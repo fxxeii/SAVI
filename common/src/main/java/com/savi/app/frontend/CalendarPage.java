@@ -1,10 +1,8 @@
-package com.savi.app;
+package com.savi.app.frontend;
 
-import static com.codename1.ui.CN.*;
 import com.codename1.ui.*; // for form, button, dialog, front image
 import com.codename1.ui.layouts.*;
-import com.codename1.io.*;
-import com.codename1.ui.plaf.*;
+
 import java.util.Date;
 import com.codename1.l10n.SimpleDateFormat;
 
