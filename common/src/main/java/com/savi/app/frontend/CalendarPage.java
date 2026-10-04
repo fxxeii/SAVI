@@ -2,7 +2,6 @@ package com.savi.app.frontend;
 
 import com.codename1.ui.*; // for form, button, dialog, front image
 import com.codename1.ui.layouts.*;
-import com.codename1.io.*;
 import com.codename1.ui.plaf.*;
 import java.util.Date;
 import com.codename1.l10n.SimpleDateFormat;
@@ -74,15 +73,6 @@ public class CalendarPage {
         dateBar.getAllStyles().setPadding(1, 1, 1, 1);
         dateBar.getAllStyles().setMargin(1, 1, 1, 1);
         dateBar.getAllStyles().setBorder(RoundRectBorder.create().cornerRadius(1));
-
-        // runs when a day is selected
-        cld.addDayActionListener((e) -> {
-            Date selectedDate = cld.getDate(); // gets the date currently selected by the user
-            String selectedDayText = getDayText(selectedDate); // get the current date
-            String selectedFormattedDate = formatter.format(selectedDate); //get the formatted date
-            dayTextLabel.setText(selectedDayText);
-            formattedDateLabel.setText(selectedFormattedDate);
-        });
 
         content.add(cld); // put the calendar inside the content
 
@@ -243,7 +233,52 @@ public class CalendarPage {
         noteText.getAllStyles().setFgColor(gray);
         noteText.getAllStyles().setFont(Font.createSystemFont(Font.FACE_SYSTEM, Font.STYLE_ITALIC, Font.SIZE_SMALL));
 
-        content.add(trackerCard);
+        Container recordsContainer = new Container(BoxLayout.y()); // container for date-dependent content
+
+        Label emptyMessage = new Label("No savings recorded for this date.");
+        emptyMessage.getAllStyles().setFont(Font.createSystemFont(Font.FACE_SYSTEM, Font.STYLE_BOLD, Font.SIZE_SMALL));
+        emptyMessage.getAllStyles().setFgColor(gray);
+        emptyMessage.getAllStyles().setAlignment(Component.CENTER);
+        emptyMessage.getAllStyles().setPadding(5, 5, 3, 3);
+
+        content.add(recordsContainer); // then put the container inide the main content
+
+        Date initialDate = cld.getDate();
+
+        SimpleDateFormat dateKeyFormat = new SimpleDateFormat("yyyy-MM-dd");
+        String initialDateKey = dateKeyFormat.format(initialDate);
+
+        if (initialDateKey.equals("2026-10-02")) {
+            recordsContainer.add(trackerCard);
+        } else {
+            recordsContainer.add(emptyMessage);
+        }
+
+        // runs when a day is selected
+        cld.addDayActionListener((e) -> {
+            Date selectedDate = cld.getDate(); // gets the date currently selected by the user
+            //updates date bar
+            String selectedDayText = getDayText(selectedDate); // get the current date
+            String selectedFormattedDate = formatter.format(selectedDate); //get the formatted date
+            dayTextLabel.setText(selectedDayText);
+            formattedDateLabel.setText(selectedFormattedDate);
+            // checks if the selected date has records
+            SimpleDateFormat dateKeyFormat1 = new SimpleDateFormat("yyyy-MM-dd");
+
+            String selectedDateKey = dateKeyFormat1.format(selectedDate);
+
+            if (selectedDateKey.equals("2026-10-02")) {
+                // OCTOBER 2: SHOW TRACKER CARD
+                recordsContainer.removeAll();
+                recordsContainer.add(trackerCard);
+            } else {
+                // OTHER DATES: SHOW EMPTY STATE
+                recordsContainer.removeAll();
+                recordsContainer.add(emptyMessage);
+            }
+
+            recordsContainer.revalidate();
+        });
 
         calendarForm.add(BorderLayout.CENTER, content); //put the content inside the form and place it in the center
 
@@ -272,39 +307,3 @@ public class CalendarPage {
     }
 
 }
-
-    // reference lang if ever
-
-    /*
-    @Override
-    public void runApp() {
-        Form hi = new Form("SAVI", BoxLayout.y()); // form is a screen
-
-        Button helloButton = new Button("Get Started"); // button is, well, button
-
-        hi.add(helloButton); // putting the button inside the screen
-
-        helloButton.addActionListener(e -> hello()); // when the user interacts with this button, call hello(). the e represents the event
-
-        hi.getToolbar().addMaterialCommandToSideMenu("MENU", FontImage.MATERIAL_CHECK, 4, e -> hello()); // addMaterialCommandToSideMenu means add something to the side menu
-
-        hi.show(); // display the fom (screen)
-    }
-
-    private void hello() {
-    Dialog.show("Hello, User", "Welcome to SAVI", "Thanks!", "Exit"); // dialog is for popup
-    }
-    */
-
-    /*
-    Button dateButton = new Button("September 2026"); // gagawa ng label for date
-    calendarForm.add(BorderLayout.NORTH, dateButton); // ilalagay sa screen tapos i-p-place sa top
-
-    Button backButton = new Button("<-- Back");
-    calendarForm.add(BorderLayout.NORTH, backButton);
-    */
-
-    /*
-    Button backButton = new Button("<-- Back"); // gagawa ng button for back
-    calendarForm.add(BorderLayout.NORTH, backButton); // place sa top
-    */
