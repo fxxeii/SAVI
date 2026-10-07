@@ -1,3 +1,6 @@
+// suggestion: maglagay ng number of pending
+// ex. 3 pending tapos dropdown para makita sino mga pending pa
+
 package com.savi.app.frontend;
 
 import com.codename1.ui.*; // for form, button, dialog, front image
