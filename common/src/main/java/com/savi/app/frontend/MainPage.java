@@ -60,5 +60,4 @@ public class MainPage {
 
         mainForm.show();
     }
-
 }
