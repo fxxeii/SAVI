@@ -23,6 +23,8 @@ public class MainPage {
         mainForm.getAllStyles().setBgTransparency(255);
 
         Container content = new Container(BoxLayout.yCenter());
+        content.getAllStyles().setBgColor(palePurple);
+        content.getAllStyles().setBgTransparency(255);
 
         Label logo = new Label("LOGO"); //ito muna
         Label title = new Label("Savi");
