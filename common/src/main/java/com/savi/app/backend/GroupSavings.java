@@ -1,0 +1,15 @@
+package com.savi.app.backend;
+
+public class GroupSavings extends Savings {
+
+    private String groupName;
+
+    public GroupSavings(String savingsName, double targetAmount, String groupName) {
+        super(savingsName, targetAmount);
+        this.groupName = groupName;
+    }
+
+    public String getGroupName() {
+        return groupName;
+    }
+}
