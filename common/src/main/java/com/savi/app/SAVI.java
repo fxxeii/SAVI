@@ -9,7 +9,6 @@ import com.savi.app.frontend.SignUpPage;
 import com.savi.app.frontend.CalendarPage;
 import com.savi.app.frontend.HomePage;
 
-
 public class SAVI extends Lifecycle {
     public static Font regularFont;
     public static Font boldFont;
@@ -44,10 +43,10 @@ public class SAVI extends Lifecycle {
     }
     @Override
     public void runApp() {
-        new HomePage().show();
-        new CalendarPage().show();
+        //new HomePage().show();
+        //new CalendarPage().show();
         new MainPage().show();
-        new SignUpPage().show();
+        //new SignUpPage().show();
 
     }
 }

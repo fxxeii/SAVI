@@ -12,4 +12,13 @@ public class PersonalSavings extends Savings {
     public String getOwner() {
         return ownerName;
     }
+
+    @Override
+    public void displayInfo() {
+        System.out.println("Type: Personal Savings");
+        System.out.println("Savings Name: " + savingsName);
+        System.out.println("Owner: " + ownerName);
+        System.out.println("Target Amount: " + targetAmount);
+        System.out.println("Current Amount: " + currentAmount);
+    }
 }

@@ -12,4 +12,13 @@ public class GroupSavings extends Savings {
     public String getGroupName() {
         return groupName;
     }
+
+    @Override
+    public void displayInfo() {
+        System.out.println("Type: Group Savings");
+        System.out.println("Group Name: " + groupName);
+        System.out.println("Savings Name: " + savingsName);
+        System.out.println("Target Amount: " + targetAmount);
+        System.out.println("Current Amount: " + currentAmount);
+    }
 }
