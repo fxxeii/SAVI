@@ -100,6 +100,5 @@ public class SignUpPage {
         signUpForm.add(BorderLayout.NORTH, purpleSection);
         signUpForm.show();
 
-
     }
 }
