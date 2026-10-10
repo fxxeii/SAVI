@@ -23,4 +23,10 @@ public class Savings {
     public double getTargetAmount() {
         return targetAmount;
     }
+
+    public void displayInfo() {
+        System.out.println("Savings Name: " + savingsName);
+        System.out.println("Target Amount: " + targetAmount);
+        System.out.println("Current Amount: " + currentAmount);
+    }
 }
