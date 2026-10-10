@@ -3,6 +3,8 @@ package com.savi.app.frontend;
 import com.codename1.ui.*; // for form, button, dialog
 import com.codename1.ui.layouts.*; //boxlayout, border layout, gridlayout
 import com.codename1.ui.plaf.Border;
+import com.codename1.ui.plaf.RoundRectBorder;
+import com.codename1.ui.plaf.Style;
 
 
 public class SignUpPage {
@@ -50,6 +52,10 @@ public class SignUpPage {
         form.getAllStyles().setBgColor(darkPurple);
         form.getAllStyles().setBgTransparency(255);
         form.getAllStyles().setPadding(90, 15, 30, 30);
+        Style cont = form.getAllStyles();
+        cont.setBorder(RoundRectBorder.create().cornerRadius(4).shadowOpacity(50).shadowBlur(10).shadowSpread(1f).shadowX(0.5f).shadowY(0.3f).shadowColor(0x6d28d9));
+        cont.setMarginUnit(Style.UNIT_TYPE_DIPS);
+        cont.setMargin(2, 0.5f, 2, 2);
 
         TextField username = new TextField("","Username");
         TextField email = new TextField("", "Email");
