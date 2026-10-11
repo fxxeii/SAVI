@@ -4,6 +4,8 @@ import com.codename1.system.Lifecycle;
 import com.codename1.ui.Display;
 import com.codename1.ui.Font;
 import com.codename1.ui.Label;
+import com.codename1.ui.Button;
+import com.codename1.ui.plaf.Style;
 import com.savi.app.frontend.MainPage;
 import com.savi.app.frontend.SignUpPage;
 import com.savi.app.frontend.CalendarPage;
@@ -45,8 +47,8 @@ public class SAVI extends Lifecycle {
     public void runApp() {
         //new HomePage().show();
         //new CalendarPage().show();
-        new MainPage().show();
-        //new SignUpPage().show();
+        //new MainPage().show();
+        new SignUpPage().show();
 
     }
 }
