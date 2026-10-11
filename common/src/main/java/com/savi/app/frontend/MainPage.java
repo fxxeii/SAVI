@@ -4,21 +4,17 @@ import com.codename1.ui.*;
 import com.codename1.ui.layouts.*;
 import com.codename1.ui.plaf.*;
 import com.codename1.io.Log;
-import com.codename1.ui.Form;
-import com.codename1.ui.plaf.Style;
 import java.io.IOException;
 import com.savi.app.SAVI;
 
-
 public class MainPage {
 
-     static int darkDarkPurple = 0x30205E;
+     int darkDarkPurple = 0x30205E;
      int darkPurple = 0x7C3AED;
      int palePurple = 0xF4EFFE;
      int pastelLavander = 0xD8B4FE;
      int paleLavander = 0xE9D5FF;
      int bluishPurple = 0x4F46E5;
-     int gray = 0x8491A7;
      int borderColor = 0xEDF0F5;
      int white = 0xFFFFFF;
      int black = 0x000000;
@@ -56,12 +52,12 @@ public class MainPage {
           */
           Image img = null;
           try {
-          Image logoimg = Image.createImage("/Logo_main.png");
-          int deviceWidth = Display.getInstance().getDisplayWidth();
-          int targetWidth = (int)(deviceWidth * 0.8f);//0.85
-          img = logoimg.scaledWidth(targetWidth);
+               Image logoimg = Image.createImage("/Logo_main.png");
+               int deviceWidth = Display.getInstance().getDisplayWidth();
+               int targetWidth = (int)(deviceWidth * 0.8f);
+               img = logoimg.scaledWidth(targetWidth);
           } catch (IOException err) {
-          Log.e(err);
+               Log.e(err);
           }
 
           Label logo = new Label(img);
@@ -96,6 +92,22 @@ public class MainPage {
           content.add(subtitle);
 
           Button btn = new Button("Get Started");
+
+          Image btnimg = null;
+          try {
+               Image btni = Image.createImage("/arrow_NE.png");
+               int deviceWidth = Display.getInstance().getDisplayWidth();
+               int targetWidth = (int)(deviceWidth * 1f);
+               btnimg = btni.scaledWidth(targetWidth);
+
+               btn.setIcon(btni);
+               //btnimg.setTextPosition(Component.LEFT);
+
+               int spaceGap = Display.getInstance().convertToPixels(1f);
+               btn.setGap(spaceGap);
+          } catch (IOException err) {
+               Log.e(err);
+          }
           //base
           btn.getAllStyles().setFgColor(white);
           btn.getAllStyles().setBgTransparency(255);
@@ -136,12 +148,13 @@ public class MainPage {
           pressed.setBackgroundGradientEndColor(pastelLavander);
           pressed.setFgColor(darkPurple);
 
-          btn.getAllStyles().setBorder(Border.createRoundBorder(125, borderColor));
+          btn.getAllStyles().setBorder(Border.createRoundBorder(140, borderColor));
 
           mainForm.add(BorderLayout.CENTER, content);
           mainForm.add(BorderLayout.SOUTH, btn);
 
-          //btn.addActionListener(e -> {
+          btn.addActionListener(e -> { LogInPage login = new LogInPage(); login.show();});
+
           mainForm.show();
      }
 }
