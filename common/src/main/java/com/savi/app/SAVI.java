@@ -47,8 +47,8 @@ public class SAVI extends Lifecycle {
     public void runApp() {
         //new HomePage().show();
         //new CalendarPage().show();
-        new MainPage().show();
-        //new SignUpPage().show();
+        //new MainPage().show();
+        new SignUpPage().show();
 
     }
 }
