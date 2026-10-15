@@ -48,7 +48,7 @@ public class SignUpPage {
                 .shadowY(1f)
                 .shadowColor(darkDarkPurple));*/
         cont.setMarginUnit(Style.UNIT_TYPE_DIPS);
-        cont.setMargin(0, 0.5f, 0, 0);
+        cont.setMargin(0, 5f, 0, 0);
         cont.setBackgroundType(Style.BACKGROUND_GRADIENT_LINEAR_HORIZONTAL);
         cont.setBackgroundGradientStartColor(pinkish);
         cont.setBackgroundGradientEndColor(darkPurple);
@@ -74,9 +74,7 @@ public class SignUpPage {
         welcome.setAlignment(Component.CENTER);
         sub.setAlignment(Component.CENTER);
 
-        header.add(logoc);
-        header.add(welcome);
-        header.add(sub);
+        header.add(logoc).add(welcome).add(sub);
 
         Container form = new Container(BoxLayout.y());
         form.getAllStyles().setBgColor(palePurple);
@@ -100,37 +98,26 @@ public class SignUpPage {
         cpass.getAllStyles().setFgColor(black);
 
         //hint
-        username.getHintLabel().getAllStyles().setFont(SAVI.regular(3f));
-        email.getHintLabel().getAllStyles().setFont(SAVI.regular(3f));
-        pass.getHintLabel().getAllStyles().setFont(SAVI.regular(3f));
-        cpass.getHintLabel().getAllStyles().setFont(SAVI.regular(3f));
+        username.getHintLabel().getAllStyles().setFont(SAVI.regular(2.5f));
+        email.getHintLabel().getAllStyles().setFont(SAVI.regular(2.5f));
+        pass.getHintLabel().getAllStyles().setFont(SAVI.regular(2.5f));
+        cpass.getHintLabel().getAllStyles().setFont(SAVI.regular(2.5f));
 
         username.getHintLabel().getAllStyles().setFgColor(gray);
         email.getHintLabel().getAllStyles().setFgColor(gray);
         pass.getHintLabel().getAllStyles().setFgColor(gray);
         cpass.getHintLabel().getAllStyles().setFgColor(gray);
-/*
-        username.getAllStyles().setPadding(1, 1, 3, 1);
-        email.getAllStyles().setPadding(1, 1, 3, 1);
-        pass.getAllStyles().setPadding(1, 1, 3, 1);
-        cpass.getAllStyles().setPadding(1, 1, 3, 1);
 
-
-        username.getAllStyles().setMarginBottom(2);
-        email.getAllStyles().setMarginBottom(2);
-        pass.getAllStyles().setMarginBottom(2);
-        cpass.getAllStyles().setMarginBottom(2);
-
-        username.getAllStyles().setBorder(Border.createRoundBorder(125);
-        email.getAllStyles().setBorder(Border.createRoundBorder(125, slategray));
-        pass.getAllStyles().setBorder(Border.createRoundBorder(125, slategray));
-        cpass.getAllStyles().setBorder(Border.createRoundBorder(125, slategray));
-*/
         TextField[] fields = {username, email, pass, cpass};
 
         for (TextField field : fields) {
             field.getAllStyles().setPadding(2, 1, 3, 4);
-            field.getAllStyles().setMargin(1, 1, 2, 2);
+            field.getAllStyles().setMargin(2, 2, 9, 9);
+            field.setSingleLineTextArea(true);
+            //field.setRows(1);
+            //field.getAllStyles().setPaddingUnit(Style.UNIT_TYPE_DIPS);
+            //field.getAllStyles().setPadding(Component.TOP, 0.5f);
+            //field.getAllStyles().setPadding(Component.BOTTOM, 0.5f);
             Style normal = field.getUnselectedStyle();
             Style focused = field.getSelectedStyle();
 
@@ -165,18 +152,14 @@ public class SignUpPage {
         pass.setConstraint(TextField.PASSWORD);
         cpass.setConstraint(TextField.PASSWORD);
 
-        form.add(username);
-        form.add(email);
-        form.add(pass);
-        form.add(cpass);
+        form.add(username).add(email).add(pass).add(cpass);
 
         Button signupbtn = new Button("Sign Up");
         signupbtn.getAllStyles().setMarginTop(10);
 
         form.add(signupbtn);
 
-        signUpForm.add(BorderLayout.CENTER, form);
-        signUpForm.add(BorderLayout.NORTH, header);
+        signUpForm.add(BorderLayout.CENTER, form).add(BorderLayout.NORTH, header);
         signUpForm.show();
 
     }
