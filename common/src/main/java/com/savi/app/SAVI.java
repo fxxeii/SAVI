@@ -4,10 +4,7 @@ import com.codename1.system.Lifecycle;
 import com.codename1.ui.Display;
 import com.codename1.ui.Font;
 import com.codename1.ui.Label;
-import com.savi.app.frontend.MainPage;
-import com.savi.app.frontend.SignUpPage;
-import com.savi.app.frontend.CalendarPage;
-import com.savi.app.frontend.HomePage;
+import com.savi.app.frontend.*;
 
 public class SAVI extends Lifecycle {
     public static Font regularFont;
@@ -47,6 +44,6 @@ public class SAVI extends Lifecycle {
         new CalendarPage().show();
         new MainPage().show();
         new SignUpPage().show();
-
+        new PendingPage().show();
     }
 }
