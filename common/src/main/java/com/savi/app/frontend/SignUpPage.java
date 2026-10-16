@@ -48,7 +48,6 @@ public class SignUpPage {
                 .shadowY(1f)
                 .shadowColor(darkDarkPurple));*/
         cont.setMarginUnit(Style.UNIT_TYPE_DIPS);
-        cont.setMargin(0, 5f, 0, 0);
         cont.setBackgroundType(Style.BACKGROUND_GRADIENT_LINEAR_HORIZONTAL);
         cont.setBackgroundGradientStartColor(pinkish);
         cont.setBackgroundGradientEndColor(darkPurple);
@@ -79,71 +78,123 @@ public class SignUpPage {
         Container form = new Container(BoxLayout.y());
         form.getAllStyles().setBgColor(palePurple);
         form.getAllStyles().setBgTransparency(255);
-        form.getAllStyles().setPadding(20, 15, 10, 10);
+        form.getAllStyles().setPadding(70, 5, 10, 10);
 
         TextField username = new TextField("","Enter username");
         TextField email = new TextField("", "Enter email");
         TextField pass = new TextField("", "Enter password");
         TextField cpass = new TextField("", "Confirm password");
 
-        //input
-        username.getAllStyles().setFont(SAVI.regular(3f));
-        email.getAllStyles().setFont(SAVI.regular(3f));
-        pass.getAllStyles().setFont(SAVI.regular(3f));
-        cpass.getAllStyles().setFont(SAVI.regular(3f));
+        Button showPass = new Button("Show");
+        Button showCpass = new Button("Show");
 
-        username.getAllStyles().setFgColor(black);
-        email.getAllStyles().setFgColor(black);
-        pass.getAllStyles().setFgColor(black);
-        cpass.getAllStyles().setFgColor(black);
+        Container passContainer = new Container(new BorderLayout());
+        passContainer.add(BorderLayout.CENTER, pass);
+        passContainer.add(BorderLayout.EAST, showPass);
 
-        //hint
-        username.getHintLabel().getAllStyles().setFont(SAVI.regular(2.5f));
-        email.getHintLabel().getAllStyles().setFont(SAVI.regular(2.5f));
-        pass.getHintLabel().getAllStyles().setFont(SAVI.regular(2.5f));
-        cpass.getHintLabel().getAllStyles().setFont(SAVI.regular(2.5f));
+        Container cpassContainer = new Container(new BorderLayout());
+        cpassContainer.add(BorderLayout.CENTER, cpass);
+        cpassContainer.add(BorderLayout.EAST, showCpass);
 
-        username.getHintLabel().getAllStyles().setFgColor(gray);
-        email.getHintLabel().getAllStyles().setFgColor(gray);
-        pass.getHintLabel().getAllStyles().setFgColor(gray);
-        cpass.getHintLabel().getAllStyles().setFgColor(gray);
+        showPass.addActionListener(e -> {
+            if (pass.getConstraint() == TextField.PASSWORD) {
+                pass.setConstraint(TextField.ANY);
+                showPass.setText("Hide");
+            } else {
+                pass.setConstraint(TextField.PASSWORD);
+                showPass.setText("Show");
+            }
+            pass.repaint();
+            pass.getParent().revalidate();
+        });
+
+        showCpass.addActionListener(e -> {
+            if (cpass.getConstraint() == TextField.PASSWORD) {
+                cpass.setConstraint(TextField.ANY);
+                showCpass.setText("Hide");
+            } else {
+                cpass.setConstraint(TextField.PASSWORD);
+                showCpass.setText("Show");
+            }
+            cpass.repaint();
+            cpass.getParent().revalidate();
+        });
+
+        Button[] showButtons = {showPass, showCpass};
+
+        for (Button btn : showButtons) {
+            Style[] styles = {
+                    btn.getUnselectedStyle(),
+                    btn.getSelectedStyle(),
+                    btn.getPressedStyle()
+            };
+
+            for (Style s : styles) {
+                s.setBgTransparency(0);
+                s.setBgImage(null);
+                s.setBorder(Border.createEmpty());
+                s.setFgColor(darkPurple);
+                s.setFont(SAVI.regular(2f));
+                s.setPadding(0, 0, 0, 3);
+                s.setMargin(0, 0,3 , 0);
+            }
+        }
 
         TextField[] fields = {username, email, pass, cpass};
 
         for (TextField field : fields) {
+            field.getAllStyles().setFont(SAVI.regular(3f));
+            field.getAllStyles().setFgColor(black);
+            field.getHintLabel().getAllStyles().setFont(SAVI.regular(2.5f));
+            field.getHintLabel().getAllStyles().setFgColor(gray);
+
             field.getAllStyles().setPadding(2, 1, 3, 4);
             field.getAllStyles().setMargin(2, 2, 9, 9);
             field.setSingleLineTextArea(true);
-            //field.setRows(1);
-            //field.getAllStyles().setPaddingUnit(Style.UNIT_TYPE_DIPS);
-            //field.getAllStyles().setPadding(Component.TOP, 0.5f);
-            //field.getAllStyles().setPadding(Component.BOTTOM, 0.5f);
+
             Style normal = field.getUnselectedStyle();
             Style focused = field.getSelectedStyle();
+            Style pressed = field.getPressedStyle();
 
             normal.setBgColor(white);
             normal.setBgTransparency(255);
-            normal.setBorder(
-                    RoundRectBorder.create()
-                            .cornerRadius(4)
+            normal.setBgImage(null);
+            normal.setBorder(Border.createEmpty());
+            normal.setBorder(RoundRectBorder.create()
+                            .cornerRadius(4f)
                             .shadowOpacity(50)
-                            .shadowBlur(10)
-                            .shadowSpread(1f)
+                            .shadowBlur(1)
+                            .shadowSpread(0.3f)
                             .shadowX(0.5f)
-                            .shadowY(0f)
+                            .shadowY(2f)
                             .shadowColor(darkDarkPurple)
             );
 
             focused.setBgColor(white);
             focused.setBgTransparency(255);
-            focused.setBorder(
-                    RoundRectBorder.create()
-                            .cornerRadius(4)
+            focused.setBgImage(null);
+            focused.setBorder(Border.createEmpty());
+            focused.setBorder(RoundRectBorder.create()
+                            .cornerRadius(4f)
                             .shadowOpacity(50)
-                            .shadowBlur(10)
-                            .shadowSpread(1f)
+                            .shadowBlur(1)
+                            .shadowSpread(0.3f)
                             .shadowX(0.5f)
-                            .shadowY(0f)
+                            .shadowY(2f)
+                            .shadowColor(darkDarkPurple)
+            );
+
+            pressed.setBgColor(white);
+            pressed.setBgTransparency(255);
+            pressed.setBgImage(null);
+            pressed.setBorder(Border.createEmpty());
+            pressed.setBorder(RoundRectBorder.create()
+                            .cornerRadius(4f)
+                            .shadowOpacity(50)
+                            .shadowBlur(1)
+                            .shadowSpread(0.3f)
+                            .shadowX(0.5f)
+                            .shadowY(2f)
                             .shadowColor(darkDarkPurple)
             );
 
@@ -152,14 +203,70 @@ public class SignUpPage {
         pass.setConstraint(TextField.PASSWORD);
         cpass.setConstraint(TextField.PASSWORD);
 
-        form.add(username).add(email).add(pass).add(cpass);
+        form.add(username).add(email);
+        form.add(passContainer).add(cpassContainer);
 
         Button signupbtn = new Button("Sign Up");
-        signupbtn.getAllStyles().setMarginTop(10);
+        signupbtn.getAllStyles().setMargin(8,0,3,3);
+        signupbtn.getAllStyles().setPadding(2f, 2f, 0f, 0f);
+        Style normal = signupbtn.getUnselectedStyle();
+        normal.setBgImage(null);
+        normal.setBorder(Border.createEmpty());
+        normal.setBgTransparency(255);
+        normal.setBackgroundType(Style.BACKGROUND_GRADIENT_LINEAR_HORIZONTAL);
+        normal.setBackgroundGradientStartColor(darkPurple);
+        normal.setBackgroundGradientEndColor(bluishPurple);
+        normal.setFgColor(white);
+
+        Style hover = signupbtn.getSelectedStyle();
+        hover.setBgImage(null);
+        hover.setBorder(Border.createEmpty());
+        hover.setFgColor(white);
+        hover.setBgTransparency(255);
+        hover.setBackgroundType(Style.BACKGROUND_GRADIENT_LINEAR_HORIZONTAL);
+        hover.setBackgroundGradientStartColor(bluishPurple);
+        hover.setBackgroundGradientEndColor(darkPurple);
+
+        Style pressed = signupbtn.getPressedStyle();
+        pressed.setBgImage(null);
+        pressed.setBorder(Border.createEmpty());
+        pressed.setBgTransparency(255);
+        pressed.setFgColor(white);
+        pressed.setBgColor(darkPurple);
+
+        signupbtn.getAllStyles().setBorder(Border.createRoundBorder(140, borderColor));
 
         form.add(signupbtn);
 
-        signUpForm.add(BorderLayout.CENTER, form).add(BorderLayout.NORTH, header);
+        Container footer = new Container(BoxLayout.y());
+        footer.getAllStyles().setBgColor(palePurple);
+        footer.getAllStyles().setBgTransparency(255);
+        footer.getAllStyles().setPadding(50, 20, 0, 0);
+        Label last = SAVI.text("Already have an account?", SAVI.regular(2f), slategray);
+
+        last.getAllStyles().setMargin(2,0,9,9);
+        last.setAlignment(Component.CENTER);
+        footer.add(last);
+
+        Button loginbtn = new Button("Log In");
+
+        Container login = new Container(new BorderLayout());
+        login.add(BorderLayout.SOUTH, loginbtn);
+        //login.add(BorderLayout.EAST, loginbtn);
+
+        Style btn = loginbtn.getAllStyles();
+        btn.setBgTransparency(0);
+        btn.setBgImage(null);
+        btn.setBorder(Border.createEmpty());
+        btn.setFgColor(darkPurple);
+        btn.setFont(SAVI.regular(2f));
+        btn.setPadding(0, 0, 0, 0);
+        btn.setMargin(0, 4,0 , 0);
+
+        footer.add(login);
+        //loginbtn.addActionListener(e -> { LogInPage loginp = new LogInPage(); loginp.show();});
+
+        signUpForm.add(BorderLayout.CENTER, form).add(BorderLayout.NORTH, header).add(BorderLayout.SOUTH, footer);
         signUpForm.show();
 
     }
