@@ -35,6 +35,7 @@ public class CalendarPage {
         });
 
         Container content = new Container(BoxLayout.y()); // creates a container para paglagyan ng iba pang content sa center. main content
+        content.setScrollableY(true);
         content.getAllStyles().setBgColor(palePurple);
         content.getAllStyles().setBgTransparency(255);
 
