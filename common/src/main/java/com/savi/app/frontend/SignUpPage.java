@@ -207,42 +207,49 @@ public class SignUpPage {
         form.add(passContainer).add(cpassContainer);
 
         Button signupbtn = new Button("Sign Up");
-        signupbtn.getAllStyles().setMargin(8,0,3,3);
-        signupbtn.getAllStyles().setPadding(2f, 2f, 0f, 0f);
-        Style normal = signupbtn.getUnselectedStyle();
-        normal.setBgImage(null);
-        normal.setBorder(Border.createEmpty());
-        normal.setBgTransparency(255);
-        normal.setBackgroundType(Style.BACKGROUND_GRADIENT_LINEAR_HORIZONTAL);
-        normal.setBackgroundGradientStartColor(darkPurple);
-        normal.setBackgroundGradientEndColor(bluishPurple);
-        normal.setFgColor(white);
 
-        Style hover = signupbtn.getSelectedStyle();
-        hover.setBgImage(null);
-        hover.setBorder(Border.createEmpty());
-        hover.setFgColor(white);
-        hover.setBgTransparency(255);
-        hover.setBackgroundType(Style.BACKGROUND_GRADIENT_LINEAR_HORIZONTAL);
-        hover.setBackgroundGradientStartColor(bluishPurple);
-        hover.setBackgroundGradientEndColor(darkPurple);
+        Button[] sbtn = {signupbtn};
 
-        Style pressed = signupbtn.getPressedStyle();
-        pressed.setBgImage(null);
-        pressed.setBorder(Border.createEmpty());
-        pressed.setBgTransparency(255);
-        pressed.setFgColor(white);
-        pressed.setBgColor(darkPurple);
+        for (Button btn : sbtn) {
+            btn.getAllStyles().setMargin(8,0,3,3);
+            btn.getAllStyles().setPadding(2f, 2f, 0f, 0f);
+            btn.getAllStyles().setFont(SAVI.bold(3f));
+
+            Style normal = signupbtn.getUnselectedStyle();
+            Style hover = signupbtn.getSelectedStyle();
+            Style pressed = signupbtn.getPressedStyle();
+
+            normal.setBgImage(null);
+            normal.setBorder(Border.createEmpty());
+            normal.setBgTransparency(255);
+            normal.setBackgroundType(Style.BACKGROUND_GRADIENT_LINEAR_HORIZONTAL);
+            normal.setBackgroundGradientStartColor(darkPurple);
+            normal.setBackgroundGradientEndColor(bluishPurple);
+            normal.setFgColor(white);
+
+            hover.setBgImage(null);
+            hover.setBorder(Border.createEmpty());
+            hover.setFgColor(white);
+            hover.setBgTransparency(255);
+            hover.setBackgroundType(Style.BACKGROUND_GRADIENT_LINEAR_HORIZONTAL);
+            hover.setBackgroundGradientStartColor(bluishPurple);
+            hover.setBackgroundGradientEndColor(darkPurple);
+
+            pressed.setBgImage(null);
+            pressed.setBorder(Border.createEmpty());
+            pressed.setBgTransparency(255);
+            pressed.setFgColor(white);
+            pressed.setBgColor(darkPurple);
+        }
 
         signupbtn.getAllStyles().setBorder(Border.createRoundBorder(140, borderColor));
-
         form.add(signupbtn);
 
         Container footer = new Container(BoxLayout.y());
         footer.getAllStyles().setBgColor(palePurple);
         footer.getAllStyles().setBgTransparency(255);
         footer.getAllStyles().setPadding(50, 20, 0, 0);
-        Label last = SAVI.text("Already have an account?", SAVI.regular(2f), slategray);
+        Label last = SAVI.text("Already have an account?", SAVI.regular(2.3f), slategray);
 
         last.getAllStyles().setMargin(2,0,9,9);
         last.setAlignment(Component.CENTER);
@@ -259,12 +266,12 @@ public class SignUpPage {
         btn.setBgImage(null);
         btn.setBorder(Border.createEmpty());
         btn.setFgColor(darkPurple);
-        btn.setFont(SAVI.regular(2f));
+        btn.setFont(SAVI.bold(2.3f));
         btn.setPadding(0, 0, 0, 0);
         btn.setMargin(0, 4,0 , 0);
 
         footer.add(login);
-        //loginbtn.addActionListener(e -> { LogInPage loginp = new LogInPage(); loginp.show();});
+        loginbtn.addActionListener(e -> { LogInPage loginp = new LogInPage(); loginp.show();});
 
         signUpForm.add(BorderLayout.CENTER, form).add(BorderLayout.NORTH, header).add(BorderLayout.SOUTH, footer);
         signUpForm.show();
