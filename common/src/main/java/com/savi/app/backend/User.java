@@ -43,8 +43,7 @@ public class User {
         Node temp = head;
 
         while (temp != null) {
-            if (temp.name.equalsIgnoreCase(n)
-                    && temp.pass.equals(p)) {
+            if (temp.name.equalsIgnoreCase(n) && temp.pass.equals(p)) {
                 currentUser = temp;
                 return true;
             }
@@ -84,23 +83,23 @@ public class User {
     }
 
     public boolean deluser(String n) {
-        Node p = head;
+        Node temp = head;
         Node q = null;
 
-        while (p != null) {
-            if (p.name.equalsIgnoreCase(n)) {
+        while (temp != null) {
+            if (temp.name.equalsIgnoreCase(n)) {
                 if (q == null) {
-                    head = p.pntnext;
+                    head = temp.pntnext;
                 } else {
-                    q.pntnext = p.pntnext;
+                    q.pntnext = temp.pntnext;
                 }
-                if (currentUser == p) {
+                if (currentUser == temp) {
                     currentUser = null;
                 }
                 return true;
             }
-            q = p;
-            p = p.pntnext;
+            q = temp;
+            temp = temp.pntnext;
         }
         return false;
     }
