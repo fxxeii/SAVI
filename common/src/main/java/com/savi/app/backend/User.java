@@ -19,12 +19,34 @@ public class User {
     Node head;
     Node currentUser;
 
-    public boolean signup(String n, String e, String p) {
-        if (exist(n) || emailExists(e)) {
-            return false;
+    public String signup(String n, String e, String p, String cp) {
+        if (!fieldsComplete(n, e, p, cp)) {
+            return "Please fill in all fields.";
         }
 
-        Node newNode = new Node(n, e, p);
+        n = n.trim();
+        e = e.trim();
+
+        if (!validName(n)) {
+            return "Username must be at least 3 characters.";
+        }
+        if (!validEmail(e)) {
+            return "Please enter a valid email address.";
+        }
+        if (!validPassword(p)) {
+            return "Password must be at least 5 characters.";
+        }
+        if (!matchingPassword(p, cp)) {
+            return "Passwords do not match.";
+        }
+        if (exist(n)) {
+            return "Username already exists.";
+        }
+        if (emailExists(e)) {
+            return "Email already registered.";
+        }
+
+        Node newNode = new Node(n.trim(), e.trim(), p);
 
         if (head == null) {
             head = newNode;
@@ -36,20 +58,27 @@ public class User {
             }
             temp.pntnext = newNode;
         }
-        return true;
+        return "success";
     }
 
-    public boolean login(String n, String p) {
+    public String login(String n, String p) {
+        if (!validUsername(n)) {
+            return "Please enter your username.";
+        }
+        if (!validLoginPassword(p)) {
+            return "Please enter your password.";
+        }
+
         Node temp = head;
 
         while (temp != null) {
             if (temp.name.equalsIgnoreCase(n) && temp.pass.equals(p)) {
                 currentUser = temp;
-                return true;
+                return "success";
             }
             temp = temp.pntnext;
         }
-        return false;
+        return "Incorrect username or password.";
     }
 
     public void logout() {
@@ -63,10 +92,8 @@ public class User {
             if (temp.name.equalsIgnoreCase(n)) {
                 return true;
             }
-
             temp = temp.pntnext;
         }
-
         return false;
     }
 
@@ -116,6 +143,48 @@ public class User {
             return null;
         }
         return currentUser.email;
+    }
+
+
+    private boolean validName(String n) {
+        return n != null && n.trim().length() >= 3;
+    }
+
+    private boolean validEmail(String e) {
+        if (e == null) {
+            return false;
+        }
+
+        int at = e.indexOf('@');
+        int dot = e.lastIndexOf('.');
+
+        return at > 0
+                && dot > at + 1
+                && dot < e.length() - 1
+                && e.indexOf(' ') == -1;
+    }
+
+    private boolean validPassword(String p) {
+        return p != null && p.length() >= 5;
+    }
+
+    private boolean matchingPassword(String p, String cp) {
+        return p != null && p.equals(cp);
+    }
+
+    private boolean fieldsComplete(String n, String e, String p, String cp) {
+        return n != null && !n.trim().isEmpty()
+                && e != null && !e.trim().isEmpty()
+                && p != null && !p.isEmpty()
+                && cp != null && !cp.isEmpty();
+    }
+
+    private boolean validUsername(String n) {
+        return n != null && !n.trim().isEmpty();
+    }
+
+    private boolean validLoginPassword(String p) {
+        return p != null && !p.isEmpty();
     }
 }
 
