@@ -7,58 +7,116 @@ class Node {
     String pass;
     String email;
     Node pntnext;
+
+    Node(String n, String e, String p) {
+        name = n;
+        email = e;
+        pass = p;
+        pntnext = null;
+    }
 }
 public class User {
-    //Scanner s = new Scanner(System.in);
-
     Node head;
+    Node currentUser;
 
-    void signup(String n, String e, String p){
-        Node newNode = new Node();
-        newNode.name = n;
-        newNode.email = e;
-        newNode.pass = p;
-
-        if (head==null){
-            head = newNode;
+    public boolean signup(String n, String e, String p) {
+        if (exist(n) || emailExists(e)) {
+            return false;
         }
-        else{
+
+        Node newNode = new Node(n, e, p);
+
+        if (head == null) {
+            head = newNode;
+        } else {
             Node temp = head;
-            
-            while(temp.pntnext != null){
+
+            while (temp.pntnext != null) {
                 temp = temp.pntnext;
             }
             temp.pntnext = newNode;
         }
+        return true;
     }
 
-    void deluser(String n){
-        Node p = head;
-        
-        if(exist(n)){
-            if(n.equalsIgnoreCase(p.name)){
-                head = p.pntnext;
+    public boolean login(String n, String p) {
+        Node temp = head;
+
+        while (temp != null) {
+            if (temp.name.equalsIgnoreCase(n)
+                    && temp.pass.equals(p)) {
+                currentUser = temp;
+                return true;
             }
-            else{
-                Node q = head;
-                while(q.pntnext != null && !q.pntnext.name.equalsIgnoreCase(n)){
-                    q = q.pntnext;
-                }
-                if(q.pntnext != null){
-                    q.pntnext = q.pntnext.pntnext;
-                }
-            } //deleted
-        }//not found
+            temp = temp.pntnext;
+        }
+        return false;
+    }
+
+    public void logout() {
+        currentUser = null;
     }
 
     private boolean exist(String n) {
-        Node p = head;
-        while(p!=null){
-            if(n.equalsIgnoreCase(p.name)){
+        Node temp = head;
+
+        while (temp != null) {
+            if (temp.name.equalsIgnoreCase(n)) {
                 return true;
             }
+
+            temp = temp.pntnext;
+        }
+
+        return false;
+    }
+
+    private boolean emailExists(String e) {
+        Node temp = head;
+
+        while (temp != null) {
+            if (temp.email.equalsIgnoreCase(e)) {
+                return true;
+            }
+            temp = temp.pntnext;
+        }
+        return false;
+    }
+
+    public boolean deluser(String n) {
+        Node p = head;
+        Node q = null;
+
+        while (p != null) {
+            if (p.name.equalsIgnoreCase(n)) {
+                if (q == null) {
+                    head = p.pntnext;
+                } else {
+                    q.pntnext = p.pntnext;
+                }
+                if (currentUser == p) {
+                    currentUser = null;
+                }
+                return true;
+            }
+            q = p;
             p = p.pntnext;
         }
         return false;
     }
+
+    public String getCurrentName() {
+        if (currentUser == null) {
+            return null;
+        }
+        return currentUser.name;
+    }
+
+    public String getCurrentEmail() {
+        if (currentUser == null) {
+            return null;
+        }
+        return currentUser.email;
+    }
 }
+

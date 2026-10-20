@@ -80,44 +80,44 @@ public class SignUpPage {
         form.getAllStyles().setBgTransparency(255);
         form.getAllStyles().setPadding(70, 5, 10, 10);
 
-        TextField username = new TextField("","Enter username");
-        TextField email = new TextField("", "Enter email");
-        TextField pass = new TextField("", "Enter password");
-        TextField cpass = new TextField("", "Confirm password");
+        TextField usernamef = new TextField("","Enter username");
+        TextField emailf = new TextField("", "Enter email");
+        TextField passf = new TextField("", "Enter password");
+        TextField cpassf = new TextField("", "Confirm password");
 
         Button showPass = new Button("Show");
         Button showCpass = new Button("Show");
 
         Container passContainer = new Container(new BorderLayout());
-        passContainer.add(BorderLayout.CENTER, pass);
+        passContainer.add(BorderLayout.CENTER, passf);
         passContainer.add(BorderLayout.EAST, showPass);
 
         Container cpassContainer = new Container(new BorderLayout());
-        cpassContainer.add(BorderLayout.CENTER, cpass);
+        cpassContainer.add(BorderLayout.CENTER, cpassf);
         cpassContainer.add(BorderLayout.EAST, showCpass);
 
         showPass.addActionListener(e -> {
-            if (pass.getConstraint() == TextField.PASSWORD) {
-                pass.setConstraint(TextField.ANY);
+            if (passf.getConstraint() == TextField.PASSWORD) {
+                passf.setConstraint(TextField.ANY);
                 showPass.setText("Hide");
             } else {
-                pass.setConstraint(TextField.PASSWORD);
+                passf.setConstraint(TextField.PASSWORD);
                 showPass.setText("Show");
             }
-            pass.repaint();
-            pass.getParent().revalidate();
+            passf.repaint();
+            passf.getParent().revalidate();
         });
 
         showCpass.addActionListener(e -> {
-            if (cpass.getConstraint() == TextField.PASSWORD) {
-                cpass.setConstraint(TextField.ANY);
+            if (cpassf.getConstraint() == TextField.PASSWORD) {
+                cpassf.setConstraint(TextField.ANY);
                 showCpass.setText("Hide");
             } else {
-                cpass.setConstraint(TextField.PASSWORD);
+                cpassf.setConstraint(TextField.PASSWORD);
                 showCpass.setText("Show");
             }
-            cpass.repaint();
-            cpass.getParent().revalidate();
+            cpassf.repaint();
+            cpassf.getParent().revalidate();
         });
 
         Button[] showButtons = {showPass, showCpass};
@@ -140,7 +140,7 @@ public class SignUpPage {
             }
         }
 
-        TextField[] fields = {username, email, pass, cpass};
+        TextField[] fields = {usernamef, emailf, passf, cpassf};
 
         for (TextField field : fields) {
             field.getAllStyles().setFont(SAVI.regular(3f));
@@ -200,10 +200,10 @@ public class SignUpPage {
 
         }
 
-        pass.setConstraint(TextField.PASSWORD);
-        cpass.setConstraint(TextField.PASSWORD);
+        passf.setConstraint(TextField.PASSWORD);
+        cpassf.setConstraint(TextField.PASSWORD);
 
-        form.add(username).add(email);
+        form.add(usernamef).add(emailf);
         form.add(passContainer).add(cpassContainer);
 
         Button signupbtn = new Button("Sign Up");
@@ -243,6 +243,33 @@ public class SignUpPage {
         }
 
         signupbtn.getAllStyles().setBorder(Border.createRoundBorder(140, borderColor));
+        signupbtn.addActionListener(evt ->{
+            String name = usernamef.getText().trim();
+            String email = emailf.getText().trim();
+            String pass = passf.getText().trim();
+            String cpass = cpassf.getText().trim();
+
+            if (name.isEmpty() || email.isEmpty() || pass.isEmpty()) {
+                Dialog.show("Error", "Please fill in all fields.",
+                        "OK", null);
+            }
+            else if(!pass.equals(cpass)){
+                Dialog.show("Error", "Password does not match.", "Ok", null);
+            }
+            else {
+                boolean success = SAVI.users.signup(name, email, pass);
+
+                if (success) {
+                    Dialog.show("Success", "Account created!",
+                            "OK", null);
+
+                    new HomePage().show();
+                } else {
+                    Dialog.show("Error", "Username already exists.",
+                            "OK", null);
+                }
+            }
+        });
         form.add(signupbtn);
 
         Container footer = new Container(BoxLayout.y());

@@ -73,25 +73,25 @@ public class LogInPage {
         form.getAllStyles().setBgTransparency(255);
         form.getAllStyles().setPadding(20, 0, 10, 10);
 
-        TextField username = new TextField("","Enter username");
-        TextField pass = new TextField("", "Enter password");
+        TextField usernamef = new TextField("","Enter username");
+        TextField passf = new TextField("", "Enter password");
 
         Button showPass = new Button("Show");
 
         Container passContainer = new Container(new BorderLayout());
-        passContainer.add(BorderLayout.CENTER, pass);
+        passContainer.add(BorderLayout.CENTER, passf);
         passContainer.add(BorderLayout.EAST, showPass);
 
         showPass.addActionListener(e -> {
-            if (pass.getConstraint() == TextField.PASSWORD) {
-                pass.setConstraint(TextField.ANY);
+            if (passf.getConstraint() == TextField.PASSWORD) {
+                passf.setConstraint(TextField.ANY);
                 showPass.setText("Hide");
             } else {
-                pass.setConstraint(TextField.PASSWORD);
+                passf.setConstraint(TextField.PASSWORD);
                 showPass.setText("Show");
             }
-            pass.repaint();
-            pass.getParent().revalidate();
+            passf.repaint();
+            passf.getParent().revalidate();
         });
 
         Button[] showButtons = {showPass};
@@ -114,7 +114,7 @@ public class LogInPage {
             }
         }
 
-        TextField[] fields = {username, pass};
+        TextField[] fields = {usernamef, passf};
 
         for (TextField field : fields) {
             field.getAllStyles().setFont(SAVI.regular(3f));
@@ -173,9 +173,9 @@ public class LogInPage {
             );
         }
 
-        pass.setConstraint(TextField.PASSWORD);
+        passf.setConstraint(TextField.PASSWORD);
 
-        form.add(username);
+        form.add(usernamef);
         form.add(passContainer);
 
         Button loginbtn = new Button("Log In");
@@ -211,6 +211,28 @@ public class LogInPage {
         }
 
         loginbtn.getAllStyles().setBorder(Border.createRoundBorder(140, borderColor));
+        loginbtn.addActionListener(evt ->{
+            String name = usernamef.getText().trim();
+            String pass = passf.getText().trim();
+
+            if (name.isEmpty() || pass.isEmpty()) {
+                Dialog.show("Error", "Please fill in all fields.",
+                        "OK", null);
+            }
+            else {
+                boolean success = SAVI.users.login(name, pass);
+
+                if (success) {
+                    Dialog.show("Success", "Account created!",
+                            "OK", null);
+
+                    new HomePage().show();
+                } else {
+                    Dialog.show("Error", "Account does not exists.",
+                            "OK", null);
+                }
+            }
+        });
         form.add(loginbtn);
 
         Container footer = new Container(BoxLayout.y());

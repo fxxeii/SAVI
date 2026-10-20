@@ -5,6 +5,7 @@ import com.codename1.ui.Display;
 import com.codename1.ui.Font;
 import com.codename1.ui.Label;
 import com.savi.app.frontend.*;
+import com.savi.app.backend.*;
 
 public class SAVI extends Lifecycle {
     public static Font regularFont;
@@ -38,6 +39,9 @@ public class SAVI extends Lifecycle {
         lbl.getAllStyles().setFgColor(color);
         return lbl;
     }
+
+    public static User users = new User();
+
     @Override
     public void runApp() {
         new HomePage().show();
