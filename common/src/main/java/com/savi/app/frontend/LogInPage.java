@@ -215,22 +215,13 @@ public class LogInPage {
             String name = usernamef.getText().trim();
             String pass = passf.getText().trim();
 
-            if (name.isEmpty() || pass.isEmpty()) {
-                Dialog.show("Error", "Please fill in all fields.",
-                        "OK", null);
-            }
-            else {
-                boolean success = SAVI.users.login(name, pass);
+            String result = SAVI.users.login(name, pass);
 
-                if (success) {
-                    Dialog.show("Success", "Account created!",
-                            "OK", null);
-
-                    new HomePage().show();
-                } else {
-                    Dialog.show("Error", "Account does not exists.",
-                            "OK", null);
-                }
+            if (result.equals("success")) {
+                Dialog.show("Success", "Login successful!", "OK", null);
+                new HomePage().show();
+            } else {
+                Dialog.show("Error", result, "OK", null);
             }
         });
         form.add(loginbtn);

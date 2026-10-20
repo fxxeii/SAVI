@@ -249,25 +249,13 @@ public class SignUpPage {
             String pass = passf.getText().trim();
             String cpass = cpassf.getText().trim();
 
-            if (name.isEmpty() || email.isEmpty() || pass.isEmpty()) {
-                Dialog.show("Error", "Please fill in all fields.",
-                        "OK", null);
-            }
-            else if(!pass.equals(cpass)){
-                Dialog.show("Error", "Password does not match.", "Ok", null);
-            }
-            else {
-                boolean success = SAVI.users.signup(name, email, pass);
+            String result = SAVI.users.signup(name, email, pass, cpass);
 
-                if (success) {
-                    Dialog.show("Success", "Account created!",
-                            "OK", null);
-
-                    new HomePage().show();
-                } else {
-                    Dialog.show("Error", "Username already exists.",
-                            "OK", null);
-                }
+            if (result.equals("success")) {
+                Dialog.show("Success", "Account created!", "OK", null);
+                new LogInPage().show();
+            } else {
+                Dialog.show("Error", result, "OK", null);
             }
         });
         form.add(signupbtn);
