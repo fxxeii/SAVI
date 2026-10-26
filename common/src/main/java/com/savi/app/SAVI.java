@@ -50,5 +50,6 @@ public class SAVI extends Lifecycle {
         new PendingPage().show();
         new LogInPage().show();
         new MainPage().show();
+        new TransferPage().show();
     }
 }

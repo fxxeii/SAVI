@@ -222,10 +222,10 @@ public class HomePage {
 
         float shortcutTitleSize = 1.5f;
 
-        shortcutsContainer.add(makeShortcut("Transfer", shortcutTitleSize, e -> Dialog.show("Pending", "Coming soon", "OK", null)));
-        shortcutsContainer.add(makeShortcut("Summary", shortcutTitleSize, e -> Dialog.show("Pending", "Coming soon", "OK", null)));
-        shortcutsContainer.add(makeShortcut("Pending", shortcutTitleSize, e -> Dialog.show("Pending", "Coming soon", "OK", null)));
-        shortcutsContainer.add(makeShortcut("Reminders", shortcutTitleSize, e -> Dialog.show("Pending", "Coming soon", "OK", null)));
+        shortcutsContainer.add(makeShortcut("Transfer", shortcutTitleSize, e -> new TransferPage().show()));
+        shortcutsContainer.add(makeShortcut("Summary", shortcutTitleSize, e -> new SummaryPage().show()));
+        shortcutsContainer.add(makeShortcut("Pending", shortcutTitleSize, e -> new PendingPage().show()));
+        shortcutsContainer.add(makeShortcut("Reminders", shortcutTitleSize, e -> new ReminderPage().show()));
 
         Container GroupOverviewContainer = new Container(new BorderLayout());
         GroupOverviewContainer.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
