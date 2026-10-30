@@ -40,7 +40,7 @@ public class LogInPage {
         Container header = new Container(BoxLayout.yCenter());
         header.getAllStyles().setBgColor(darkPurple);
         header.getAllStyles().setBgTransparency(255);
-        header.getAllStyles().setPadding(225, 20, 0, 0);
+        header.getAllStyles().setPadding(225, 30, 0, 0);
 
         Image img = null;
         try {
@@ -66,7 +66,6 @@ public class LogInPage {
         header.add(logoc).add(welcome).add(sub);
 
         Container form = new Container(BoxLayout.y());
-        //form.getAllStyles().setBgColor(darkPurple);
         form.getAllStyles().setBackgroundType(Style.BACKGROUND_GRADIENT_LINEAR_VERTICAL);
         form.getAllStyles().setBackgroundGradientStartColor(darkPurple);
         form.getAllStyles().setBackgroundGradientEndColor(0x5C21B7);
@@ -110,69 +109,119 @@ public class LogInPage {
                 s.setFgColor(white);
                 s.setFont(SAVI.regular(2f));
                 s.setPadding(0, 0, 0, 3);
-                s.setMargin(0, 0,3 , 0);
+                s.setMargin(0, 0,0, 0);
             }
         }
 
-        TextField[] fields = {usernamef, passf};
+        usernamef.getAllStyles().setFont(SAVI.regular(3f));
+        usernamef.getAllStyles().setFgColor(black);
+        usernamef.getHintLabel().getAllStyles().setFont(SAVI.regular(2.5f));
+        usernamef.getHintLabel().getAllStyles().setFgColor(gray);
 
-        for (TextField field : fields) {
-            field.getAllStyles().setFont(SAVI.regular(3f));
-            field.getAllStyles().setFgColor(black);
-            field.getHintLabel().getAllStyles().setFont(SAVI.regular(2.5f));
-            field.getHintLabel().getAllStyles().setFgColor(gray);
+        usernamef.getAllStyles().setPadding(2, 1, 3, 4);
+        usernamef.getAllStyles().setMargin(2, 2, 9, 9);
+        usernamef.setSingleLineTextArea(true);
 
-            field.getAllStyles().setPadding(2, 1, 3, 4);
-            field.getAllStyles().setMargin(2, 2, 9, 9);
-            field.setSingleLineTextArea(true);
+        Style normal = usernamef.getUnselectedStyle();
+        Style focused = usernamef.getSelectedStyle();
+        Style pressed = usernamef.getPressedStyle();
 
-            Style normal = field.getUnselectedStyle();
-            Style focused = field.getSelectedStyle();
-            Style pressed = field.getPressedStyle();
+        normal.setBgColor(white);
+        normal.setBgTransparency(255);
+        normal.setBgImage(null);
+        normal.setBorder(Border.createEmpty());
+        normal.setBorder(RoundRectBorder.create()
+                .cornerRadius(3f)
+                .shadowOpacity(50)
+                .shadowBlur(1)
+                .shadowSpread(0.3f)
+                .shadowX(0.5f)
+                .shadowY(2f)
+                .shadowColor(darkDarkPurple)
+        );
 
-            normal.setBgColor(white);
-            normal.setBgTransparency(255);
-            normal.setBgImage(null);
-            normal.setBorder(Border.createEmpty());
-            normal.setBorder(RoundRectBorder.create()
-                    .cornerRadius(4f)
-                    .shadowOpacity(50)
-                    .shadowBlur(1)
-                    .shadowSpread(0.3f)
-                    .shadowX(0.5f)
-                    .shadowY(2f)
-                    .shadowColor(darkDarkPurple)
-            );
+        focused.setBgColor(white);
+        focused.setBgTransparency(255);
+        focused.setBgImage(null);
+        focused.setBorder(Border.createEmpty());
+        focused.setBorder(RoundRectBorder.create()
+                .cornerRadius(3f)
+                .shadowOpacity(50)
+                .shadowBlur(1)
+                .shadowSpread(0.3f)
+                .shadowX(0.5f)
+                .shadowY(2f)
+                .shadowColor(darkDarkPurple)
+        );
 
-            focused.setBgColor(white);
-            focused.setBgTransparency(255);
-            focused.setBgImage(null);
-            focused.setBorder(Border.createEmpty());
-            focused.setBorder(RoundRectBorder.create()
-                    .cornerRadius(4f)
-                    .shadowOpacity(50)
-                    .shadowBlur(1)
-                    .shadowSpread(0.3f)
-                    .shadowX(0.5f)
-                    .shadowY(2f)
-                    .shadowColor(darkDarkPurple)
-            );
+        pressed.setBgColor(white);
+        pressed.setBgTransparency(255);
+        pressed.setBgImage(null);
+        pressed.setBorder(Border.createEmpty());
+        pressed.setBorder(RoundRectBorder.create()
+                .cornerRadius(3f)
+                .shadowOpacity(50)
+                .shadowBlur(1)
+                .shadowSpread(0.3f)
+                .shadowX(0.5f)
+                .shadowY(2f)
+                .shadowColor(darkDarkPurple)
+        );
 
-            pressed.setBgColor(white);
-            pressed.setBgTransparency(255);
-            pressed.setBgImage(null);
-            pressed.setBorder(Border.createEmpty());
-            pressed.setBorder(RoundRectBorder.create()
-                    .cornerRadius(4f)
-                    .shadowOpacity(50)
-                    .shadowBlur(1)
-                    .shadowSpread(0.3f)
-                    .shadowX(0.5f)
-                    .shadowY(2f)
-                    .shadowColor(darkDarkPurple)
-            );
-        }
+        passf.getAllStyles().setFont(SAVI.regular(3f));
+        passf.getAllStyles().setFgColor(black);
+        passf.getHintLabel().getAllStyles().setFont(SAVI.regular(2.5f));
+        passf.getHintLabel().getAllStyles().setFgColor(gray);
 
+        passf.getAllStyles().setPadding(2, 1, 3, 4);
+        passf.getAllStyles().setMargin(2, 2, 9, 1);
+        passf.setSingleLineTextArea(true);
+
+        Style norm = passf.getUnselectedStyle();
+        Style foc = passf.getSelectedStyle();
+        Style pre = passf.getPressedStyle();
+
+        norm.setBgColor(white);
+        norm.setBgTransparency(255);
+        norm.setBgImage(null);
+        norm.setBorder(Border.createEmpty());
+        norm.setBorder(RoundRectBorder.create()
+                .cornerRadius(3f)
+                .shadowOpacity(50)
+                .shadowBlur(1)
+                .shadowSpread(0.3f)
+                .shadowX(0.5f)
+                .shadowY(2f)
+                .shadowColor(darkDarkPurple)
+        );
+
+        foc.setBgColor(white);
+        foc.setBgTransparency(255);
+        foc.setBgImage(null);
+        foc.setBorder(Border.createEmpty());
+        foc.setBorder(RoundRectBorder.create()
+                .cornerRadius(3f)
+                .shadowOpacity(50)
+                .shadowBlur(1)
+                .shadowSpread(0.3f)
+                .shadowX(0.5f)
+                .shadowY(2f)
+                .shadowColor(darkDarkPurple)
+        );
+
+        pre.setBgColor(white);
+        pre.setBgTransparency(255);
+        pre.setBgImage(null);
+        pre.setBorder(Border.createEmpty());
+        pre.setBorder(RoundRectBorder.create()
+                .cornerRadius(3f)
+                .shadowOpacity(50)
+                .shadowBlur(1)
+                .shadowSpread(0.3f)
+                .shadowX(0.5f)
+                .shadowY(2f)
+                .shadowColor(darkDarkPurple)
+        );
         passf.setConstraint(TextField.PASSWORD);
 
         form.add(usernamef);
@@ -187,27 +236,27 @@ public class LogInPage {
             btn.getAllStyles().setPadding(2f, 2f, 0f, 0f);
             btn.getAllStyles().setFont(SAVI.bold(3f));
 
-            Style normal = loginbtn.getUnselectedStyle();
-            Style hover = loginbtn.getSelectedStyle();
-            Style pressed = loginbtn.getPressedStyle();
+            Style n = loginbtn.getUnselectedStyle();
+            Style h = loginbtn.getSelectedStyle();
+            Style p = loginbtn.getPressedStyle();
 
-            normal.setBgImage(null);
-            normal.setBorder(Border.createEmpty());
-            normal.setBgTransparency(255);
-            normal.setBgColor(white);
-            normal.setFgColor(darkPurple);
+            n.setBgImage(null);
+            n.setBorder(Border.createEmpty());
+            n.setBgTransparency(255);
+            n.setBgColor(white);
+            n.setFgColor(darkPurple);
 
-            hover.setBgImage(null);
-            hover.setBorder(Border.createEmpty());
-            hover.setFgColor(white);
-            hover.setBgTransparency(255);
-            hover.setBgColor(darkPurple);
+            h.setBgImage(null);
+            h.setBorder(Border.createEmpty());
+            h.setFgColor(white);
+            h.setBgTransparency(255);
+            h.setBgColor(darkPurple);
 
-            pressed.setBgImage(null);
-            pressed.setBorder(Border.createEmpty());
-            pressed.setBgTransparency(255);
-            pressed.setFgColor(white);
-            pressed.setBgColor(darkPurple);
+            p.setBgImage(null);
+            p.setBorder(Border.createEmpty());
+            p.setBgTransparency(255);
+            p.setFgColor(white);
+            p.setBgColor(darkPurple);
         }
 
         loginbtn.getAllStyles().setBorder(Border.createRoundBorder(140, borderColor));

@@ -61,7 +61,7 @@ public class SignUpPage {
         } catch (IOException err) {
             Log.e(err);
         }
-        
+
         Label logo = new Label(img);
         Label welcome = SAVI.text("Welcome to Savi!", SAVI.bold(4f), white);
         Label sub = SAVI.text("Start tracking your savings with us today.", SAVI.regular(2.5f), white);
@@ -136,11 +136,11 @@ public class SignUpPage {
                 s.setFgColor(darkPurple);
                 s.setFont(SAVI.regular(2f));
                 s.setPadding(0, 0, 0, 3);
-                s.setMargin(0, 0,3 , 0);
+                s.setMargin(0, 0,0, 0);
             }
         }
 
-        TextField[] fields = {usernamef, emailf, passf, cpassf};
+        TextField[] fields = {usernamef, emailf};
 
         for (TextField field : fields) {
             field.getAllStyles().setFont(SAVI.regular(3f));
@@ -161,13 +161,13 @@ public class SignUpPage {
             normal.setBgImage(null);
             normal.setBorder(Border.createEmpty());
             normal.setBorder(RoundRectBorder.create()
-                            .cornerRadius(4f)
-                            .shadowOpacity(50)
-                            .shadowBlur(1)
-                            .shadowSpread(0.3f)
-                            .shadowX(0.5f)
-                            .shadowY(2f)
-                            .shadowColor(darkDarkPurple)
+                    .cornerRadius(3f)
+                    .shadowOpacity(50)
+                    .shadowBlur(1)
+                    .shadowSpread(0.3f)
+                    .shadowX(0.5f)
+                    .shadowY(2f)
+                    .shadowColor(darkDarkPurple)
             );
 
             focused.setBgColor(white);
@@ -175,13 +175,13 @@ public class SignUpPage {
             focused.setBgImage(null);
             focused.setBorder(Border.createEmpty());
             focused.setBorder(RoundRectBorder.create()
-                            .cornerRadius(4f)
-                            .shadowOpacity(50)
-                            .shadowBlur(1)
-                            .shadowSpread(0.3f)
-                            .shadowX(0.5f)
-                            .shadowY(2f)
-                            .shadowColor(darkDarkPurple)
+                    .cornerRadius(3f)
+                    .shadowOpacity(50)
+                    .shadowBlur(1)
+                    .shadowSpread(0.3f)
+                    .shadowX(0.5f)
+                    .shadowY(2f)
+                    .shadowColor(darkDarkPurple)
             );
 
             pressed.setBgColor(white);
@@ -189,13 +189,73 @@ public class SignUpPage {
             pressed.setBgImage(null);
             pressed.setBorder(Border.createEmpty());
             pressed.setBorder(RoundRectBorder.create()
-                            .cornerRadius(4f)
-                            .shadowOpacity(50)
-                            .shadowBlur(1)
-                            .shadowSpread(0.3f)
-                            .shadowX(0.5f)
-                            .shadowY(2f)
-                            .shadowColor(darkDarkPurple)
+                    .cornerRadius(3f)
+                    .shadowOpacity(50)
+                    .shadowBlur(1)
+                    .shadowSpread(0.3f)
+                    .shadowX(0.5f)
+                    .shadowY(2f)
+                    .shadowColor(darkDarkPurple)
+            );
+
+        }
+
+        TextField[] field = {passf, cpassf};
+
+        for (TextField f : field) {
+            f.getAllStyles().setFont(SAVI.regular(3f));
+            f.getAllStyles().setFgColor(black);
+            f.getHintLabel().getAllStyles().setFont(SAVI.regular(2.5f));
+            f.getHintLabel().getAllStyles().setFgColor(gray);
+
+            f.getAllStyles().setPadding(2, 1, 3, 4);
+            f.getAllStyles().setMargin(2, 2, 9, 1);
+            f.setSingleLineTextArea(true);
+
+            Style n = f.getUnselectedStyle();
+            Style fc = f.getSelectedStyle();
+            Style p = f.getPressedStyle();
+
+            n.setBgColor(white);
+            n.setBgTransparency(255);
+            n.setBgImage(null);
+            n.setBorder(Border.createEmpty());
+            n.setBorder(RoundRectBorder.create()
+                    .cornerRadius(3f)
+                    .shadowOpacity(50)
+                    .shadowBlur(1)
+                    .shadowSpread(0.3f)
+                    .shadowX(0.5f)
+                    .shadowY(2f)
+                    .shadowColor(darkDarkPurple)
+            );
+
+            fc.setBgColor(white);
+            fc.setBgTransparency(255);
+            fc.setBgImage(null);
+            fc.setBorder(Border.createEmpty());
+            fc.setBorder(RoundRectBorder.create()
+                    .cornerRadius(3f)
+                    .shadowOpacity(50)
+                    .shadowBlur(1)
+                    .shadowSpread(0.3f)
+                    .shadowX(0.5f)
+                    .shadowY(2f)
+                    .shadowColor(darkDarkPurple)
+            );
+
+            p.setBgColor(white);
+            p.setBgTransparency(255);
+            p.setBgImage(null);
+            p.setBorder(Border.createEmpty());
+            p.setBorder(RoundRectBorder.create()
+                    .cornerRadius(3f)
+                    .shadowOpacity(50)
+                    .shadowBlur(1)
+                    .shadowSpread(0.3f)
+                    .shadowX(0.5f)
+                    .shadowY(2f)
+                    .shadowColor(darkDarkPurple)
             );
 
         }
