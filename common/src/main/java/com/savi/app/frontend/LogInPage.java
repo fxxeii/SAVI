@@ -236,6 +236,22 @@ public class LogInPage {
             }
         }
 /*
+        signupbtn.addActionListener(evt ->{
+            String name = usernamef.getText().trim();
+            String email = emailf.getText().trim();
+            String pass = passf.getText().trim();
+            String cpass = cpassf.getText().trim();
+
+            String result = SAVI.users.signup(name, email, pass, cpass);
+
+            if (result.equals("success")) {
+                Dialog.show("Success", "Account created!", "OK", null);
+                new LogInPage().show();
+            } else {
+                Dialog.show("Error", result, "OK", null);
+            }
+        });
+
         forgotp.addActionListener(e -> {
             if (){
             } else {
