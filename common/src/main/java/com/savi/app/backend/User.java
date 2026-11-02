@@ -1,5 +1,4 @@
 package com.savi.app.backend;
-//import java.util.Scanner;
 //user infos, log in, sign up, sign out, update profile, add/del profile photo
 
 class Node {
