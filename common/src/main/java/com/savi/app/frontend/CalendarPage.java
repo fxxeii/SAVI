@@ -8,24 +8,14 @@ import com.codename1.ui.layouts.*;
 import com.codename1.ui.plaf.*;
 import java.util.Date;
 import com.codename1.l10n.SimpleDateFormat;
+import com.savi.app.SAVI;
 
 public class CalendarPage {
 
     public void show() {
 
-        // COLORS
-        int darkDarkPurple = 0x30205E;
-        int darkPurple = 0x7C3AED;
-        int palePurple = 0xF4EFFE;
-        int navy = 0x29364D;
-        int gray = 0x8491A7;
-        int green = 0x00A878;
-        int paleGreen = 0xE6FAF2;
-        int borderColor = 0xEDF0F5;
-        int white = 0xFFFFFF;
-
         Form calendarForm = new Form(new BorderLayout()); // ginagawa yung screen
-        calendarForm.getAllStyles().setBgColor(palePurple);
+        calendarForm.getAllStyles().setBgColor(SAVI.PALE_PURPLE);
         calendarForm.getAllStyles().setBgTransparency(255);
 
         // for back button
@@ -36,12 +26,12 @@ public class CalendarPage {
 
         Container content = new Container(BoxLayout.y()); // creates a container para paglagyan ng iba pang content sa center. main content
         content.setScrollableY(true);
-        content.getAllStyles().setBgColor(palePurple);
+        content.getAllStyles().setBgColor(SAVI.PALE_PURPLE);
         content.getAllStyles().setBgTransparency(255);
 
         Calendar cld = new Calendar(); // creates a calendar
         // calendar style
-        cld.getAllStyles().setBgColor(darkDarkPurple);
+        cld.getAllStyles().setBgColor(SAVI.DARK_DARK_PURPLE);
         cld.getAllStyles().setBgTransparency(255);
         cld.getAllStyles().setPadding(3, 3, 3, 3);
         cld.getAllStyles().setMargin(2, 2, 2, 2);
@@ -60,10 +50,10 @@ public class CalendarPage {
         formattedDateLabel.setText(formattedDate);
 
         // selected day style
-        dayTextLabel.getAllStyles().setFgColor(white);
+        dayTextLabel.getAllStyles().setFgColor(SAVI.WHITE);
         dayTextLabel.getAllStyles().setFont(Font.createSystemFont(Font.FACE_SYSTEM, Font.STYLE_BOLD, Font.SIZE_MEDIUM));
         //formatted day style
-        formattedDateLabel.getAllStyles().setFgColor(white);
+        formattedDateLabel.getAllStyles().setFgColor(SAVI.WHITE);
         formattedDateLabel.getAllStyles().setFont(Font.createSystemFont(Font.FACE_SYSTEM, Font.STYLE_PLAIN, Font.SIZE_SMALL));
 
         // date bar
@@ -72,7 +62,7 @@ public class CalendarPage {
         dateBar.add(BorderLayout.EAST, formattedDateLabel);
 
         // date bar style
-        dateBar.getAllStyles().setBgColor(darkPurple);
+        dateBar.getAllStyles().setBgColor(SAVI.DARK_PURPLE);
         dateBar.getAllStyles().setBgTransparency(255);
         dateBar.getAllStyles().setPadding(1, 1, 1, 1);
         dateBar.getAllStyles().setMargin(1, 1, 1, 1);
@@ -178,33 +168,33 @@ public class CalendarPage {
         trackerCard.add(noteText);
 
         // TRACKER CARD
-        trackerCard.getAllStyles().setBgColor(white);
+        trackerCard.getAllStyles().setBgColor(SAVI.WHITE);
         trackerCard.getAllStyles().setBgTransparency(255); // 255 means show its background color fully. 0 is full transparent, 255 is full opaque
         trackerCard.getAllStyles().setPadding(3, 3, 3, 3); // padding is the space inside the container
         trackerCard.getAllStyles().setMargin(2, 2, 2, 2); // margin is the space outside the container
         // .create() creates a rounded-rectangular border
-        trackerCard.getAllStyles().setBorder(RoundRectBorder.create().cornerRadius(3).strokeColor(borderColor));
+        trackerCard.getAllStyles().setBorder(RoundRectBorder.create().cornerRadius(3).strokeColor(SAVI.BORDER_COLOR));
 
         // GROUP NAME
-        groupName.getAllStyles().setFgColor(navy); // fg color is for text or icon color
+        groupName.getAllStyles().setFgColor(SAVI.NAVY); // fg color is for text or icon color
         // Font.createSystemFont() — changing the text style
         groupName.getAllStyles().setFont(Font.createSystemFont(Font.FACE_SYSTEM, Font.STYLE_BOLD, Font.SIZE_MEDIUM));
 
         // SAVED BADGE
-        status.getAllStyles().setFgColor(green);
-        status.getAllStyles().setBgColor(paleGreen);
+        status.getAllStyles().setFgColor(SAVI.GREEN);
+        status.getAllStyles().setBgColor(SAVI.PALE_GREEN);
         status.getAllStyles().setBgTransparency(255);
         status.getAllStyles().setPadding(1, 1, 1, 1);
         status.getAllStyles().setBorder(RoundRectBorder.create().cornerRadius(1));
         status.getAllStyles().setFont(Font.createSystemFont(Font.FACE_SYSTEM, Font.STYLE_BOLD, Font.SIZE_SMALL));
 
         // AMOUNT
-        amountSaved.getAllStyles().setFgColor(green);
+        amountSaved.getAllStyles().setFgColor(SAVI.GREEN);
         amountSaved.getAllStyles().setFont(Font.createSystemFont(Font.FACE_SYSTEM, Font.STYLE_BOLD, Font.SIZE_MEDIUM));
 
         // VIEW/HIDE CONTRIBUTIONS BUTTON
-        viewContributions.getAllStyles().setFgColor(darkPurple);
-        viewContributions.getAllStyles().setBgColor(palePurple);
+        viewContributions.getAllStyles().setFgColor(SAVI.DARK_PURPLE);
+        viewContributions.getAllStyles().setBgColor(SAVI.PALE_PURPLE);
         viewContributions.getAllStyles().setBgTransparency(255);
         viewContributions.getAllStyles().setPadding(2, 2, 2, 2);
         viewContributions.getAllStyles().setBorder(RoundRectBorder.create().cornerRadius(1));
@@ -223,25 +213,25 @@ public class CalendarPage {
         name4.getAllStyles().setFont(rowFont);
 
         amount1.getAllStyles().setFont(rowFont);
-        amount1.getAllStyles().setFgColor(green);
+        amount1.getAllStyles().setFgColor(SAVI.GREEN);
         amount2.getAllStyles().setFont(rowFont);
-        amount2.getAllStyles().setFgColor(green);
+        amount2.getAllStyles().setFgColor(SAVI.GREEN);
         amount3.getAllStyles().setFont(rowFont);
-        amount3.getAllStyles().setFgColor(green);
+        amount3.getAllStyles().setFgColor(SAVI.GREEN);
         amount4.getAllStyles().setFont(rowFont);
-        amount4.getAllStyles().setFgColor(green);
+        amount4.getAllStyles().setFgColor(SAVI.GREEN);
 
         // NOTE
-        noteTitle.getAllStyles().setFgColor(gray);
+        noteTitle.getAllStyles().setFgColor(SAVI.BLUE_GRAY);
         noteTitle.getAllStyles().setFont(Font.createSystemFont(Font.FACE_SYSTEM, Font.STYLE_PLAIN, Font.SIZE_SMALL));
-        noteText.getAllStyles().setFgColor(gray);
+        noteText.getAllStyles().setFgColor(SAVI.BLUE_GRAY);
         noteText.getAllStyles().setFont(Font.createSystemFont(Font.FACE_SYSTEM, Font.STYLE_ITALIC, Font.SIZE_SMALL));
 
         Container recordsContainer = new Container(BoxLayout.y()); // container for date-dependent content
 
         Label emptyMessage = new Label("No savings recorded for this date.");
         emptyMessage.getAllStyles().setFont(Font.createSystemFont(Font.FACE_SYSTEM, Font.STYLE_BOLD, Font.SIZE_SMALL));
-        emptyMessage.getAllStyles().setFgColor(gray);
+        emptyMessage.getAllStyles().setFgColor(SAVI.BLUE_GRAY);
         emptyMessage.getAllStyles().setAlignment(Component.CENTER);
         emptyMessage.getAllStyles().setPadding(5, 5, 3, 3);
 

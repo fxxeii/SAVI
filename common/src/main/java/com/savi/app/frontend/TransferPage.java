@@ -14,13 +14,6 @@ import com.savi.app.SAVI;
 
 public class TransferPage {
 
-    int darkPurple = 0x7C3AED;
-    int palePurple = 0xF4EFFE;
-    int paleLavander = 0xE9D5FF;
-    int white = 0xFFFFFF;
-    int black = 0x000000;
-    int slategray = 0x64748B;
-
     void styles(Container cont, int bgColor, float padLR, float padTB, float marLR, float marT, float marB){
         Style contS = cont.getAllStyles();
         contS.setBgTransparency(255);
@@ -32,7 +25,7 @@ public class TransferPage {
                 shadowSpread(1f).
                 shadowX(0.5f).
                 shadowY(0.3f).
-                shadowColor(slategray));
+                shadowColor(SAVI.SLATE_GRAY));
         contS.setPaddingUnit(Style.UNIT_TYPE_DIPS);
         contS.setPadding(padTB, padTB, padLR, padLR);
         contS.setMarginUnit(Style.UNIT_TYPE_DIPS);
@@ -90,9 +83,9 @@ public class TransferPage {
                                    boolean active, String[] groups, String[] members) {
         // ---- card ----
         Container card = new Container(new BorderLayout());
-        styles(card, white, 1f, 1f, 2f, 0, 1);
+        styles(card, SAVI.WHITE, 1f, 1f, 2f, 0, 1);
         Style cs = card.getAllStyles();
-        cs.setBgColor(white);
+        cs.setBgColor(SAVI.WHITE);
         cs.setBgTransparency(255);
         cs.setPaddingUnit(Style.UNIT_TYPE_DIPS);
         cs.setPadding(2, 2, 2, 2);
@@ -106,11 +99,11 @@ public class TransferPage {
         // ---- number badge (solid purple if active, pale lavender if not) ----
         Label num = new Label(number);
         Style ns = num.getAllStyles();
-        ns.setFgColor(active ? white : darkPurple);
+        ns.setFgColor(active ? SAVI.WHITE : SAVI.DARK_PURPLE);
         ns.setBgTransparency(0);
         ns.setMargin(0, 0, 0, 0);
         ns.setPadding(0, 0, 0, 0);
-        ns.setBorder(RoundBorder.create().color(active ? darkPurple : paleLavander));
+        ns.setBorder(RoundBorder.create().color(active ? SAVI.DARK_PURPLE : SAVI.PASTEL_LAVENDER));
         num.setAlignment(Component.CENTER);
         num.setVerticalAlignment(Component.CENTER);
         int d = Display.getInstance().convertToPixels(7);
@@ -120,7 +113,7 @@ public class TransferPage {
         badgeWrap.add(num);
 
         // ---- title + subtitle ----
-        Label titleLbl = SAVI.text(title, SAVI.semiBold(2.2f), black);
+        Label titleLbl = SAVI.text(title, SAVI.semiBold(2.2f), SAVI.BLACK);
         Label subLbl = SAVI.text(subtitle, SAVI.semiBold(1.5f), 0x6b7280);
         for (Label l : new Label[]{titleLbl, subLbl}) {
             l.getAllStyles().setMargin(0, 0, 0, 0);
@@ -170,12 +163,12 @@ public class TransferPage {
 
     public void show(){
         Form base = new Form("", new BorderLayout());
-        base.getContentPane().getAllStyles().setBgColor(palePurple);
+        base.getContentPane().getAllStyles().setBgColor(SAVI.PALE_PURPLE);
         base.getContentPane().getAllStyles().setBgTransparency(255);
 
         com.codename1.ui.Button back = new com.codename1.ui.Button();
         Style s = back.getAllStyles();
-        s.setFgColor(black);
+        s.setFgColor(SAVI.BLACK);
         s.setBgTransparency(0);
         s.setPaddingUnit(Style.UNIT_TYPE_DIPS);
         s.setPadding(1, 1, 1, 1);
@@ -191,9 +184,9 @@ public class TransferPage {
         //base.add(BorderLayout.NORTH, top);
 
         Container titleContainer = new Container(new BorderLayout());
-        styles(titleContainer, darkPurple, 1f, 0f, 2f, 2, 1);
+        styles(titleContainer, SAVI.DARK_PURPLE, 1f, 0f, 2f, 2, 1);
 
-        Label TransferFunds = SAVI.text("Transfer Funds", SAVI.semiBold(2.5f), white);
+        Label TransferFunds = SAVI.text("Transfer Funds", SAVI.semiBold(2.5f), SAVI.WHITE);
         titleContainer.add(BorderLayout.WEST, TransferFunds);
 
         Container header = new Container(new BorderLayout());
@@ -213,7 +206,7 @@ public class TransferPage {
         amountContainer.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
         amountContainer.getAllStyles().setMargin(1, 1, 2, 2);
 
-        Label amount = SAVI.text("Amount", SAVI.semiBold(2.5f), black);
+        Label amount = SAVI.text("Amount", SAVI.semiBold(2.5f), SAVI.BLACK);
         amountContainer.add(BorderLayout.NORTH, amount);
 
         TextField amountField = new TextField();
@@ -223,11 +216,11 @@ public class TransferPage {
 
         Button TransferSav = new Button("Transfer Savings ->");
         Style transSavS = TransferSav.getAllStyles();
-        transSavS.setFgColor(white);
+        transSavS.setFgColor(SAVI.WHITE);
         transSavS.setFont(SAVI.semiBold(2f));
         transSavS.setAlignment(Component.CENTER);
         transSavS.setBgTransparency(255);
-        transSavS.setBgColor(darkPurple);
+        transSavS.setBgColor(SAVI.DARK_PURPLE);
         transSavS.setBorder(RoundRectBorder.create().
                 cornerRadius(4).
                 shadowOpacity(50).

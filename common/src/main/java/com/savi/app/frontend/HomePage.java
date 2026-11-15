@@ -64,7 +64,7 @@ public class HomePage {
 
         String day = days[c.get(Calendar.DAY_OF_WEEK)-1];
 
-        int textColor = today ? 0x7C3AED : 0xFFFFFF;
+        int textColor = today ? SAVI.DARK_DARK_PURPLE : SAVI.WHITE;
         Label num = SAVI.text(dateFormat.format(d), today ? SAVI.bold(1.8f) : SAVI.regular(1.8f), textColor);
         Label dayLett = SAVI.text(day, today ? SAVI.bold(1.5f) : SAVI.regular(1.5f), textColor);
         num.getAllStyles().setAlignment(Component.CENTER);
@@ -78,7 +78,7 @@ public class HomePage {
         s.setPadding(0.3f, 0.3f, 0.3f,0.3f);
         s.setMargin(1, 1, 1, 1);
         if(today){
-            s.setBgColor(0xFFFFFF);
+            s.setBgColor(SAVI.WHITE);
             s.setBgTransparency(255);
             s.setBorder(RoundRectBorder.create().cornerRadius(3f));
         }
@@ -92,7 +92,7 @@ public class HomePage {
 
     static void shortcutsStyle(Container cont){
         Style s = cont.getAllStyles();
-        s.setBgColor(0xFFFFFF);
+        s.setBgColor(SAVI.WHITE);
         s.setBgTransparency(255);
         s.setBorder(RoundRectBorder.create().
                 cornerRadius(3).
@@ -101,7 +101,7 @@ public class HomePage {
                 shadowSpread(1f).
                 shadowX(0.5f).
                 shadowY(0.3f).
-                shadowColor(0x6d28d9));
+                shadowColor(SAVI.BRIGHT_VIOLET));
         s.setMarginUnit(Style.UNIT_TYPE_DIPS);
         s.setMargin(0, 0, 1, 0);
         s.setPaddingUnit(Style.UNIT_TYPE_DIPS);
@@ -115,7 +115,7 @@ public class HomePage {
 
         Button b = new Button(title);
         b.setUIID("Label");
-        b.getAllStyles().setFgColor(0x334155);
+        b.getAllStyles().setFgColor(SAVI.DEEP_SLATE);
         b.getAllStyles().setFont(SAVI.semiBold(mm));
         b.addActionListener(onClick);
 
@@ -135,7 +135,7 @@ public class HomePage {
                 shadowSpread(1f).
                 shadowX(0.5f).
                 shadowY(0.3f).
-                shadowColor(0x6d28d9));
+                shadowColor(SAVI.BRIGHT_VIOLET));
         s.setMarginUnit(Style.UNIT_TYPE_DIPS);
         s.setMargin(0.5f, 0.5f, 2, 2);
         s.setPaddingUnit(Style.UNIT_TYPE_DIPS);
@@ -144,17 +144,17 @@ public class HomePage {
 
     public void show() {
         Form base = new Form("", new BorderLayout());
-        base.getContentPane().getAllStyles().setBgColor(0xF4EFFE);
+        base.getContentPane().getAllStyles().setBgColor(SAVI.PALE_PURPLE);
         base.getContentPane().getAllStyles().setBgTransparency(255);
 
         Container weekContainer = new Container(new BorderLayout());
-        boxStyles(weekContainer, 0x7C3AED, 1.5f, 1.5f);
+        boxStyles(weekContainer, SAVI.DARK_DARK_PURPLE, 1.5f, 1.5f);
         weekContainer.getAllStyles().setMarginBottom(0.4f);
         weekContainer.getAllStyles().setMarginTop(1f);
 
-        Label thisWeek = SAVI.text("THIS WEEK", SAVI.bold(2.5f), 0xFFFFFF);
+        Label thisWeek = SAVI.text("THIS WEEK", SAVI.bold(2.5f), SAVI.WHITE);
         Label icon = new Label();
-        icon.getAllStyles().setFgColor(0xFFFFFF);
+        icon.getAllStyles().setFgColor(SAVI.WHITE);
         FontImage.setMaterialIcon(icon, FontImage.MATERIAL_DATE_RANGE, 4f);
         Container headerLeft = new Container(new FlowLayout());
         headerLeft.add(icon).add(thisWeek);
@@ -178,7 +178,7 @@ public class HomePage {
 
         // current month, top right
         Label monthLabel = SAVI.text(new SimpleDateFormat("MMMM").format(today).toUpperCase(),
-                SAVI.semiBold(2f), 0xFFFFFF);
+                SAVI.semiBold(2f), SAVI.WHITE);
         Container headerRight = new Container(new FlowLayout(Component.RIGHT, Component.CENTER));
         headerRight.add(monthLabel);
 
@@ -190,17 +190,17 @@ public class HomePage {
         weekContainer.add(BorderLayout.CENTER, daysRow);
 
         Container weekTotalContainer = new Container(new BorderLayout());
-        boxStyles(weekTotalContainer, 0xFFFFFF, 2, 3);
+        boxStyles(weekTotalContainer, SAVI.WHITE, 2, 3);
 
-        Label amountSaved = SAVI.text("AMOUNT SAVED", SAVI.bold(2.5f), 0x64748B);
+        Label amountSaved = SAVI.text("AMOUNT SAVED", SAVI.bold(2.5f), SAVI.SLATE_GRAY);
         double saved = 4256.50, target = 5000;
         float pct = (float) (saved / target);
 
-        Label amount = SAVI.text("P4,256.50", SAVI.bold(4), 0x0f172A);
+        Label amount = SAVI.text("P4,256.50", SAVI.bold(4), SAVI.DARK_KNIGHT);
 
         Container targetPercent = new Container(new BorderLayout());
-        Label weekTarget = SAVI.text("Weekly Target: P5,000", SAVI.regular(2f), 0x64748B);
-        Label percentage = SAVI.text((int) (pct * 100) + "%", SAVI.bold(2f), 0x6D28D9);
+        Label weekTarget = SAVI.text("Weekly Target: P5,000", SAVI.regular(2f), SAVI.SLATE_GRAY);
+        Label percentage = SAVI.text((int) (pct * 100) + "%", SAVI.bold(2f), SAVI.BRIGHT_VIOLET);
         targetPercent.add(BorderLayout.WEST, weekTarget);
         targetPercent.add(BorderLayout.EAST, percentage);
 
@@ -209,7 +209,7 @@ public class HomePage {
         weekTotalContent.add(amount);
         weekTotalContent.add(targetPercent);
 
-        Component bar = progressBar(pct, 0xF1F5F9, 0x7C3AED, 1.5f);
+        Component bar = progressBar(pct, SAVI.POWDER_WHITE, SAVI.DARK_DARK_PURPLE, 1.5f);
         bar.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
         bar.getAllStyles().setMargin(1f, 0f, 0f, 0f);
         weekTotalContent.add(bar);
@@ -230,29 +230,29 @@ public class HomePage {
         Container GroupOverviewContainer = new Container(new BorderLayout());
         GroupOverviewContainer.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
         GroupOverviewContainer.getAllStyles().setMargin(0.5f, 0.5f, 2, 2);
-        Label groupOverviewText = SAVI.text("Group Overview", SAVI.bold(2f), 0x1E293B);
+        Label groupOverviewText = SAVI.text("Group Overview", SAVI.bold(2f), SAVI.DARK_BLUE);
 
         Button manage = new Button("Manage");
-        manage.getAllStyles().setFgColor(0x7C3AED);
+        manage.getAllStyles().setFgColor(SAVI.DARK_DARK_PURPLE);
         manage.getAllStyles().setFont(SAVI.semiBold(2f));
 
         GroupOverviewContainer.add(BorderLayout.WEST, groupOverviewText);
         GroupOverviewContainer.add(BorderLayout.EAST, manage);
 
         Container singleOverview = new Container(new BorderLayout());
-        boxStyles(singleOverview, 0xFFFFFF,2f, 2f);
+        boxStyles(singleOverview, SAVI.WHITE,2f, 2f);
 
-        Label groupName = SAVI.text("December Vacation", SAVI.semiBold(2f), 0x1E293B);
+        Label groupName = SAVI.text("December Vacation", SAVI.semiBold(2f), SAVI.DARK_BLUE);
 
         Container totalSaved = new Container(BoxLayout.y());
-        Label totalSavedText = SAVI.text("TOTAL SAVED", SAVI.semiBold(1.5f), 0x1E293B);
-        Label groupSaveAmount = SAVI.text("P12,000", SAVI.bold(3f), 0x1E293B);
+        Label totalSavedText = SAVI.text("TOTAL SAVED", SAVI.semiBold(1.5f), SAVI.DARK_BLUE);
+        Label groupSaveAmount = SAVI.text("P12,000", SAVI.bold(3f), SAVI.DARK_BLUE);
         totalSaved.add(totalSavedText);
         totalSaved.add(groupSaveAmount);
 
         Container remainingBal = new Container(BoxLayout.y());
-        Label remainingBalText = SAVI.text("REMAINING BALANCE", SAVI.semiBold(1.5f), 0x1E293B);
-        Label remainingBalAmount = SAVI.text("P350", SAVI.bold(3f), 0x1E293B);
+        Label remainingBalText = SAVI.text("REMAINING BALANCE", SAVI.semiBold(1.5f), SAVI.DARK_BLUE);
+        Label remainingBalAmount = SAVI.text("P350", SAVI.bold(3f), SAVI.DARK_BLUE);
         remainingBal.add(remainingBalText);
         remainingBal.add(remainingBalAmount);
 
@@ -263,10 +263,10 @@ public class HomePage {
         Container recentsTitle = new Container(new BorderLayout());
         recentsTitle.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
         recentsTitle.getAllStyles().setMargin(0.5f, 0.5f, 2, 2);
-        Label recentContText = SAVI.text("Recent Contributions", SAVI.semiBold(2f), 0x1E293B);
+        Label recentContText = SAVI.text("Recent Contributions", SAVI.semiBold(2f), SAVI.DARK_BLUE);
 
         Button seeAll = new Button("See All");
-        seeAll.getAllStyles().setFgColor(0x7C3AED);
+        seeAll.getAllStyles().setFgColor(SAVI.DARK_DARK_PURPLE);
         seeAll.getAllStyles().setFont(SAVI.semiBold(2f));
 
         recentsTitle.add(BorderLayout.WEST, recentContText);
@@ -274,22 +274,22 @@ public class HomePage {
 
         //put in a method
         Container recentInfoCont = new Container(new BorderLayout());
-        boxStyles(recentInfoCont, 0xFFFFFF,1.5f, 1.5f);
+        boxStyles(recentInfoCont, SAVI.WHITE,1.5f, 1.5f);
 
         Container recentDate = new Container(new BorderLayout());
         recentDate.setPreferredW(Display.getInstance().convertToPixels(15f));
-        boxStyles(recentDate, 0x7C3AED,1.5f, 0.6f);
+        boxStyles(recentDate, SAVI.DARK_DARK_PURPLE,1.5f, 0.6f);
 
-        Label dateNum = SAVI.text("02", SAVI.semiBold(3f), 0xFFFFFF);
-        Label dateDay = SAVI.text("Wednesday", SAVI.semiBold(1.5f), 0xFFFFFF);
+        Label dateNum = SAVI.text("02", SAVI.semiBold(3f), SAVI.WHITE);
+        Label dateDay = SAVI.text("Wednesday", SAVI.semiBold(1.5f), SAVI.WHITE);
         recentDate.add(BorderLayout.NORTH, dateNum);
         recentDate.add(BorderLayout.SOUTH, dateDay);
         recentInfoCont.add(BorderLayout.WEST, recentDate);
 
         Container groupAndMemInfo = new Container(BoxLayout.y());
-        Label recentTitle = SAVI.text("December Vacation", SAVI.semiBold(2.2f), 0x1E293B);
-        Label recentContributor = SAVI.text("Someone contributed P24", SAVI.regular(2f), 0x0F172A);
-        Label contributionNote = SAVI.text("Note: ", SAVI.regular(2f), 0x0F172A);
+        Label recentTitle = SAVI.text("December Vacation", SAVI.semiBold(2.2f), SAVI.DARK_BLUE);
+        Label recentContributor = SAVI.text("Someone contributed P24", SAVI.regular(2f), SAVI.DARK_KNIGHT);
+        Label contributionNote = SAVI.text("Note: ", SAVI.regular(2f), SAVI.DARK_KNIGHT);
         groupAndMemInfo.add(recentTitle);
         groupAndMemInfo.add(recentContributor);
         groupAndMemInfo.add(contributionNote);

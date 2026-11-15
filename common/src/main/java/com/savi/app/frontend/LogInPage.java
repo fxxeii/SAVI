@@ -14,31 +14,14 @@ import java.io.IOException;
 
 public class LogInPage {
 
-
-    int darkDarkPurple = 0x30205E;
-    int darkPurple = 0x7C3AED;
-    int palePurple = 0xF4EFFE;
-    int pastelLavander = 0xD8B4FE;
-    int paleLavander = 0xE9D5FF;
-    int bluishPurple = 0x4F46E5;
-    int borderColor = 0xEDF0F5;
-    int white = 0xFFFFFF;
-    int black = 0x000000;
-    int slategray = 0x64748B;
-    int navy = 0x29364D;
-    int gray = 0x616161;
-    int green = 0x00A878;
-    int paleGreen = 0xE6FAF2;
-
-
     public void show(){
 
         Form LogInForm = new Form(new BorderLayout());
-        LogInForm.getAllStyles().setBgColor(palePurple);
+        LogInForm.getAllStyles().setBgColor(SAVI.PALE_PURPLE);
         LogInForm.getAllStyles().setBgTransparency(255);
 
         Container header = new Container(BoxLayout.yCenter());
-        header.getAllStyles().setBgColor(darkPurple);
+        header.getAllStyles().setBgColor(SAVI.DARK_PURPLE);
         header.getAllStyles().setBgTransparency(255);
         header.getAllStyles().setPadding(225, 50, 0, 0);
 
@@ -53,9 +36,9 @@ public class LogInPage {
         }
 
         Label logo = new Label(img);
-        Label welcome = SAVI.text("Welcome Back!", SAVI.bold(5f), white);
-        Label sub1 = SAVI.text("Continue your savings with", SAVI.regular(2.3f), white);
-        Label sub2 = SAVI.text("Savi", SAVI.bold(2.3f), white);
+        Label welcome = SAVI.text("Welcome Back!", SAVI.bold(5f), SAVI.WHITE);
+        Label sub1 = SAVI.text("Continue your savings with", SAVI.regular(2.3f), SAVI.WHITE);
+        Label sub2 = SAVI.text("Savi", SAVI.bold(2.3f), SAVI.WHITE);
 
         welcome.getAllStyles().setPadding(0,1f,0,0);
         welcome.setAlignment(Component.CENTER);
@@ -73,7 +56,7 @@ public class LogInPage {
 
         Container form = new Container(BoxLayout.y());
         form.getAllStyles().setBackgroundType(Style.BACKGROUND_GRADIENT_LINEAR_VERTICAL);
-        form.getAllStyles().setBackgroundGradientStartColor(darkPurple);
+        form.getAllStyles().setBackgroundGradientStartColor(SAVI.DARK_PURPLE);
         form.getAllStyles().setBackgroundGradientEndColor(0x5C21B7);
         form.getAllStyles().setBgTransparency(255);
         form.getAllStyles().setPadding(0, 0, 10, 10);
@@ -82,12 +65,12 @@ public class LogInPage {
         TextField passf = new TextField("", "Enter password");
 
         usernamef.getAllStyles().setFont(SAVI.regular(2.5f));
-        usernamef.getAllStyles().setFgColor(black);
+        usernamef.getAllStyles().setFgColor(SAVI.BLACK);
         usernamef.getAllStyles().setPadding(2, 1.5f, 3, 4);
         usernamef.getAllStyles().setMargin(2, 2, 9, 9);
 
         usernamef.getHintLabel().getAllStyles().setFont(SAVI.regular(1.9f));
-        usernamef.getHintLabel().getAllStyles().setFgColor(gray);
+        usernamef.getHintLabel().getAllStyles().setFgColor(SAVI.GRANITE_GRAY);
         usernamef.getHintLabel().getAllStyles().setPadding(2,1.5f,3,0);
 
         usernamef.setSingleLineTextArea(true);
@@ -96,7 +79,7 @@ public class LogInPage {
         Style focused = usernamef.getSelectedStyle();
         Style pressed = usernamef.getPressedStyle();
 
-        normal.setBgColor(white);
+        normal.setBgColor(SAVI.WHITE);
         normal.setBgTransparency(255);
         normal.setBgImage(null);
         normal.setBorder(Border.createEmpty());
@@ -107,10 +90,10 @@ public class LogInPage {
                 .shadowSpread(0.3f)
                 .shadowX(0.5f)
                 .shadowY(1.5f)
-                .shadowColor(gray)
+                .shadowColor(SAVI.GRANITE_GRAY)
         );
 
-        focused.setBgColor(white);
+        focused.setBgColor(SAVI.WHITE);
         focused.setBgTransparency(255);
         focused.setBgImage(null);
         focused.setBorder(Border.createEmpty());
@@ -121,10 +104,10 @@ public class LogInPage {
                 .shadowSpread(0.3f)
                 .shadowX(0.5f)
                 .shadowY(1.5f)
-                .shadowColor(gray)
+                .shadowColor(SAVI.GRANITE_GRAY)
         );
 
-        pressed.setBgColor(white);
+        pressed.setBgColor(SAVI.WHITE);
         pressed.setBgTransparency(255);
         pressed.setBgImage(null);
         pressed.setBorder(Border.createEmpty());
@@ -135,16 +118,16 @@ public class LogInPage {
                 .shadowSpread(0.3f)
                 .shadowX(0.5f)
                 .shadowY(1.5f)
-                .shadowColor(gray)
+                .shadowColor(SAVI.GRANITE_GRAY)
         );
 
         passf.getAllStyles().setFont(SAVI.regular(2.5f));
-        passf.getAllStyles().setFgColor(black);
+        passf.getAllStyles().setFgColor(SAVI.BLACK);
         passf.getAllStyles().setPadding(2, 1.5f, 3, 3);
         passf.getAllStyles().setMargin(2, 2, 9, 1);
 
         passf.getHintLabel().getAllStyles().setFont(SAVI.regular(1.9f));
-        passf.getHintLabel().getAllStyles().setFgColor(gray);
+        passf.getHintLabel().getAllStyles().setFgColor(SAVI.GRANITE_GRAY);
         passf.getHintLabel().getAllStyles().setPadding(2,1.5f,3,0);
 
         passf.setSingleLineTextArea(true);
@@ -153,7 +136,7 @@ public class LogInPage {
         Style foc = passf.getSelectedStyle();
         Style pre = passf.getPressedStyle();
 
-        norm.setBgColor(white);
+        norm.setBgColor(SAVI.WHITE);
         norm.setBgTransparency(255);
         norm.setBgImage(null);
         norm.setBorder(Border.createEmpty());
@@ -164,10 +147,10 @@ public class LogInPage {
                 .shadowSpread(0.3f)
                 .shadowX(0.5f)
                 .shadowY(1.5f)
-                .shadowColor(gray)
+                .shadowColor(SAVI.GRANITE_GRAY)
         );
 
-        foc.setBgColor(white);
+        foc.setBgColor(SAVI.WHITE);
         foc.setBgTransparency(255);
         foc.setBgImage(null);
         foc.setBorder(Border.createEmpty());
@@ -178,10 +161,10 @@ public class LogInPage {
                 .shadowSpread(0.3f)
                 .shadowX(0.5f)
                 .shadowY(1.5f)
-                .shadowColor(gray)
+                .shadowColor(SAVI.GRANITE_GRAY)
         );
 
-        pre.setBgColor(white);
+        pre.setBgColor(SAVI.WHITE);
         pre.setBgTransparency(255);
         pre.setBgImage(null);
         pre.setBorder(Border.createEmpty());
@@ -192,7 +175,7 @@ public class LogInPage {
                 .shadowSpread(0.3f)
                 .shadowX(0.5f)
                 .shadowY(1.5f)
-                .shadowColor(gray)
+                .shadowColor(SAVI.GRANITE_GRAY)
         );
         passf.setConstraint(TextField.PASSWORD);
 
@@ -229,7 +212,7 @@ public class LogInPage {
                 s.setBgTransparency(0);
                 s.setBgImage(null);
                 s.setBorder(Border.createEmpty());
-                s.setFgColor(white);
+                s.setFgColor(SAVI.WHITE);
                 s.setFont(SAVI.bold(1.9f));
                 s.setPadding(0, 0, 0, 3);
                 s.setMargin(0, 0,0, 0);
@@ -274,7 +257,7 @@ public class LogInPage {
                 s.setBgTransparency(0);
                 s.setBgImage(null);
                 s.setBorder(Border.createEmpty());
-                s.setFgColor(white);
+                s.setFgColor(SAVI.WHITE);
                 s.setFont(SAVI.bold(1.7f));
                 s.setPadding(0, 0, 0, 25);
                 s.setMargin(0, 0,0, 0);
@@ -300,23 +283,23 @@ public class LogInPage {
             n.setBgImage(null);
             n.setBorder(Border.createEmpty());
             n.setBgTransparency(255);
-            n.setBgColor(white);
-            n.setFgColor(darkPurple);
+            n.setBgColor(SAVI.WHITE);
+            n.setFgColor(SAVI.DARK_DARK_PURPLE);
 
             h.setBgImage(null);
             h.setBorder(Border.createEmpty());
-            h.setFgColor(white);
+            h.setFgColor(SAVI.WHITE);
             h.setBgTransparency(255);
-            h.setBgColor(darkPurple);
+            h.setBgColor(SAVI.DARK_PURPLE);
 
             p.setBgImage(null);
             p.setBorder(Border.createEmpty());
             p.setBgTransparency(255);
-            p.setFgColor(white);
-            p.setBgColor(darkPurple);
+            p.setFgColor(SAVI.WHITE);
+            p.setBgColor(SAVI.DARK_PURPLE);
         }
 
-        loginbtn.getAllStyles().setBorder(Border.createRoundBorder(140, borderColor));
+        loginbtn.getAllStyles().setBorder(Border.createRoundBorder(140, SAVI.BORDER_COLOR));
         loginbtn.addActionListener(evt ->{
             String name = usernamef.getText().trim();
             String pass = passf.getText().trim();
@@ -333,12 +316,12 @@ public class LogInPage {
         form.add(loginbtn);
 
         Container footer = new Container(BoxLayout.y());
-        footer.getAllStyles().setBgColor(palePurple);
+        footer.getAllStyles().setBgColor(SAVI.PALE_PURPLE);
         footer.getAllStyles().setBgTransparency(255);
         footer.getAllStyles().setMargin(150,0,0,0);
         footer.getAllStyles().setPadding(40, 20, 0, 0);
 
-        Label last = SAVI.text("No account yet?", SAVI.regular(2.3f), slategray);
+        Label last = SAVI.text("No account yet?", SAVI.regular(2.3f), SAVI.SLATE_GRAY);
         last.getAllStyles().setPadding(6,0,0,0);
         last.getAllStyles().setMargin(0,4,0,0);
 
@@ -348,7 +331,7 @@ public class LogInPage {
         btn.setBgTransparency(0);
         btn.setBgImage(null);
         btn.setBorder(Border.createEmpty());
-        btn.setFgColor(darkPurple);
+        btn.setFgColor(SAVI.DARK_PURPLE);
         btn.setFont(SAVI.bold(2.3f));
         btn.setPadding(6, 0, 0, 0);
         btn.setMargin(0, 4,0 , 0);

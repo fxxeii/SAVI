@@ -12,30 +12,14 @@ import java.io.IOException;
 
 public class SignUpPage {
 
-    int darkDarkPurple = 0x30205E;
-    int darkPurple = 0x7C3AED;
-    int palePurple = 0xF4EFFE;
-    int pastelLavander = 0xD8B4FE;
-    int paleLavander = 0xE9D5FF;
-    int pinkish = 0xC084FC;
-    int bluishPurple = 0x4F46E5;
-    int borderColor = 0xEDF0F5;
-    int white = 0xFFFFFF;
-    int black = 0x000000;
-    int slategray = 0x64748B;
-    int navy = 0x29364D;
-    int gray = 0x8491A7;
-    int green = 0x00A878;
-    int paleGreen = 0xE6FAF2;
-
     public void show() {
 
         Form signUpForm = new Form(new BorderLayout());
-        signUpForm.getAllStyles().setBgColor(palePurple);
+        signUpForm.getAllStyles().setBgColor(SAVI.PALE_PURPLE);
         signUpForm.getAllStyles().setBgTransparency(255);
 
         Container header = new Container(BoxLayout.yCenter());
-        header.getAllStyles().setBgColor(darkPurple);
+        header.getAllStyles().setBgColor(SAVI.DARK_PURPLE);
         header.getAllStyles().setBgTransparency(255);
         header.getAllStyles().setPadding(20, 50, 0, 0);
         Style cont = header.getAllStyles();
@@ -49,8 +33,8 @@ public class SignUpPage {
                 .shadowColor(darkDarkPurple));*/
         cont.setMarginUnit(Style.UNIT_TYPE_DIPS);
         cont.setBackgroundType(Style.BACKGROUND_GRADIENT_LINEAR_HORIZONTAL);
-        cont.setBackgroundGradientStartColor(pinkish);
-        cont.setBackgroundGradientEndColor(darkPurple);
+        cont.setBackgroundGradientStartColor(SAVI.PINKISH);
+        cont.setBackgroundGradientEndColor(SAVI.DARK_PURPLE);
 
         Image img = null;
         try {
@@ -63,8 +47,8 @@ public class SignUpPage {
         }
 
         Label logo = new Label(img);
-        Label welcome = SAVI.text("Welcome to Savi!", SAVI.bold(4f), white);
-        Label sub = SAVI.text("Start tracking your savings with us today.", SAVI.regular(2.5f), white);
+        Label welcome = SAVI.text("Welcome to Savi!", SAVI.bold(4f), SAVI.WHITE);
+        Label sub = SAVI.text("Start tracking your savings with us today.", SAVI.regular(2.5f), SAVI.WHITE);
 
         logo.setAlignment(Component.CENTER);
         Container logoc = new Container(new FlowLayout(Component.CENTER, Component.CENTER));
@@ -76,7 +60,7 @@ public class SignUpPage {
         header.add(logoc).add(welcome).add(sub);
 
         Container form = new Container(BoxLayout.y());
-        form.getAllStyles().setBgColor(palePurple);
+        form.getAllStyles().setBgColor(SAVI.PALE_PURPLE);
         form.getAllStyles().setBgTransparency(255);
         form.getAllStyles().setPadding(70, 5, 10, 10);
 
@@ -133,7 +117,7 @@ public class SignUpPage {
                 s.setBgTransparency(0);
                 s.setBgImage(null);
                 s.setBorder(Border.createEmpty());
-                s.setFgColor(darkPurple);
+                s.setFgColor(SAVI.DARK_PURPLE);
                 s.setFont(SAVI.regular(2f));
                 s.setPadding(0, 0, 0, 3);
                 s.setMargin(0, 0,0, 0);
@@ -144,9 +128,9 @@ public class SignUpPage {
 
         for (TextField field : fields) {
             field.getAllStyles().setFont(SAVI.regular(3f));
-            field.getAllStyles().setFgColor(black);
+            field.getAllStyles().setFgColor(SAVI.BLACK);
             field.getHintLabel().getAllStyles().setFont(SAVI.regular(2.5f));
-            field.getHintLabel().getAllStyles().setFgColor(gray);
+            field.getHintLabel().getAllStyles().setFgColor(SAVI.BLUE_GRAY);
 
             field.getAllStyles().setPadding(2, 1, 3, 4);
             field.getAllStyles().setMargin(2, 2, 9, 9);
@@ -156,7 +140,7 @@ public class SignUpPage {
             Style focused = field.getSelectedStyle();
             Style pressed = field.getPressedStyle();
 
-            normal.setBgColor(white);
+            normal.setBgColor(SAVI.WHITE);
             normal.setBgTransparency(255);
             normal.setBgImage(null);
             normal.setBorder(Border.createEmpty());
@@ -167,10 +151,10 @@ public class SignUpPage {
                     .shadowSpread(0.3f)
                     .shadowX(0.5f)
                     .shadowY(2f)
-                    .shadowColor(darkDarkPurple)
+                    .shadowColor(SAVI.DARK_DARK_PURPLE)
             );
 
-            focused.setBgColor(white);
+            focused.setBgColor(SAVI.WHITE);
             focused.setBgTransparency(255);
             focused.setBgImage(null);
             focused.setBorder(Border.createEmpty());
@@ -181,10 +165,10 @@ public class SignUpPage {
                     .shadowSpread(0.3f)
                     .shadowX(0.5f)
                     .shadowY(2f)
-                    .shadowColor(darkDarkPurple)
+                    .shadowColor(SAVI.DARK_DARK_PURPLE)
             );
 
-            pressed.setBgColor(white);
+            pressed.setBgColor(SAVI.WHITE);
             pressed.setBgTransparency(255);
             pressed.setBgImage(null);
             pressed.setBorder(Border.createEmpty());
@@ -195,7 +179,7 @@ public class SignUpPage {
                     .shadowSpread(0.3f)
                     .shadowX(0.5f)
                     .shadowY(2f)
-                    .shadowColor(darkDarkPurple)
+                    .shadowColor(SAVI.DARK_DARK_PURPLE)
             );
 
         }
@@ -204,9 +188,9 @@ public class SignUpPage {
 
         for (TextField f : field) {
             f.getAllStyles().setFont(SAVI.regular(3f));
-            f.getAllStyles().setFgColor(black);
+            f.getAllStyles().setFgColor(SAVI.BLACK);
             f.getHintLabel().getAllStyles().setFont(SAVI.regular(2.5f));
-            f.getHintLabel().getAllStyles().setFgColor(gray);
+            f.getHintLabel().getAllStyles().setFgColor(SAVI.BLUE_GRAY);
 
             f.getAllStyles().setPadding(2, 1, 3, 4);
             f.getAllStyles().setMargin(2, 2, 9, 1);
@@ -216,7 +200,7 @@ public class SignUpPage {
             Style fc = f.getSelectedStyle();
             Style p = f.getPressedStyle();
 
-            n.setBgColor(white);
+            n.setBgColor(SAVI.WHITE);
             n.setBgTransparency(255);
             n.setBgImage(null);
             n.setBorder(Border.createEmpty());
@@ -227,10 +211,10 @@ public class SignUpPage {
                     .shadowSpread(0.3f)
                     .shadowX(0.5f)
                     .shadowY(2f)
-                    .shadowColor(darkDarkPurple)
+                    .shadowColor(SAVI.DARK_DARK_PURPLE)
             );
 
-            fc.setBgColor(white);
+            fc.setBgColor(SAVI.WHITE);
             fc.setBgTransparency(255);
             fc.setBgImage(null);
             fc.setBorder(Border.createEmpty());
@@ -241,10 +225,10 @@ public class SignUpPage {
                     .shadowSpread(0.3f)
                     .shadowX(0.5f)
                     .shadowY(2f)
-                    .shadowColor(darkDarkPurple)
+                    .shadowColor(SAVI.DARK_DARK_PURPLE)
             );
 
-            p.setBgColor(white);
+            p.setBgColor(SAVI.WHITE);
             p.setBgTransparency(255);
             p.setBgImage(null);
             p.setBorder(Border.createEmpty());
@@ -255,7 +239,7 @@ public class SignUpPage {
                     .shadowSpread(0.3f)
                     .shadowX(0.5f)
                     .shadowY(2f)
-                    .shadowColor(darkDarkPurple)
+                    .shadowColor(SAVI.DARK_DARK_PURPLE)
             );
 
         }
@@ -283,26 +267,26 @@ public class SignUpPage {
             normal.setBorder(Border.createEmpty());
             normal.setBgTransparency(255);
             normal.setBackgroundType(Style.BACKGROUND_GRADIENT_LINEAR_HORIZONTAL);
-            normal.setBackgroundGradientStartColor(darkPurple);
-            normal.setBackgroundGradientEndColor(bluishPurple);
-            normal.setFgColor(white);
+            normal.setBackgroundGradientStartColor(SAVI.DARK_PURPLE);
+            normal.setBackgroundGradientEndColor(SAVI.BLUISH_PURPLE);
+            normal.setFgColor(SAVI.WHITE);
 
             hover.setBgImage(null);
             hover.setBorder(Border.createEmpty());
-            hover.setFgColor(white);
+            hover.setFgColor(SAVI.WHITE);
             hover.setBgTransparency(255);
             hover.setBackgroundType(Style.BACKGROUND_GRADIENT_LINEAR_HORIZONTAL);
-            hover.setBackgroundGradientStartColor(bluishPurple);
-            hover.setBackgroundGradientEndColor(darkPurple);
+            hover.setBackgroundGradientStartColor(SAVI.BLUISH_PURPLE);
+            hover.setBackgroundGradientEndColor(SAVI.DARK_PURPLE);
 
             pressed.setBgImage(null);
             pressed.setBorder(Border.createEmpty());
             pressed.setBgTransparency(255);
-            pressed.setFgColor(white);
-            pressed.setBgColor(darkPurple);
+            pressed.setFgColor(SAVI.WHITE);
+            pressed.setBgColor(SAVI.DARK_PURPLE);
         }
 
-        signupbtn.getAllStyles().setBorder(Border.createRoundBorder(140, borderColor));
+        signupbtn.getAllStyles().setBorder(Border.createRoundBorder(140, SAVI.BORDER_COLOR));
         signupbtn.addActionListener(evt ->{
             String name = usernamef.getText().trim();
             String email = emailf.getText().trim();
@@ -321,10 +305,10 @@ public class SignUpPage {
         form.add(signupbtn);
 
         Container footer = new Container(BoxLayout.y());
-        footer.getAllStyles().setBgColor(palePurple);
+        footer.getAllStyles().setBgColor(SAVI.PALE_PURPLE);
         footer.getAllStyles().setBgTransparency(255);
         footer.getAllStyles().setPadding(50, 20, 0, 0);
-        Label last = SAVI.text("Already have an account?", SAVI.regular(2.3f), slategray);
+        Label last = SAVI.text("Already have an account?", SAVI.regular(2.3f), SAVI.SLATE_GRAY);
 
         last.getAllStyles().setMargin(2,0,9,9);
         last.setAlignment(Component.CENTER);
@@ -340,7 +324,7 @@ public class SignUpPage {
         btn.setBgTransparency(0);
         btn.setBgImage(null);
         btn.setBorder(Border.createEmpty());
-        btn.setFgColor(darkPurple);
+        btn.setFgColor(SAVI.DARK_PURPLE);
         btn.setFont(SAVI.bold(2.3f));
         btn.setPadding(0, 0, 0, 0);
         btn.setMargin(0, 4,0 , 0);

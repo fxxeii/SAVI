@@ -9,27 +9,16 @@ import com.savi.app.SAVI;
 
 public class MainPage {
 
-     int darkDarkPurple = 0x30205E;
-     int darkPurple = 0x7C3AED;
-     int palePurple = 0xF4EFFE;
-     int pastelLavander = 0xD8B4FE;
-     int paleLavander = 0xE9D5FF;
-     int bluishPurple = 0x4F46E5;
-     int borderColor = 0xEDF0F5;
-     int white = 0xFFFFFF;
-     int black = 0x000000;
-     int slategray = 0x64748B;
-
      public void show(){
 
           Form mainForm = new Form(new BorderLayout());;
-          mainForm.getAllStyles().setBgColor(palePurple);
+          mainForm.getAllStyles().setBgColor(SAVI.PALE_PURPLE);
           mainForm.getAllStyles().setBgTransparency(255);
-          mainForm.getContentPane().getAllStyles().setBgColor(palePurple);
+          mainForm.getContentPane().getAllStyles().setBgColor(SAVI.PALE_PURPLE);
           mainForm.getContentPane().getAllStyles().setBgTransparency(255);
 
           Container content = new Container(BoxLayout.yCenter());
-          content.getAllStyles().setBgColor(palePurple);
+          content.getAllStyles().setBgColor(SAVI.PALE_PURPLE);
           content.getAllStyles().setBgTransparency(255);
           /*
           Container overlap = new Container(new LayeredLayout());
@@ -61,8 +50,8 @@ public class MainPage {
           }
 
           Label logo = new Label(img);
-          Label title = SAVI.text("Savi", SAVI.bold(6f), black);
-          Label subtitle = SAVI.text("MONEY. TRACKER. ALL IN ONE PLACE.", SAVI.regular(2.2f), slategray);
+          Label title = SAVI.text("Savi", SAVI.bold(6f), SAVI.BLACK);
+          Label subtitle = SAVI.text("MONEY. TRACKER. ALL IN ONE PLACE.", SAVI.regular(2.2f), SAVI.SLATE_GRAY);
 
           logo.setAlignment(Component.CENTER);
           title.setAlignment(Component.CENTER);
@@ -109,7 +98,7 @@ public class MainPage {
                Log.e(err);
           }
           //base
-          btn.getAllStyles().setFgColor(white);
+          btn.getAllStyles().setFgColor(SAVI.WHITE);
           btn.getAllStyles().setBgTransparency(255);
           btn.getAllStyles().setPaddingUnit(Style.UNIT_TYPE_DIPS);
           btn.getAllStyles().setPadding(3, 3, 5, 5);
@@ -124,19 +113,19 @@ public class MainPage {
           normal.setBorder(Border.createEmpty());
           normal.setBgTransparency(255);
           normal.setBackgroundType(Style.BACKGROUND_GRADIENT_LINEAR_HORIZONTAL);
-          normal.setBackgroundGradientStartColor(darkDarkPurple);
-          normal.setBackgroundGradientEndColor(darkPurple);
-          normal.setFgColor(white);
+          normal.setBackgroundGradientStartColor(SAVI.DARK_DARK_PURPLE);
+          normal.setBackgroundGradientEndColor(SAVI.DARK_PURPLE);
+          normal.setFgColor(SAVI.WHITE);
 
           //hover/selected state gradient
           Style hover = btn.getSelectedStyle();
           hover.setBgImage(null);
           hover.setBorder(Border.createEmpty());
-          hover.setFgColor(white);
+          hover.setFgColor(SAVI.WHITE);
           hover.setBgTransparency(255);
           hover.setBackgroundType(Style.BACKGROUND_GRADIENT_LINEAR_HORIZONTAL);
-          hover.setBackgroundGradientStartColor(darkPurple);
-          hover.setBackgroundGradientEndColor(bluishPurple);
+          hover.setBackgroundGradientStartColor(SAVI.DARK_PURPLE);
+          hover.setBackgroundGradientEndColor(SAVI.BLUISH_PURPLE);
 
           // pressed state solid
           Style pressed = btn.getPressedStyle();
@@ -144,11 +133,11 @@ public class MainPage {
           pressed.setBorder(Border.createEmpty());
           pressed.setBgTransparency(255);
           pressed.setBackgroundType(Style.BACKGROUND_GRADIENT_LINEAR_HORIZONTAL);
-          pressed.setBackgroundGradientStartColor(paleLavander);
-          pressed.setBackgroundGradientEndColor(pastelLavander);
-          pressed.setFgColor(darkPurple);
+          pressed.setBackgroundGradientStartColor(SAVI.PALE_PURPLE);
+          pressed.setBackgroundGradientEndColor(SAVI.PASTEL_LAVENDER);
+          pressed.setFgColor(SAVI.DARK_PURPLE);
 
-          btn.getAllStyles().setBorder(Border.createRoundBorder(140, borderColor));
+          btn.getAllStyles().setBorder(Border.createRoundBorder(140, SAVI.BORDER_COLOR));
 
           mainForm.add(BorderLayout.CENTER, content);
           mainForm.add(BorderLayout.SOUTH, btn);
