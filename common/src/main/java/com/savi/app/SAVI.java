@@ -80,5 +80,6 @@ public class SAVI extends Lifecycle {
         new LogInPage().show();
         new MainPage().show();
         new TransferPage().show();
+        new SummaryPage().show();
     }
 }
