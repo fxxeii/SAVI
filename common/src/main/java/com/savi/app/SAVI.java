@@ -81,6 +81,8 @@ public class SAVI extends Lifecycle {
 //        new MainPage().show();
 //        new TransferPage().show();
 //        new SummaryPage().show();
-        new TransferConfirmationPage().show(500f, "Anna", "Family", "Ben", "Friends");
+        //new PeoplePage().show();
+          new ProfilePage().show();
+       // new TransferConfirmationPage().show(500f, "Anna", "Family", "Ben", "Friends");
     }
 }
