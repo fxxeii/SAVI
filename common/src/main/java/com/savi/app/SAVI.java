@@ -73,13 +73,14 @@ public class SAVI extends Lifecycle {
 
     @Override
     public void runApp() {
-        new HomePage().show();
-        new CalendarPage().show();
-        new SignUpPage().show();
-        new PendingPage().show();
-        new LogInPage().show();
-        new MainPage().show();
-        new TransferPage().show();
-        new SummaryPage().show();
+//        new HomePage().show();
+//        new CalendarPage().show();
+//        new SignUpPage().show();
+//        new PendingPage().show();
+//        new LogInPage().show();
+//        new MainPage().show();
+//        new TransferPage().show();
+//        new SummaryPage().show();
+        new TransferConfirmationPage().show(500f, "Anna", "Family", "Ben", "Friends");
     }
 }
