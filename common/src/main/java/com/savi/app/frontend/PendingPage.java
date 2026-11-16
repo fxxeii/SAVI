@@ -21,11 +21,7 @@ public class PendingPage {
         content.getAllStyles().setPadding(3, 3, 3, 3);
 
         // BACK BUTTON
-        pendingForm.getToolbar().addMaterialCommandToLeftBar(
-                "", FontImage.MATERIAL_ARROW_BACK, e -> {
-                    // previousForm.showBack();
-                }
-        );
+        pendingForm.getToolbar().addMaterialCommandToLeftBar("", FontImage.MATERIAL_ARROW_BACK, e -> {{new HomePage().show();}});
 
         // HEADER
         Label title = new Label("Pending");
