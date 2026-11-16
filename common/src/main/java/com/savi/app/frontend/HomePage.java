@@ -248,6 +248,7 @@ public class HomePage {
         Button manage = new Button("Manage");
         manage.getAllStyles().setFgColor(SAVI.DARK_PURPLE);
         manage.getAllStyles().setFont(SAVI.semiBold(2f));
+        manage.addActionListener(e->{new PeoplePage().show();});
 
         GroupOverviewContainer.add(BorderLayout.WEST, groupOverviewText);
         GroupOverviewContainer.add(BorderLayout.EAST, manage);
