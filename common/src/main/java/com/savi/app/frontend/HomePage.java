@@ -108,7 +108,7 @@ public class HomePage {
         s.setPadding(1, 1, 0.8f, 0.5f);
     }
 
-    static Container makeShortcut(String title, float mm, ActionListener<ActionEvent> onClick) {
+    static Container makeShortcut(String title, float mm, ActionListener<ActionEvent> onClick, String imgPath) {
         Container c = new Container(new BorderLayout());
         shortcutSize(c);
         shortcutsStyle(c);
@@ -120,8 +120,21 @@ public class HomePage {
         b.addActionListener(onClick);
 
         c.add(BorderLayout.SOUTH, b);
+        c.add(BorderLayout.NORTH, shortcutImg(imgPath));
         c.setLeadComponent(b);
         return c;
+    }
+
+    static Label shortcutImg(String imagePath){
+        Label pic = new Label();
+        pic.getAllStyles().setAlignment(Component.CENTER);
+        try {
+            Image img = Image.createImage(imagePath);
+            pic.setIcon(img.scaledWidth(Display.getInstance().convertToPixels(8f)));
+        } catch (java.io.IOException ex) {
+            ex.printStackTrace();
+        }
+        return pic;
     }
 
     static void boxStyles(Container name, int color, float paddingTB, float paddingLR){
@@ -222,10 +235,10 @@ public class HomePage {
 
         float shortcutTitleSize = 1.5f;
 
-        shortcutsContainer.add(makeShortcut("Transfer", shortcutTitleSize, e -> new TransferPage().show()));
-        shortcutsContainer.add(makeShortcut("Summary", shortcutTitleSize, e -> new SummaryPage().show()));
-        shortcutsContainer.add(makeShortcut("Pending", shortcutTitleSize, e -> new PendingPage().show()));
-        shortcutsContainer.add(makeShortcut("Reminders", shortcutTitleSize, e -> new ReminderPage().show()));
+        shortcutsContainer.add(makeShortcut("Transfer", shortcutTitleSize, e -> new TransferPage().show(), "/Transfer_Icon.png"));
+        shortcutsContainer.add(makeShortcut("Summary", shortcutTitleSize, e -> new SummaryPage().show(), "/Summary_Icon.png"));
+        shortcutsContainer.add(makeShortcut("Pending", shortcutTitleSize, e -> new PendingPage().show(), "/Pending_Icon.png"));
+        shortcutsContainer.add(makeShortcut("Reminders", shortcutTitleSize, e -> new ReminderPage().show(), "/Reminders_Icon.png"));
 
         Container GroupOverviewContainer = new Container(new BorderLayout());
         GroupOverviewContainer.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
@@ -233,7 +246,7 @@ public class HomePage {
         Label groupOverviewText = SAVI.text("Group Overview", SAVI.bold(2f), SAVI.DARK_BLUE);
 
         Button manage = new Button("Manage");
-        manage.getAllStyles().setFgColor(SAVI.DARK_DARK_PURPLE);
+        manage.getAllStyles().setFgColor(SAVI.DARK_PURPLE);
         manage.getAllStyles().setFont(SAVI.semiBold(2f));
 
         GroupOverviewContainer.add(BorderLayout.WEST, groupOverviewText);
@@ -266,8 +279,9 @@ public class HomePage {
         Label recentContText = SAVI.text("Recent Contributions", SAVI.semiBold(2f), SAVI.DARK_BLUE);
 
         Button seeAll = new Button("See All");
-        seeAll.getAllStyles().setFgColor(SAVI.DARK_DARK_PURPLE);
+        seeAll.getAllStyles().setFgColor(SAVI.DARK_PURPLE);
         seeAll.getAllStyles().setFont(SAVI.semiBold(2f));
+        seeAll.addActionListener(e-> {new RecentContributions().show();});
 
         recentsTitle.add(BorderLayout.WEST, recentContText);
         recentsTitle.add(BorderLayout.EAST, seeAll);
@@ -278,7 +292,7 @@ public class HomePage {
 
         Container recentDate = new Container(new BorderLayout());
         recentDate.setPreferredW(Display.getInstance().convertToPixels(15f));
-        boxStyles(recentDate, SAVI.DARK_DARK_PURPLE,1.5f, 0.6f);
+        boxStyles(recentDate, SAVI.DARK_PURPLE,1.5f, 0.6f);
 
         Label dateNum = SAVI.text("02", SAVI.semiBold(3f), SAVI.WHITE);
         Label dateDay = SAVI.text("Wednesday", SAVI.semiBold(1.5f), SAVI.WHITE);
@@ -288,8 +302,8 @@ public class HomePage {
 
         Container groupAndMemInfo = new Container(BoxLayout.y());
         Label recentTitle = SAVI.text("December Vacation", SAVI.semiBold(2.2f), SAVI.DARK_BLUE);
-        Label recentContributor = SAVI.text("Someone contributed P24", SAVI.regular(2f), SAVI.DARK_KNIGHT);
-        Label contributionNote = SAVI.text("Note: ", SAVI.regular(2f), SAVI.DARK_KNIGHT);
+        Label recentContributor = SAVI.text("Someone contributed P24", SAVI.regular(2f), SAVI.DARK_BLUE);
+        Label contributionNote = SAVI.text("Note: ", SAVI.regular(2f), SAVI.DARK_BLUE);
         groupAndMemInfo.add(recentTitle);
         groupAndMemInfo.add(recentContributor);
         groupAndMemInfo.add(contributionNote);

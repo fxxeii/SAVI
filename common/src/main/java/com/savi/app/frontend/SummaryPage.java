@@ -443,6 +443,7 @@ public class SummaryPage {
         ds.setMargin(0, 0, 0, 0);
         ds.setPadding(0, 0, 0, 0);
         details.setTextPosition(Component.LEFT);
+        details.addActionListener(e-> {new PeoplePage().show();});
         FontImage.setMaterialIcon(details, FontImage.MATERIAL_CHEVRON_RIGHT, 3f);
 
         Container footer = new Container(new BorderLayout());
