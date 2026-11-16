@@ -1,11 +1,14 @@
 package com.savi.app;
 
 import com.codename1.system.Lifecycle;
+import com.codename1.ui.*;
+import com.codename1.ui.plaf.Style;
 import com.codename1.ui.Display;
 import com.codename1.ui.Font;
 import com.codename1.ui.Label;
 import com.savi.app.frontend.*;
 import com.savi.app.backend.*;
+import java.util.ArrayList;
 
 public class SAVI extends Lifecycle {
 
@@ -40,6 +43,7 @@ public class SAVI extends Lifecycle {
     public static Font regularFont;
     public static Font boldFont;
     public static Font semiBoldFont;
+    public static Font italicFont;
 
     public static Font regular(float mm){
         if(regularFont==null){
@@ -62,6 +66,13 @@ public class SAVI extends Lifecycle {
         return semiBoldFont.derive(Display.getInstance().convertToPixels(mm), Font.STYLE_BOLD);
     }
 
+    public static Font italic(float mm){
+        if(italicFont==null){
+            italicFont = Font.createTrueTypeFont("GoogleSans-italic", "GoogleSans-italic.ttf");
+        }
+        return italicFont.derive(Display.getInstance().convertToPixels(mm), Font.STYLE_BOLD);
+    }
+
     public static Label text(String str, Font font, int color) {
         Label lbl = new Label(str);
         lbl.getAllStyles().setFont(font);
@@ -69,7 +80,30 @@ public class SAVI extends Lifecycle {
         return lbl;
     }
 
+    public static Button createBackButton(Runnable action) {
+
+        Button back = new Button();
+
+        Style s = back.getAllStyles();
+
+        s.setFgColor(SAVI.BLACK);
+        s.setBgTransparency(0);
+        s.setPaddingUnit(Style.UNIT_TYPE_DIPS);
+        s.setPadding(1, 1, 1, 1);
+
+        FontImage.setMaterialIcon(
+                back,
+                FontImage.MATERIAL_CHEVRON_LEFT,
+                5
+        );
+
+        back.addActionListener(e -> action.run());
+
+        return back;
+    }
+
     public static User users = new User();
+    public static ArrayList<GroupSavings> groups = new ArrayList<>();
 
     @Override
     public void runApp() {
