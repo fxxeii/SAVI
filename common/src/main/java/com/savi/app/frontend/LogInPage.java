@@ -37,7 +37,7 @@ public class LogInPage {
 
         Label logo = new Label(img);
         Label welcome = SAVI.text("Welcome Back!", SAVI.bold(5f), SAVI.WHITE);
-        Label sub1 = SAVI.text("Continue your savings with", SAVI.regular(2.3f), SAVI.WHITE);
+        Label sub1 = SAVI.text("Continue your savings with ", SAVI.regular(2.3f), SAVI.WHITE);
         Label sub2 = SAVI.text("Savi", SAVI.bold(2.3f), SAVI.WHITE);
 
         welcome.getAllStyles().setPadding(0,1f,0,0);
@@ -218,32 +218,9 @@ public class LogInPage {
                 s.setMargin(0, 0,0, 0);
             }
         }
-/*
-        signupbtn.addActionListener(evt ->{
-            String name = usernamef.getText().trim();
-            String email = emailf.getText().trim();
-            String pass = passf.getText().trim();
-            String cpass = cpassf.getText().trim();
 
-            String result = SAVI.users.signup(name, email, pass, cpass);
+        forgotp.addActionListener(e -> {ForgotPassPage fppage = new ForgotPassPage(); fppage.show();});
 
-            if (result.equals("success")) {
-                Dialog.show("Success", "Account created!", "OK", null);
-                new LogInPage().show();
-            } else {
-                Dialog.show("Error", result, "OK", null);
-            }
-        });
-
-        forgotp.addActionListener(e -> {
-            if (){
-            } else {
-                ForgotPassPage fpp = new ForgotPassPage();
-                fpp.show();
-            }
-
-        };
-*/
         Button[] forgotButton = {forgotp};
 
         for (Button btn : forgotButton) {
