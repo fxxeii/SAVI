@@ -101,7 +101,7 @@ public class HomePage {
                 shadowSpread(1f).
                 shadowX(0.5f).
                 shadowY(0.3f).
-                shadowColor(SAVI.BRIGHT_VIOLET));
+                shadowColor(SAVI.DARK_PURPLE));
         s.setMarginUnit(Style.UNIT_TYPE_DIPS);
         s.setMargin(0, 0, 1, 0);
         s.setPaddingUnit(Style.UNIT_TYPE_DIPS);
@@ -148,7 +148,7 @@ public class HomePage {
         base.getContentPane().getAllStyles().setBgTransparency(255);
 
         Container weekContainer = new Container(new BorderLayout());
-        boxStyles(weekContainer, SAVI.DARK_DARK_PURPLE, 1.5f, 1.5f);
+        boxStyles(weekContainer, SAVI.DARK_PURPLE, 1.5f, 1.5f);
         weekContainer.getAllStyles().setMarginBottom(0.4f);
         weekContainer.getAllStyles().setMarginTop(1f);
 
@@ -209,7 +209,7 @@ public class HomePage {
         weekTotalContent.add(amount);
         weekTotalContent.add(targetPercent);
 
-        Component bar = progressBar(pct, SAVI.POWDER_WHITE, SAVI.DARK_DARK_PURPLE, 1.5f);
+        Component bar = progressBar(pct, SAVI.POWDER_WHITE, SAVI.DARK_PURPLE, 1.5f);
         bar.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
         bar.getAllStyles().setMargin(1f, 0f, 0f, 0f);
         weekTotalContent.add(bar);
