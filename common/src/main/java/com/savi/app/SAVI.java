@@ -77,10 +77,10 @@ public class SAVI extends Lifecycle {
         new HomePage().show();
         SampleData.load();
         new CalendarPage().show();
-        //new SignUpPage().show();
-        //new PendingPage().show();
-        //new LogInPage().show();
-        //new MainPage().show();
-        //new TransferPage().show();
+        new SignUpPage().show();
+        new PendingPage().show();
+        new LogInPage().show();
+        new MainPage().show();
+        new TransferPage().show();
     }
 }
