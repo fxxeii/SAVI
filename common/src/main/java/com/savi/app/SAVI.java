@@ -6,6 +6,7 @@ import com.codename1.ui.Font;
 import com.codename1.ui.Label;
 import com.savi.app.frontend.*;
 import com.savi.app.backend.*;
+import java.util.ArrayList;
 
 public class SAVI extends Lifecycle {
 
@@ -35,7 +36,6 @@ public class SAVI extends Lifecycle {
     public static final int RED = 0xE11D48;
     public static final int PALE_RED = 0xFFF1F2;
     public static final int PINKISH = 0xC084FC;
-
 
     public static Font regularFont;
     public static Font boldFont;
@@ -70,16 +70,17 @@ public class SAVI extends Lifecycle {
     }
 
     public static User users = new User();
+    public static ArrayList<GroupSavings> groups = new ArrayList<>();
 
     @Override
     public void runApp() {
         new HomePage().show();
+        SampleData.load();
         new CalendarPage().show();
         new SignUpPage().show();
         new PendingPage().show();
         new LogInPage().show();
         new MainPage().show();
         new TransferPage().show();
-        new SummaryPage().show();
     }
 }
