@@ -516,8 +516,6 @@ public class ViewAllTransacPage {
         return row;
     }
 
-    // ---------- transaction list ----------
-
     static Container txRow(Txn t) {
         boolean missed = t.type.equals("MISSED");
         boolean deposit = t.type.equals("DEPOSIT");
@@ -527,7 +525,6 @@ public class ViewAllTransacPage {
         char icon = missed ? FontImage.MATERIAL_WARNING : FontImage.MATERIAL_ARROW_DOWNWARD;
         Container iconBox = squareIcon(icon, 6.5f, soft, accent);
 
-        // middle column: title, date and (for missed) the tags
         Container info = new Container(BoxLayout.y());
         info.add(SAVI.text(t.title, SAVI.bold(2.1f), SAVI.DARK_KNIGHT));
         info.add(SAVI.text(t.date, SAVI.regular(1.7f), MUTED));
