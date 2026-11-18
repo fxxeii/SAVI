@@ -165,12 +165,17 @@ public class HomePage {
         weekContainer.getAllStyles().setMarginBottom(0.4f);
         weekContainer.getAllStyles().setMarginTop(1f);
 
-        Label thisWeek = SAVI.text("THIS WEEK", SAVI.bold(2.5f), SAVI.WHITE);
+        Button thisWeek = new Button("THIS WEEK");
+        thisWeek.setUIID("Label");                         // removes the default button look
+        thisWeek.getAllStyles().setFont(SAVI.bold(2.5f));
+        thisWeek.getAllStyles().setFgColor(SAVI.WHITE);
+        thisWeek.addActionListener(e -> new CalendarPage().show());
         Label icon = new Label();
         icon.getAllStyles().setFgColor(SAVI.WHITE);
         FontImage.setMaterialIcon(icon, FontImage.MATERIAL_DATE_RANGE, 4f);
         Container headerLeft = new Container(new FlowLayout());
         headerLeft.add(icon).add(thisWeek);
+        weekContainer.setLeadComponent(thisWeek);
 
         Calendar cal = Calendar.getInstance();
         Date today = new Date();

@@ -52,4 +52,8 @@ public abstract class Savings {
     }
 
     public abstract void displayInfo();
+
+    public ArrayList<Contribution> getContributions() {
+        return new ArrayList<>(contributions);
+    }
 }
