@@ -21,9 +21,19 @@ public class PendingPage {
         content.getAllStyles().setPadding(3, 3, 3, 3);
 
         // BACK BUTTON
-        pendingForm.getToolbar().addMaterialCommandToLeftBar("", FontImage.MATERIAL_ARROW_BACK, e -> {{new HomePage().show();}});
+        com.codename1.ui.Button back = new com.codename1.ui.Button();
+        Style s = back.getAllStyles();
+        s.setFgColor(SAVI.BLACK);
+        s.setBgTransparency(0);
+        s.setPaddingUnit(Style.UNIT_TYPE_DIPS);
+        s.setPadding(1, 1, 1, 1);
+        FontImage.setMaterialIcon(back, FontImage.MATERIAL_CHEVRON_LEFT, 5);
+
+        back.addActionListener(e -> {new HomePage().show();});
 
         // HEADER
+        Container BackAndLabel = new Container(new BorderLayout());
+
         Label title = new Label("Pending");
         title.getAllStyles().setFgColor(SAVI.WHITE);
         title.getAllStyles().setFont(SAVI.semiBold(3));
@@ -38,7 +48,10 @@ public class PendingPage {
         titleBar.getAllStyles().setMargin(1, 1, 1, 1);
         titleBar.getAllStyles().setBorder(RoundRectBorder.create().cornerRadius(1));
 
-        content.add(titleBar);
+        BackAndLabel.add(BorderLayout.WEST, back);
+        BackAndLabel.add(BorderLayout.CENTER, titleBar);
+
+        content.add(BackAndLabel);
 
         // SPACE
         Container space1 = new Container();
