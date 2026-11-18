@@ -20,6 +20,7 @@ import com.codename1.ui.plaf.RoundRectBorder;
 import com.codename1.ui.plaf.Style;
 import com.savi.app.SAVI;
 
+
 public class ViewAllTransacPage {
 
     static final int PAGE_BG = 0xF7F5FF;
