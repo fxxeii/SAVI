@@ -17,10 +17,10 @@ import com.codename1.ui.layouts.GridLayout;
 import com.codename1.ui.plaf.RoundRectBorder;
 import com.codename1.ui.plaf.Style;
 import com.savi.app.SAVI;
+import com.savi.app.backend.GroupSavings;
+import com.savi.app.backend.Home;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
+import java.time.LocalDate;
 
 public class HomePage {
 
@@ -56,17 +56,13 @@ public class HomePage {
         };
     }
 
-    static Container dayCell(Date d, boolean today){
-        SimpleDateFormat dateFormat = new SimpleDateFormat("d");
-        String[] days = {"S", "M", "T", "W", "T", "F", "S"};
-        Calendar c = Calendar.getInstance();
-        c.setTime(d);
-
-        String day = days[c.get(Calendar.DAY_OF_WEEK)-1];
+    // CALENDAR: the date, day letter and "is it today" now come from Home (backend)
+    static Container dayCell(LocalDate d){
+        boolean today = Home.isToday(d);
 
         int textColor = today ? SAVI.DARK_DARK_PURPLE : SAVI.WHITE;
-        Label num = SAVI.text(dateFormat.format(d), today ? SAVI.bold(1.8f) : SAVI.regular(1.8f), textColor);
-        Label dayLett = SAVI.text(day, today ? SAVI.bold(1.5f) : SAVI.regular(1.5f), textColor);
+        Label num = SAVI.text(Home.getDayNumber(d), today ? SAVI.bold(1.8f) : SAVI.regular(1.8f), textColor);
+        Label dayLett = SAVI.text(Home.getDayLetter(d), today ? SAVI.bold(1.5f) : SAVI.regular(1.5f), textColor);
         num.getAllStyles().setAlignment(Component.CENTER);
         dayLett.getAllStyles().setAlignment(Component.CENTER);
 
@@ -156,6 +152,11 @@ public class HomePage {
     }
 
     public void show() {
+        // BACKEND: one Home object feeds the cards below (SAVI.user / SAVI.groups: see note)
+        Home home = new Home(SAVI.user, SAVI.groups);
+        GroupSavings g = home.getFeaturedGroup();                    // null if the user has no groups
+        Home.RecentContribution r = home.getLatestContribution();    // null if no contributions yet
+
         Form base = new Form("", new BorderLayout());
         base.getContentPane().getAllStyles().setBgColor(SAVI.PALE_PURPLE);
         base.getContentPane().getAllStyles().setBgTransparency(255);
@@ -165,32 +166,27 @@ public class HomePage {
         weekContainer.getAllStyles().setMarginBottom(0.4f);
         weekContainer.getAllStyles().setMarginTop(1f);
 
-        Label thisWeek = SAVI.text("THIS WEEK", SAVI.bold(2.5f), SAVI.WHITE);
+        Button thisWeek = new Button("THIS WEEK");
+        thisWeek.setUIID("Label");                         // removes the default button look
+        thisWeek.getAllStyles().setFont(SAVI.bold(2.5f));
+        thisWeek.getAllStyles().setFgColor(SAVI.WHITE);
+        thisWeek.addActionListener(e -> new CalendarPage().show());
         Label icon = new Label();
         icon.getAllStyles().setFgColor(SAVI.WHITE);
         FontImage.setMaterialIcon(icon, FontImage.MATERIAL_DATE_RANGE, 4f);
         Container headerLeft = new Container(new FlowLayout());
         headerLeft.add(icon).add(thisWeek);
+        weekContainer.setLeadComponent(thisWeek);
 
-        Calendar cal = Calendar.getInstance();
-        Date today = new Date();
-        cal.setTime(today);
-        long noon = today.getTime();
-        long weekStart = noon - (cal.get(Calendar.DAY_OF_WEEK) - 1) * 86400000L;
-        Date start = new Date(weekStart);
-        Date end = new Date(weekStart + 6 * 86400000L);
-
+        // CALENDAR: the 7 days (Sunday to Saturday) of the current week come from Home
         Container daysRow = new Container(new GridLayout(1, 7));
-        SimpleDateFormat key = new SimpleDateFormat("yyyyMMdd");
-        for (int i = 0; i < 7; i++) {
-            Date d = new Date(weekStart + i * 86400000L);
-            boolean isToday = key.format(d).equals(key.format(today));
-            daysRow.add(dayCell(d, isToday));
+        for (LocalDate d : Home.getWeekDays(LocalDate.now())) {
+            daysRow.add(dayCell(d));
         }
         daysRow.getAllStyles().setMarginTop(2);
 
         // current month, top right
-        Label monthLabel = SAVI.text(new SimpleDateFormat("MMMM").format(today).toUpperCase(),
+        Label monthLabel = SAVI.text(Home.getMonthName(),
                 SAVI.semiBold(2f), SAVI.WHITE);
         Container headerRight = new Container(new FlowLayout(Component.RIGHT, Component.CENTER));
         headerRight.add(monthLabel);
@@ -206,14 +202,13 @@ public class HomePage {
         boxStyles(weekTotalContainer, SAVI.WHITE, 2, 3);
 
         Label amountSaved = SAVI.text("AMOUNT SAVED", SAVI.bold(2.5f), SAVI.SLATE_GRAY);
-        double saved = 4256.50, target = 5000;
-        float pct = (float) (saved / target);
+        float pct = (float) home.getWeeklyProgress();
 
-        Label amount = SAVI.text("P4,256.50", SAVI.bold(4), SAVI.DARK_KNIGHT);
+        Label amount = SAVI.text(Home.pesoFormat(home.getWeeklySaved()), SAVI.bold(4), SAVI.DARK_KNIGHT);
 
         Container targetPercent = new Container(new BorderLayout());
-        Label weekTarget = SAVI.text("Weekly Target: P5,000", SAVI.regular(2f), SAVI.SLATE_GRAY);
-        Label percentage = SAVI.text((int) (pct * 100) + "%", SAVI.bold(2f), SAVI.BRIGHT_VIOLET);
+        Label weekTarget = SAVI.text("Weekly Target: " + Home.pesoShort(home.getWeeklyTarget()), SAVI.regular(2f), SAVI.SLATE_GRAY);
+        Label percentage = SAVI.text(home.getWeeklyPercent() + "%", SAVI.bold(2f), SAVI.BRIGHT_VIOLET);
         targetPercent.add(BorderLayout.WEST, weekTarget);
         targetPercent.add(BorderLayout.EAST, percentage);
 
@@ -256,17 +251,17 @@ public class HomePage {
         Container singleOverview = new Container(new BorderLayout());
         boxStyles(singleOverview, SAVI.WHITE,2f, 2f);
 
-        Label groupName = SAVI.text("December Vacation", SAVI.semiBold(2f), SAVI.DARK_BLUE);
+        Label groupName = SAVI.text(g == null ? "No groups yet" : g.getGroupName(), SAVI.semiBold(2f), SAVI.DARK_BLUE);
 
         Container totalSaved = new Container(BoxLayout.y());
         Label totalSavedText = SAVI.text("TOTAL SAVED", SAVI.semiBold(1.5f), SAVI.DARK_BLUE);
-        Label groupSaveAmount = SAVI.text("P12,000", SAVI.bold(3f), SAVI.DARK_BLUE);
+        Label groupSaveAmount = SAVI.text(g == null ? "P0" : Home.pesoShort(home.getTotalSaved(g)), SAVI.bold(3f), SAVI.DARK_BLUE);
         totalSaved.add(totalSavedText);
         totalSaved.add(groupSaveAmount);
 
         Container remainingBal = new Container(BoxLayout.y());
         Label remainingBalText = SAVI.text("REMAINING BALANCE", SAVI.semiBold(1.5f), SAVI.DARK_BLUE);
-        Label remainingBalAmount = SAVI.text("P350", SAVI.bold(3f), SAVI.DARK_BLUE);
+        Label remainingBalAmount = SAVI.text(g == null ? "P0" : Home.pesoShort(home.getRemainingBalance(g)), SAVI.bold(3f), SAVI.DARK_BLUE);
         remainingBal.add(remainingBalText);
         remainingBal.add(remainingBalAmount);
 
@@ -295,16 +290,16 @@ public class HomePage {
         recentDate.setPreferredW(Display.getInstance().convertToPixels(15f));
         boxStyles(recentDate, SAVI.DARK_PURPLE,1.5f, 0.6f);
 
-        Label dateNum = SAVI.text("02", SAVI.semiBold(3f), SAVI.WHITE);
-        Label dateDay = SAVI.text("Wednesday", SAVI.semiBold(1.5f), SAVI.WHITE);
+        Label dateNum = SAVI.text(r == null ? "--" : r.getDayNumber(), SAVI.semiBold(3f), SAVI.WHITE);
+        Label dateDay = SAVI.text(r == null ? "" : r.getWeekday(), SAVI.semiBold(1.5f), SAVI.WHITE);
         recentDate.add(BorderLayout.NORTH, dateNum);
         recentDate.add(BorderLayout.SOUTH, dateDay);
         recentInfoCont.add(BorderLayout.WEST, recentDate);
 
         Container groupAndMemInfo = new Container(BoxLayout.y());
-        Label recentTitle = SAVI.text("December Vacation", SAVI.semiBold(2.2f), SAVI.DARK_BLUE);
-        Label recentContributor = SAVI.text("Someone contributed P24", SAVI.regular(2f), SAVI.DARK_BLUE);
-        Label contributionNote = SAVI.text("Note: ", SAVI.regular(2f), SAVI.DARK_BLUE);
+        Label recentTitle = SAVI.text(r == null ? "No contributions yet" : r.getGroupName(), SAVI.semiBold(2.2f), SAVI.DARK_BLUE);
+        Label recentContributor = SAVI.text(r == null ? "" : r.getSummary(), SAVI.regular(2f), SAVI.DARK_BLUE);
+        Label contributionNote = SAVI.text(r == null ? "" : r.getNoteText(), SAVI.regular(2f), SAVI.DARK_BLUE);
         groupAndMemInfo.add(recentTitle);
         groupAndMemInfo.add(recentContributor);
         groupAndMemInfo.add(contributionNote);
@@ -315,9 +310,13 @@ public class HomePage {
         mainContents.add(weekTotalContainer);
         mainContents.add(shortcutsContainer);
         mainContents.add(GroupOverviewContainer);
-        mainContents.add(singleOverview);
+        if (g != null) {                       // group card only when the user has a group
+            mainContents.add(singleOverview);
+        }
         mainContents.add(recentsTitle);
-        mainContents.add(recentInfoCont);
+        if (r != null) {                       // contribution card only when there is a contribution
+            mainContents.add(recentInfoCont);
+        }
         base.add(BorderLayout.CENTER, mainContents);
         base.show();
     }

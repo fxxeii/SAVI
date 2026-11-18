@@ -9,6 +9,7 @@ import com.codename1.ui.Label;
 import com.savi.app.frontend.*;
 import com.savi.app.backend.*;
 import java.util.ArrayList;
+import com.savi.app.backend.User;
 
 public class SAVI extends Lifecycle {
 
@@ -45,6 +46,8 @@ public class SAVI extends Lifecycle {
     public static Font semiBoldFont;
     public static Font italicFont;
 
+    public static User user = new User();
+
     public static Font regular(float mm){
         if(regularFont==null){
             regularFont = Font.createTrueTypeFont("GoogleSans-Regular", "GoogleSans-Regular.ttf");
@@ -61,7 +64,7 @@ public class SAVI extends Lifecycle {
 
     public static Font semiBold(float mm){
         if(semiBoldFont==null){
-            semiBoldFont = Font.createTrueTypeFont("GoogleSans-SemiBold", "GoogleSans-SemiBold.ttf");
+            semiBoldFont = Font.createTrueTypeFont("Google Sans SemiBold", "GoogleSans-SemiBold.ttf");
         }
         return semiBoldFont.derive(Display.getInstance().convertToPixels(mm), Font.STYLE_BOLD);
     }
@@ -102,28 +105,29 @@ public class SAVI extends Lifecycle {
         return back;
     }
 
-    public static User users = new User();
+    public static User users = user;
     public static ArrayList<GroupSavings> groups = new ArrayList<>();
 
     @Override
     public void runApp() {
-        new HomePage().show();
-        new CalendarPage().show();
-        new SignUpPage().show();
-        new PendingPage().show();
+        user.load();
+//        new HomePage().show();
+//        new CalendarPage().show();
+//        new SignUpPage().show();
+//        new PendingPage().show();
+//        new LogInPage().show();
+//        new MainPage().show();
+//        new TransferPage().show();
+//        new SummaryPage().show();
+//        new TransferConfirmationPage().show(500f, "Anna", "Family", "Ben", "Friends");
+//        new RecentContributions().show();
+//        new HomePage().show();
+//        new CalendarPage().show();
+//        new SignUpPage().show();
+//        new PendingPage().show();
         new LogInPage().show();
-        new MainPage().show();
-        new TransferPage().show();
-        new SummaryPage().show();
-        new TransferConfirmationPage().show(500f, "Anna", "Family", "Ben", "Friends");
-        new RecentContributions().show();
-        new HomePage().show();
-        new CalendarPage().show();
-        new SignUpPage().show();
-        new PendingPage().show();
-        new LogInPage().show();
-        new MainPage().show();
-        new TransferPage().show();
-        new SummaryPage().show();
+//        new MainPage().show();
+//        new TransferPage().show();
+//        new SummaryPage().show();
     }
 }
