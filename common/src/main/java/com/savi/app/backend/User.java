@@ -3,6 +3,7 @@ package com.savi.app.backend;
 
 import com.codename1.io.Storage;
 import com.codename1.io.Util;
+import com.codename1.ui.Display;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -219,15 +220,18 @@ public class User {
         writeFile(text.toString());
     }
 
-    /** Reads the file and rebuilds the linked list. SAVI.runApp() calls this once at startup,
-     *  after Codename One's storage is ready (NOT from the constructor / a static field). */
     public void load() {
         head = null;
         currentUser = null;
-        Node tail = null;
 
-        String text = readFile();
-        System.out.println("USERS FILE: [" + text + "]");
+        String shared = readRecords();
+        String local = readFile();
+
+        loadText(shared);
+        loadText(local);
+    }
+
+    private void loadText(String text) {
         int start = 0;
 
         while (start < text.length()) {
@@ -246,14 +250,20 @@ public class User {
             if (node == null) {
                 continue;   // blank or damaged line: skip it
             }
+            if (exist(node.name) || emailExists(node.email)) {
+                continue;   // already loaded (the same account is in both files)
+            }
 
             // added straight to the list (NOT through signup, so nothing is saved twice)
             if (head == null) {
                 head = node;
             } else {
+                Node tail = head;
+                while (tail.pntnext != null) {
+                    tail = tail.pntnext;
+                }
                 tail.pntnext = node;
             }
-            tail = node;
         }
     }
 
@@ -338,12 +348,27 @@ public class User {
         }
     }
 
+    private String readRecords() {
+        try {
+            InputStream in = Display.getInstance().getResourceAsStream(User.class, "/" + fileRec);
+            if (in == null) {
+                return "";
+            }
+            String text = Util.readToString(in, "UTF-8");
+            return text == null ? "" : text;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return "";
+        }
+    }
+
     private void writeFile(String text) {
         try {
             OutputStream out = Storage.getInstance().createOutputStream(fileRec);
             out.write(text.getBytes("UTF-8"));
             out.close();
-            System.out.println("FILE WRITTEN: " + readFile().length() + " chars");   // temporary check
+            // temporary: copy these lines into src/main/resources/Users_Records.csv to share them
+            System.out.println("USERS CSV NOW:\n" + text);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
