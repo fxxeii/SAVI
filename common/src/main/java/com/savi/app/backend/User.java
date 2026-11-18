@@ -1,5 +1,5 @@
 package com.savi.app.backend;
-//user infos, log in, sign up, sign out, update profile, add/del profile photo
+//user infos, log in, sign up, sign out, update profile
 
 import com.codename1.io.Storage;
 import com.codename1.io.Util;
@@ -92,6 +92,36 @@ public class User {
 
     public void logout() {
         currentUser = null;
+    }
+
+    public String resetPass(String n, String p, String cp) {
+        if (n == null || n.trim().isEmpty()
+                || p == null || p.isEmpty()
+                || cp == null || cp.isEmpty()) {
+            return "Please fill in all fields.";
+        }
+
+        if (!validPassword(p)) {
+            return "Password must be at least 5 characters.";
+        }
+
+        if (!matchingPassword(p, cp)) {
+            return "Passwords do not match.";
+        }
+
+        Node temp = head;
+
+        while (temp != null) {
+            if (temp.name.equalsIgnoreCase(n.trim())) {
+                temp.pass = p;
+                saveAll();
+                return "success";
+            }
+
+            temp = temp.pntnext;
+        }
+
+        return "Username not found.";
     }
 
     private boolean exist(String n) {
@@ -224,11 +254,11 @@ public class User {
         head = null;
         currentUser = null;
 
-        String shared = readRecords();
         String local = readFile();
+        String shared = readRecords();
 
-        loadText(shared);
         loadText(local);
+        loadText(shared);
     }
 
     private void loadText(String text) {
