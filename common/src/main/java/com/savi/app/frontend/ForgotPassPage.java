@@ -104,8 +104,6 @@ public class ForgotPassPage {
             }
         }
 
-        usn.getAllStyles().setPadding(2, 1.5f, 3, 4);
-        usn.getAllStyles().setMargin(1, 1, 5, 0);
         psf.getAllStyles().setPadding(2, 1.5f, 3, 4);
         psf.getAllStyles().setMargin(1, 1, 5, 1.5f);
         cpsf.getAllStyles().setPadding(2, 1.5f, 3, 4);
@@ -180,7 +178,43 @@ public class ForgotPassPage {
         box.add(fp).add(sub1).add(sub2);
         box.add(form);
 
-        ForgotpForm.add(BorderLayout.NORTH, box);
+        Button savebtn = new Button("Save Password");
+
+        Button[] sbtn = {savebtn};
+
+        for (Button btn : sbtn) {
+            btn.getAllStyles().setMargin(0,26,9,9);
+            btn.getAllStyles().setPadding(2f, 2f, 0f, 0f);
+            btn.getAllStyles().setFont(SAVI.bold(2.5f));
+
+            Style n = savebtn.getUnselectedStyle();
+            Style h = savebtn.getSelectedStyle();
+            Style p = savebtn.getPressedStyle();
+
+            n.setBgImage(null);
+            n.setBorder(Border.createEmpty());
+            n.setBgTransparency(255);
+            n.setBgColor(SAVI.DARK_PURPLE);
+            n.setFgColor(SAVI.WHITE);
+
+            h.setBgImage(null);
+            h.setBorder(Border.createEmpty());
+            h.setFgColor(SAVI.DARK_PURPLE);
+            h.setBgTransparency(255);
+            h.setBgColor(SAVI.WHITE);
+
+            p.setBgImage(null);
+            p.setBorder(Border.createEmpty());
+            p.setBgTransparency(255);
+            p.setFgColor(SAVI.WHITE);
+            p.setBgColor(SAVI.DARK_PURPLE);
+        }
+        savebtn.getAllStyles().setBorder(Border.createRoundBorder(140, SAVI.BORDER_COLOR));
+
+
+
+
+        ForgotpForm.add(BorderLayout.NORTH, box).add(BorderLayout.SOUTH, savebtn);
         ForgotpForm.show();
     }
 }
