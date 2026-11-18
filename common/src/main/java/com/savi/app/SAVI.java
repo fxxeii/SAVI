@@ -57,8 +57,6 @@ public class SAVI extends Lifecycle {
     private static final float NAV_SHADOW_MM = 1.5f; // how far the shadow reaches above the bar
     private static final int NAV_SHADOW_ALPHA = 90;  // shadow strength at the bar: 0 (none) to 255
 
-    public static User user = new User();
-
     public static Font regular(float mm){
         if(regularFont==null){
             regularFont = Font.createTrueTypeFont("GoogleSans-Regular", "GoogleSans-Regular.ttf");
