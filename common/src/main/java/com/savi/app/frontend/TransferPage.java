@@ -11,6 +11,7 @@ import com.codename1.ui.plaf.RoundRectBorder;
 import com.codename1.ui.plaf.Style;
 import com.codename1.ui.spinner.Picker;
 import com.savi.app.SAVI;
+import com.savi.app.backend.Transfer;
 
 public class TransferPage {
 
@@ -32,12 +33,12 @@ public class TransferPage {
         contS.setMargin(marT, marB, marLR,marLR);
     }
 
-    private Container dropdown(String placeholder, String... options) {
+    // the Picker is created by the caller, so show() can read what was chosen and refill it
+    private Container dropdown(Picker picker, String placeholder, String... options) {
         String[] items = new String[options.length + 1];
         items[0] = placeholder;
         System.arraycopy(options, 0, items, 1, options.length);
 
-        Picker picker = new Picker();
         picker.setUIID("Label");                 // removes the default gray box behind the text
         picker.setType(Display.PICKER_TYPE_STRINGS);
         picker.setStrings(items);
@@ -70,17 +71,19 @@ public class TransferPage {
                 .cornerRadius(4)                 // bigger radius = more pill-like
                 .strokeColor(0xd9d4f5)           // light lavender like the design
                 .strokeOpacity(255)
-                .stroke(1, false));
+                .stroke(2f, false));
         bs.setPaddingUnit(Style.UNIT_TYPE_DIPS);
-        bs.setPadding(2, 2, 2, 2);               // top, bottom, left, right: taller than before
+        bs.setPadding(0, 0, 2.5f, 2.5f);         // top, bottom, left, right: smaller height
         bs.setMarginUnit(Style.UNIT_TYPE_DIPS);
-        bs.setMargin(0, 1.5f, 0, 0);             // space between the two bars
+        bs.setMargin(1, 1, 2.5f, 2.5f);         // top, bottom, left, right: gap between bars, and
+        // a little room so the border is not cut at the edges
 
         return bar;
     }
 
     private Container transferCard(String number, String title, String subtitle,
-                                   boolean active, String[] groups, String[] members) {
+                                   boolean active, Picker groupPicker, String[] groups,
+                                   Picker memberPicker, String[] members) {
         // ---- card ----
         Container card = new Container(new BorderLayout());
         styles(card, SAVI.WHITE, 1f, 1f, 2f, 0, 1);
@@ -134,8 +137,8 @@ public class TransferPage {
 
         // ---- dropdowns ----
         Container dropdowns = new Container(BoxLayout.y());
-        dropdowns.add(dropdown("Select group", groups));
-        dropdowns.add(dropdown("Select member", members));
+        dropdowns.add(dropdown(groupPicker, "Select group", groups));
+        dropdowns.add(dropdown(memberPicker, "Select member", members));
 
         card.add(BorderLayout.NORTH, headRow);
         card.add(BorderLayout.CENTER, dropdowns);
@@ -161,46 +164,59 @@ public class TransferPage {
         return l;
     }
 
+    // BACKEND helpers: the backend gives java.util.List, a Picker needs a String[]
+    private String[] toArray(java.util.List<String> list) {
+        String[] arr = new String[list.size()];
+        for (int i = 0; i < arr.length; i++) {
+            arr[i] = list.get(i);
+        }
+        return arr;
+    }
+
+    // refills a dropdown (placeholder first) and goes back to the placeholder
+    private void setOptions(Picker picker, String placeholder, java.util.List<String> options) {
+        String[] items = new String[options.size() + 1];
+        items[0] = placeholder;
+        for (int i = 0; i < options.size(); i++) {
+            items[i + 1] = options.get(i);
+        }
+        picker.setStrings(items);
+        picker.setSelectedStringIndex(0);
+    }
+
     public void show(){
         Form base = new Form("", new BorderLayout());
         base.getContentPane().getAllStyles().setBgColor(SAVI.PALE_PURPLE);
         base.getContentPane().getAllStyles().setBgTransparency(255);
 
-        com.codename1.ui.Button back = new com.codename1.ui.Button();
-        Style s = back.getAllStyles();
-        s.setFgColor(SAVI.BLACK);
-        s.setBgTransparency(0);
-        s.setPaddingUnit(Style.UNIT_TYPE_DIPS);
-        s.setPadding(1, 1, 1, 1);
-        FontImage.setMaterialIcon(back, FontImage.MATERIAL_CHEVRON_LEFT, 5);
+        // BACKEND: the groups come from the logged-in user's groups, members from the chosen group
+        Transfer transfer = new Transfer(SAVI.user, SAVI.groups);
+        String[] groups = toArray(transfer.getGroupNames());
+        String[] noMembers = new String[0];     // filled in once a group is chosen
 
-        back.addActionListener(e -> {new HomePage().show();});
+        Picker fromGroup = new Picker();
+        Picker fromMember = new Picker();
+        Picker toGroup = new Picker();
+        Picker toMember = new Picker();
 
-        // put it at the top-left
-        Container top = BorderLayout.west(back);
-        Style ts = top.getAllStyles();
-        ts.setMarginUnit(Style.UNIT_TYPE_DIPS);   // or UNIT_TYPE_PIXELS / UNIT_TYPE_SCREEN_PERCENTAGE
-        ts.setMargin(2, 1, 2, 0);                 // top, bottom, left, right (in dips)
-        //base.add(BorderLayout.NORTH, top);
+        fromGroup.addActionListener(e -> {
+            transfer.setFromGroup(fromGroup.getSelectedString());   // also clears the member
+            setOptions(fromMember, "Select member", transfer.getMemberNames(transfer.getFromGroup()));
+        });
+        fromMember.addActionListener(e -> transfer.setFromMember(fromMember.getSelectedString()));
 
-        Container titleContainer = new Container(new BorderLayout());
-        styles(titleContainer, SAVI.DARK_PURPLE, 1f, 0f, 2f, 2, 1);
-
-        Label TransferFunds = SAVI.text("Transfer Funds", SAVI.semiBold(2.5f), SAVI.WHITE);
-        titleContainer.add(BorderLayout.WEST, TransferFunds);
-
-        Container header = new Container(new BorderLayout());
-        header.add(BorderLayout.WEST, top);
-        header.add(BorderLayout.CENTER, titleContainer);
-        String[] groups = {"Family", "Friends", "Work"};
-        String[] members = {"Anna", "Ben", "Carl"};
+        toGroup.addActionListener(e -> {
+            transfer.setToGroup(toGroup.getSelectedString());
+            setOptions(toMember, "Select member", transfer.getMemberNames(transfer.getToGroup()));
+        });
+        toMember.addActionListener(e -> transfer.setToMember(toMember.getSelectedString()));
 
         Container mainContents = new Container(BoxLayout.y());
         mainContents.add(transferCard("1", "Transfer from", "Choose where the funds will come from",
-                true, groups, members));
+                true, fromGroup, groups, fromMember, noMembers));
         mainContents.add(divider());
         mainContents.add(transferCard("2", "Transfer to", "Choose who will receive the funds",
-                false, groups, members));
+                false, toGroup, groups, toMember, noMembers));
 
         Container amountContainer = new Container(new BorderLayout());
         amountContainer.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
@@ -230,9 +246,21 @@ public class TransferPage {
                 shadowY(0.3f));
         transSavS.setMarginUnit(Style.UNIT_TYPE_DIPS);
         transSavS.setMargin(1, 1, 5, 5);
+
+        TransferSav.addActionListener(e -> {
+            transfer.setAmount(amountField.getText());
+            String result = transfer.confirm();          // checks everything, then moves the money
+            if (!result.equals(Transfer.SUCCESS)) {
+                Dialog.show("Transfer failed", result, "OK", null);
+                return;
+            }
+            new TransferConfirmationPage().show((float) transfer.getAmount(),
+                    transfer.getFromMember(), transfer.getFromGroup(),
+                    transfer.getToMember(), transfer.getToGroup());
+        });
         mainContents.add(TransferSav);
 
-        base.add(BorderLayout.NORTH, header);
+        base.add(BorderLayout.NORTH, SAVI.buildHeader("Transfer Funds", () -> new HomePage().show()));
         base.add(BorderLayout.CENTER, mainContents);
         base.show();
     }

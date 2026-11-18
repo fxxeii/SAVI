@@ -65,31 +65,6 @@ public class SummaryPage {
         return row;
     }
 
-    private Container header() {
-        com.codename1.ui.Button back = new com.codename1.ui.Button();
-        Style bs = back.getAllStyles();
-        bs.setFgColor(SAVI.BLACK);
-        bs.setBgTransparency(0);
-        bs.setBorder(RoundBorder.create().color(SAVI.WHITE));
-        bs.setPaddingUnit(Style.UNIT_TYPE_DIPS);
-        bs.setPadding(1, 1, 1, 1);
-        bs.setMargin(0, 0, 2, 0);
-        FontImage.setMaterialIcon(back, FontImage.MATERIAL_CHEVRON_LEFT, 4);
-        back.addActionListener(e -> new HomePage().show());
-
-        Label title = txt("Group Savings Summary", SAVI.bold(3f), SAVI.WHITE);
-        title.getAllStyles().setAlignment(Component.CENTER);
-
-        Container headerText = new Container(new BorderLayout());
-        styles(headerText, SAVI.DARK_PURPLE, 1, 1, 2, 1, 1.5f);
-        headerText.add(BorderLayout.CENTER, title);
-
-        Container header = new Container(new BorderLayout());
-        header.add(BorderLayout.WEST, back);
-        header.add(BorderLayout.CENTER, headerText);
-        return header;
-    }
-
     private Container poolCard() {
         Container card = new Container(new BorderLayout());
         styles(card, SAVI.DARK_PURPLE, 3f, 4f, 2f, 0.5f, 0.5f);
@@ -475,7 +450,7 @@ public class SummaryPage {
         mainContents.add(memberSummaryCard());
         mainContents.add(monthlyChartCard());
 
-        base.add(BorderLayout.NORTH, header());
+        base.add(BorderLayout.NORTH, SAVI.buildHeader("Group Savings Summary", () -> new HomePage().show()));
         base.add(BorderLayout.CENTER, mainContents);
         base.show();
     }

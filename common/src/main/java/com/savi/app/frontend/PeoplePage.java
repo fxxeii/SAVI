@@ -117,15 +117,6 @@ public class PeoplePage {
         return c;
     }
 
-    static Container roundIconButton(char icon, ActionListener<ActionEvent> onClick) {
-        Container c = circleIcon(icon, 10f, 3.5f, SAVI.WHITE, SAVI.DEEP_SLATE, true);
-        Button hit = new Button();
-        hit.setUIID("Label");
-        hit.addActionListener(onClick);
-        c.setLeadComponent(hit);
-        return c;
-    }
-
     static Container pill(Label text, int bgColor, int borderColor) {
         Container p = new Container(new FlowLayout(Component.CENTER, Component.CENTER));
         Style s = p.getAllStyles();
@@ -141,30 +132,12 @@ public class PeoplePage {
         return p;
     }
 
-    static Container topBar() {
-        Container bar = new Container(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER));
-        setMargins(bar, 1, 1, 1, 1);
-
-        Container back = roundIconButton(FontImage.MATERIAL_ARROW_BACK_IOS, e -> new HomePage().show());
-        Container menu = roundIconButton(FontImage.MATERIAL_MORE_VERT, e -> {
-        });
-
-        Label contributionFor = SAVI.text("CONTRIBUTION FOR:", SAVI.bold(2f), SAVI.BRIGHT_VIOLET);
-        Container title = pill(contributionFor, LIGHT_VIOLET, LIGHT_VIOLET_BORDER);
-
-        bar.add(BorderLayout.WEST, back);
-        bar.add(BorderLayout.CENTER, title);
-        bar.add(BorderLayout.EAST, menu);
-        return bar;
-    }
-
     static Container groupBanner(String name, String pool, int contributors) {
-        // paints a violet -> indigo gradient clipped to the card's rounded corners
         final float radiusMM = 5f;
         Container banner = new Container(BoxLayout.y()) {
             @Override
             public void paintBackground(Graphics g) {
-                super.paintBackground(g); // shadow + solid fallback fill
+                super.paintBackground(g);
                 if (g.isShapeClipSupported()) {
                     int r = Display.getInstance().convertToPixels(radiusMM);
                     g.setAntiAliased(true);
@@ -178,7 +151,6 @@ public class PeoplePage {
         cardStyles(banner, BANNER_START, radiusMM, 2.5f, 2.5f);
         setMargins(banner, 0.5f, 1, 2, 2);
 
-        // title row
         Label groupName = SAVI.text(name.toUpperCase(), SAVI.bold(3.5f), SAVI.WHITE);
         Container chevron = circleIcon(FontImage.MATERIAL_KEYBOARD_ARROW_DOWN, 6f, 3f, BANNER_SOFT, SAVI.WHITE, false);
 
@@ -186,12 +158,10 @@ public class PeoplePage {
         titleRow.add(BorderLayout.WEST, groupName);
         titleRow.add(BorderLayout.EAST, chevron);
 
-        // total pool (left)
         Container poolCont = new Container(BoxLayout.y());
         poolCont.add(SAVI.text("Total Pool", SAVI.regular(2f), BANNER_LABEL));
         poolCont.add(SAVI.text(pool, SAVI.bold(4f), SAVI.WHITE));
 
-        // members (right)
         Container memCont = new Container(BoxLayout.y());
         Label memText = SAVI.text("Members", SAVI.regular(2f), BANNER_LABEL);
         memText.getAllStyles().setAlignment(Component.RIGHT);
@@ -337,7 +307,7 @@ public class PeoplePage {
                     }));
         }
 
-        base.add(BorderLayout.NORTH, topBar());
+        base.add(BorderLayout.NORTH, SAVI.buildHeader("Group Members", () -> new HomePage().show()));
         base.add(BorderLayout.CENTER, mainContents);
         base.show();
     }

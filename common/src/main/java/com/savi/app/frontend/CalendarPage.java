@@ -15,23 +15,22 @@ public class CalendarPage {
 
         CalendarLogic logic = new CalendarLogic(); //backend
 
-        Form calendarForm = new Form(new BorderLayout());
-        calendarForm.getAllStyles().setBgColor(SAVI.PALE_PURPLE);
-        calendarForm.getAllStyles().setBgTransparency(255);
-
-        // for back button
-        calendarForm.getToolbar().addMaterialCommandToLeftBar("", FontImage.MATERIAL_ARROW_BACK, e -> {new HomePage().show();});
+        Form calendarForm = new Form("", new BorderLayout());
+        calendarForm.getContentPane().getAllStyles().setBgColor(SAVI.PALE_PURPLE);
+        calendarForm.getContentPane().getAllStyles().setBgTransparency(255);
 
         Container content = new Container(BoxLayout.y());
         content.setScrollableY(true);
         content.getAllStyles().setBgColor(SAVI.PALE_PURPLE);
         content.getAllStyles().setBgTransparency(255);
+        content.getAllStyles().setPaddingUnit(Style.UNIT_TYPE_DIPS);
+        content.getAllStyles().setPadding(0.5f, 2f, 0, 0);
 
         MonthCalendar cld = new MonthCalendar();
 
         // date labels [Today     (the date)]
-        Label dayTextLabel = new Label();
-        Label formattedDateLabel = new Label();
+        Label dayTextLabel = SAVI.text("", SAVI.bold(2.3f), SAVI.WHITE);
+        Label formattedDateLabel = SAVI.text("", SAVI.regular(2f), SAVI.WHITE);
         SimpleDateFormat formatter = new SimpleDateFormat("MMM dd, yyyy");
 
         // show the starting date immediately
@@ -39,41 +38,24 @@ public class CalendarPage {
         dayTextLabel.setText(logic.getDayText(initialDate));
         formattedDateLabel.setText(formatter.format(cld.getDate()));
 
-        dayTextLabel.getAllStyles().setFgColor(SAVI.WHITE);
-        dayTextLabel.getAllStyles().setFont(Font.createSystemFont(Font.FACE_SYSTEM, Font.STYLE_BOLD, Font.SIZE_MEDIUM));
-        formattedDateLabel.getAllStyles().setFgColor(SAVI.WHITE);
-        formattedDateLabel.getAllStyles().setFont(Font.createSystemFont(Font.FACE_SYSTEM, Font.STYLE_PLAIN, Font.SIZE_SMALL));
-
         // date bar
-        Container dateBar = new Container(new BorderLayout());
+        Container dateBar = new Container(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER));
         dateBar.add(BorderLayout.WEST, dayTextLabel);
         dateBar.add(BorderLayout.EAST, formattedDateLabel);
-        dateBar.getAllStyles().setBgColor(SAVI.DARK_PURPLE);
-        dateBar.getAllStyles().setBgTransparency(255);
-        dateBar.getAllStyles().setPadding(1, 1, 1, 1);
-        dateBar.getAllStyles().setMargin(1, 1, 1, 1);
-        dateBar.getAllStyles().setBorder(RoundRectBorder.create().cornerRadius(1));
+        HomePage.boxStyles(dateBar, SAVI.DARK_PURPLE, 1.5f, 2f);
+        dateBar.getAllStyles().setMarginTop(1.2f);
+        dateBar.getAllStyles().setMarginBottom(1f);
 
         content.add(cld);
-
-        Container space1 = new Container();
-        space1.setPreferredH(24);
-        content.add(space1);
-
         content.add(dateBar);
 
-        Container space2 = new Container();
-        space2.setPreferredH(24);
-        content.add(space2);
-
-        // container for the date-dependent cards
+        // Date-dependent records container
         Container recordsContainer = new Container(BoxLayout.y());
 
-        Label emptyMessage = new Label("No savings recorded for this date.");
-        emptyMessage.getAllStyles().setFont(Font.createSystemFont(Font.FACE_SYSTEM, Font.STYLE_BOLD, Font.SIZE_SMALL));
-        emptyMessage.getAllStyles().setFgColor(SAVI.BLUE_GRAY);
+        Label emptyMessage = SAVI.text("No savings recorded for this date.", SAVI.semiBold(2.1f), SAVI.SLATE_GRAY);
         emptyMessage.getAllStyles().setAlignment(Component.CENTER);
-        emptyMessage.getAllStyles().setPadding(5, 5, 3, 3);
+        emptyMessage.getAllStyles().setPaddingUnit(Style.UNIT_TYPE_DIPS);
+        emptyMessage.getAllStyles().setPadding(4f, 4f, 2f, 2f);
 
         content.add(recordsContainer);
 
@@ -88,6 +70,7 @@ public class CalendarPage {
             showRecords(recordsContainer, emptyMessage, selected, logic);
         });
 
+        calendarForm.add(BorderLayout.NORTH, SAVI.buildHeader("Savings Calendar", () -> new HomePage().show()));
         calendarForm.add(BorderLayout.CENTER, content);
         calendarForm.show();
     }
@@ -110,30 +93,50 @@ public class CalendarPage {
 
     // one card per group (same design as before, but with real data)
     private Container createTrackerCard(GroupSavings g, LocalDate date, CalendarLogic logic) {
-
         ArrayList<Contribution> list = g.getContributionsOn(date);
         int count = list.size();
 
         Container trackerCard = new Container(BoxLayout.y());
+        HomePage.boxStyles(trackerCard, SAVI.WHITE, 2f, 2f);
 
         // HEADER: group name on the left, status on the right
-        Container trackerHeader = new Container(new BorderLayout());
-        Label groupName = new Label(g.getGroupName());
-        Label status = new Label(logic.getStatus(g, date));
+        Container trackerHeader = new Container(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER));
+        Label groupName = SAVI.text(g.getGroupName(), SAVI.bold(2.3f), SAVI.DARK_KNIGHT);
+
+        String statusStr = logic.getStatus(g, date);
+        boolean isSaved = "Saved".equalsIgnoreCase(statusStr);
+        Label status = SAVI.text(statusStr, SAVI.bold(1.7f), isSaved ? SAVI.GREEN : SAVI.AMBER);
+        Style ss = status.getAllStyles();
+        ss.setBgColor(isSaved ? SAVI.PALE_GREEN : SAVI.YELLOW_TAG);
+        ss.setBgTransparency(255);
+        ss.setPaddingUnit(Style.UNIT_TYPE_DIPS);
+        ss.setPadding(0.6f, 0.6f, 1.5f, 1.5f);
+        ss.setBorder(RoundRectBorder.create().cornerRadius(2f));
+
         trackerHeader.add(BorderLayout.WEST, groupName);
         trackerHeader.add(BorderLayout.EAST, status);
 
         // AMOUNT SAVED
-        Label amountSaved = new Label("Amount Saved: " + logic.formatAmount(g.getTotalOn(date)));
+        Label amountSaved = SAVI.text("Amount Saved: " + Home.pesoFormat(g.getTotalOn(date)), SAVI.bold(2.2f), SAVI.GREEN);
+        amountSaved.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
+        amountSaved.getAllStyles().setMargin(0.8f, 1f, 0, 0);
 
         // CONTRIBUTIONS BUTTON for drop down
         Button viewContributions = new Button("View contributions (" + count + ")");
         viewContributions.setMaterialIcon(FontImage.MATERIAL_ARROW_DROP_DOWN);
+        Style vs = viewContributions.getAllStyles();
+        vs.setFont(SAVI.semiBold(1.9f));
+        vs.setFgColor(SAVI.DARK_PURPLE);
+        vs.setBgColor(SAVI.PALE_PURPLE);
+        vs.setBgTransparency(255);
+        vs.setPaddingUnit(Style.UNIT_TYPE_DIPS);
+        vs.setPadding(1.2f, 1.2f, 1.5f, 1.5f);
+        vs.setBorder(RoundRectBorder.create().cornerRadius(2.5f));
 
         // CONTRIBUTIONS LIST: one row per contribution
         Container contributionsList = new Container(BoxLayout.y());
         for (Contribution c : list) {
-            contributionsList.add(createContributionRow(c.getMember(), "+" + logic.formatAmount(c.getAmount())));
+            contributionsList.add(createContributionRow(c.getMember(), "+" + Home.pesoFormat(c.getAmount())));
         }
         contributionsList.setHidden(true);
 
@@ -161,63 +164,27 @@ public class CalendarPage {
         // NOTE SECTION (only if there is a note)
         String note = logic.getNoteOn(g, date);
         if (!note.isEmpty()) {
-            Label noteTitle = new Label("Note");
-            Label noteText = new Label(note);
-            noteTitle.getAllStyles().setFgColor(SAVI.BLUE_GRAY);
-            noteTitle.getAllStyles().setFont(Font.createSystemFont(Font.FACE_SYSTEM, Font.STYLE_PLAIN, Font.SIZE_SMALL));
-            noteText.getAllStyles().setFgColor(SAVI.BLUE_GRAY);
-            noteText.getAllStyles().setFont(Font.createSystemFont(Font.FACE_SYSTEM, Font.STYLE_ITALIC, Font.SIZE_SMALL));
+            Label noteTitle = SAVI.text("Note", SAVI.semiBold(1.7f), SAVI.SLATE_GRAY);
+            noteTitle.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
+            noteTitle.getAllStyles().setMargin(1f, 0, 0, 0);
+            Label noteText = SAVI.text(note, SAVI.regular(1.8f), SAVI.SLATE_GRAY);
             trackerCard.add(noteTitle);
             trackerCard.add(noteText);
         }
-
-        // TRACKER CARD STYLE
-        trackerCard.getAllStyles().setBgColor(SAVI.WHITE);
-        trackerCard.getAllStyles().setBgTransparency(255);
-        trackerCard.getAllStyles().setPadding(3, 3, 3, 3);
-        trackerCard.getAllStyles().setMargin(2, 2, 2, 2);
-        trackerCard.getAllStyles().setBorder(RoundRectBorder.create().cornerRadius(3).strokeColor(SAVI.BORDER_COLOR));
-
-        // GROUP NAME
-        groupName.getAllStyles().setFgColor(SAVI.NAVY);
-        groupName.getAllStyles().setFont(Font.createSystemFont(Font.FACE_SYSTEM, Font.STYLE_BOLD, Font.SIZE_MEDIUM));
-
-        // STATUS BADGE (green for now; a yellow "Pending" style comes later)
-        status.getAllStyles().setFgColor(SAVI.GREEN);
-        status.getAllStyles().setBgColor(SAVI.PALE_GREEN);
-        status.getAllStyles().setBgTransparency(255);
-        status.getAllStyles().setPadding(1, 1, 1, 1);
-        status.getAllStyles().setBorder(RoundRectBorder.create().cornerRadius(1));
-        status.getAllStyles().setFont(Font.createSystemFont(Font.FACE_SYSTEM, Font.STYLE_BOLD, Font.SIZE_SMALL));
-
-        // AMOUNT
-        amountSaved.getAllStyles().setFgColor(SAVI.GREEN);
-        amountSaved.getAllStyles().setFont(Font.createSystemFont(Font.FACE_SYSTEM, Font.STYLE_BOLD, Font.SIZE_MEDIUM));
-
-        // VIEW/HIDE CONTRIBUTIONS BUTTON
-        viewContributions.getAllStyles().setFgColor(SAVI.DARK_PURPLE);
-        viewContributions.getAllStyles().setBgColor(SAVI.PALE_PURPLE);
-        viewContributions.getAllStyles().setBgTransparency(255);
-        viewContributions.getAllStyles().setPadding(2, 2, 2, 2);
-        viewContributions.getAllStyles().setBorder(RoundRectBorder.create().cornerRadius(1));
 
         return trackerCard;
     }
 
     // one "name .... +₱10.00" row
     private Container createContributionRow(String name, String amount) {
-        Font rowFont = Font.createSystemFont(Font.FACE_SYSTEM, Font.STYLE_PLAIN, Font.SIZE_SMALL);
-
-        Label nameLabel = new Label(name);
-        Label amountLabel = new Label(amount);
-        nameLabel.getAllStyles().setFont(rowFont);
-        amountLabel.getAllStyles().setFont(rowFont);
-        amountLabel.getAllStyles().setFgColor(SAVI.GREEN);
+        Label nameLabel = SAVI.text(name, SAVI.regular(1.9f), SAVI.DARK_KNIGHT);
+        Label amountLabel = SAVI.text(amount, SAVI.semiBold(1.9f), SAVI.GREEN);
 
         Container row = new Container(new BorderLayout());
         row.add(BorderLayout.WEST, nameLabel);
         row.add(BorderLayout.EAST, amountLabel);
-        row.getAllStyles().setPadding(1, 1, 2, 2);
+        row.getAllStyles().setPaddingUnit(Style.UNIT_TYPE_DIPS);
+        row.getAllStyles().setPadding(0.8f, 0.8f, 1.5f, 1.5f);
         return row;
     }
 }

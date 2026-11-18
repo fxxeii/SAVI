@@ -57,31 +57,6 @@ public class RecentContributions{
         return w;
     }
 
-    private Container header() {
-        com.codename1.ui.Button back = new com.codename1.ui.Button();
-        Style bs = back.getAllStyles();
-        bs.setFgColor(SAVI.BLACK);
-        bs.setBgTransparency(0);
-        bs.setBorder(RoundBorder.create().color(SAVI.WHITE));
-        bs.setPaddingUnit(Style.UNIT_TYPE_DIPS);
-        bs.setPadding(1, 1, 1, 1);
-        bs.setMargin(0, 0, 2, 0);
-        FontImage.setMaterialIcon(back, FontImage.MATERIAL_CHEVRON_LEFT, 4);
-        back.addActionListener(e -> new HomePage().show());
-
-        Label title = txt("Recent Contributions", SAVI.bold(3f), SAVI.WHITE);
-        title.getAllStyles().setAlignment(Component.CENTER);
-
-        Container headerText = new Container(new BorderLayout());
-        styles(headerText, SAVI.DARK_PURPLE, 1, 1, 2, 1, 1.5f);
-        headerText.add(BorderLayout.CENTER, title);
-
-        Container header = new Container(new BorderLayout());
-        header.add(BorderLayout.WEST, back);
-        header.add(BorderLayout.CENTER, headerText);
-        return header;
-    }
-
     // purple badge for recent contributions, pale gray badge for older ones
     private Container dateBadge(String day, String dow, boolean recent) {
         int bg = recent ? SAVI.DARK_PURPLE : 0xF1F5F9;
@@ -201,15 +176,20 @@ public class RecentContributions{
         java.util.List<Home.RecentContribution> items = home.getRecentContributions();
         LocalDate newest = items.isEmpty() ? null : items.get(0).getDate();
 
-        for (Home.RecentContribution c : items) {
-            boolean recent = c.getDate().equals(newest);              // purple badge = newest day
-            String dow = c.getWeekday().substring(0, 3).toUpperCase(); // "Wednesday" -> "WED"
-            list.add(contributionCard(c.getDayNumber(), dow, c.getGroupName(), c.getMember(),
-                    Home.pesoShort(c.getAmount()), c.getNote(), recent));
+        if (items.isEmpty()) {
+            Label empty = SAVI.text("No contributions recorded.", SAVI.regular(2.5f), SAVI.SLATE_GRAY);
+            base.add(BorderLayout.CENTER, BorderLayout.centerAbsolute(empty));   // centered both ways
+        } else {
+            for (Home.RecentContribution c : items) {
+                boolean recent = c.getDate().equals(newest);               // purple badge = newest day
+                String dow = c.getWeekday().substring(0, 3).toUpperCase(); // "Wednesday" -> "WED"
+                list.add(contributionCard(c.getDayNumber(), dow, c.getGroupName(), c.getMember(),
+                        Home.pesoShort(c.getAmount()), c.getNote(), recent));
+            }
+            base.add(BorderLayout.CENTER, list);
         }
 
-        base.add(BorderLayout.NORTH, header());
-        base.add(BorderLayout.CENTER, list);
+        base.add(BorderLayout.NORTH, SAVI.buildHeader("Recent Contributions", () -> new HomePage().show()));
         base.show();
     }
 }
