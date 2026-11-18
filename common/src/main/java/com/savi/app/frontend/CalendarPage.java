@@ -1,58 +1,46 @@
-// suggestion: maglagay ng number of pending
-// ex. 3 pending tapos dropdown para makita sino mga pending pa
-
 package com.savi.app.frontend;
 
-import com.codename1.ui.*; // for form, button, dialog, front image
+import com.codename1.ui.*;
 import com.codename1.ui.layouts.*;
 import com.codename1.ui.plaf.*;
-import java.util.Date;
 import com.codename1.l10n.SimpleDateFormat;
 import com.savi.app.SAVI;
+import com.savi.app.backend.*;
+import java.time.LocalDate;
+import java.util.ArrayList;
 
 public class CalendarPage {
 
     public void show() {
 
-        Form calendarForm = new Form(new BorderLayout()); // ginagawa yung screen
+        CalendarLogic logic = new CalendarLogic(); //backend
+
+        Form calendarForm = new Form(new BorderLayout());
         calendarForm.getAllStyles().setBgColor(SAVI.PALE_PURPLE);
         calendarForm.getAllStyles().setBgTransparency(255);
 
         // for back button
-        calendarForm.getToolbar().addMaterialCommandToLeftBar("", FontImage.MATERIAL_ARROW_BACK, e -> {
-            // dito ilalagay yung code para bumalik sa previous screen
-            // should look like: previousForm.showBack();
-        });
+        calendarForm.getToolbar().addMaterialCommandToLeftBar("", FontImage.MATERIAL_ARROW_BACK, e -> {new HomePage().show();});
 
-        Container content = new Container(BoxLayout.y()); // creates a container para paglagyan ng iba pang content sa center. main content
+        Container content = new Container(BoxLayout.y());
         content.setScrollableY(true);
         content.getAllStyles().setBgColor(SAVI.PALE_PURPLE);
         content.getAllStyles().setBgTransparency(255);
 
-        Calendar cld = new Calendar(); // creates a calendar
-        // calendar style
-        cld.getAllStyles().setBgColor(SAVI.DARK_DARK_PURPLE);
-        cld.getAllStyles().setBgTransparency(255);
-        cld.getAllStyles().setPadding(3, 3, 3, 3);
-        cld.getAllStyles().setMargin(2, 2, 2, 2);
+        MonthCalendar cld = new MonthCalendar();
 
         // date labels [Today     (the date)]
         Label dayTextLabel = new Label();
         Label formattedDateLabel = new Label();
+        SimpleDateFormat formatter = new SimpleDateFormat("MMM dd, yyyy");
 
-        SimpleDateFormat formatter = new SimpleDateFormat("MMM dd, yyyy"); // for format ng date
+        // show the starting date immediately
+        LocalDate initialDate = logic.toLocalDate(cld.getDate());
+        dayTextLabel.setText(logic.getDayText(initialDate));
+        formattedDateLabel.setText(formatter.format(cld.getDate()));
 
-        // display todays date immediately after opening the app
-        Date currentDate = new Date();
-        String dayText = getDayText(currentDate);
-        String formattedDate = formatter.format(currentDate);
-        dayTextLabel.setText(dayText);
-        formattedDateLabel.setText(formattedDate);
-
-        // selected day style
         dayTextLabel.getAllStyles().setFgColor(SAVI.WHITE);
         dayTextLabel.getAllStyles().setFont(Font.createSystemFont(Font.FACE_SYSTEM, Font.STYLE_BOLD, Font.SIZE_MEDIUM));
-        //formatted day style
         formattedDateLabel.getAllStyles().setFgColor(SAVI.WHITE);
         formattedDateLabel.getAllStyles().setFont(Font.createSystemFont(Font.FACE_SYSTEM, Font.STYLE_PLAIN, Font.SIZE_SMALL));
 
@@ -60,127 +48,141 @@ public class CalendarPage {
         Container dateBar = new Container(new BorderLayout());
         dateBar.add(BorderLayout.WEST, dayTextLabel);
         dateBar.add(BorderLayout.EAST, formattedDateLabel);
-
-        // date bar style
         dateBar.getAllStyles().setBgColor(SAVI.DARK_PURPLE);
         dateBar.getAllStyles().setBgTransparency(255);
         dateBar.getAllStyles().setPadding(1, 1, 1, 1);
         dateBar.getAllStyles().setMargin(1, 1, 1, 1);
         dateBar.getAllStyles().setBorder(RoundRectBorder.create().cornerRadius(1));
 
-        content.add(cld); // put the calendar inside the content
+        content.add(cld);
 
-        // SPACE BETWEEN CALENDAR AND DATE BAR
         Container space1 = new Container();
         space1.setPreferredH(24);
         content.add(space1);
 
-        content.add(dateBar); // adds date bar inside the content
+        content.add(dateBar);
 
-        // SPACE BETWEEN DATE BAR AND TRACKER CARD
         Container space2 = new Container();
         space2.setPreferredH(24);
         content.add(space2);
 
-        Container trackerCard = new Container(BoxLayout.y()); // isang malaking container na paglalagyan ng contribution tracker
+        // container for the date-dependent cards
+        Container recordsContainer = new Container(BoxLayout.y());
+
+        Label emptyMessage = new Label("No savings recorded for this date.");
+        emptyMessage.getAllStyles().setFont(Font.createSystemFont(Font.FACE_SYSTEM, Font.STYLE_BOLD, Font.SIZE_SMALL));
+        emptyMessage.getAllStyles().setFgColor(SAVI.BLUE_GRAY);
+        emptyMessage.getAllStyles().setAlignment(Component.CENTER);
+        emptyMessage.getAllStyles().setPadding(5, 5, 3, 3);
+
+        content.add(recordsContainer);
+
+        // load the cards for the starting date
+        showRecords(recordsContainer, emptyMessage, initialDate, logic);
+
+        // runs when a day is selected
+        cld.addDayActionListener(e -> {
+            LocalDate selected = logic.toLocalDate(cld.getDate());
+            dayTextLabel.setText(logic.getDayText(selected));
+            formattedDateLabel.setText(formatter.format(cld.getDate()));
+            showRecords(recordsContainer, emptyMessage, selected, logic);
+        });
+
+        calendarForm.add(BorderLayout.CENTER, content);
+        calendarForm.show();
+    }
+
+    // rebuilds the cards for the selected date
+    private void showRecords(Container recordsContainer, Label emptyMessage, LocalDate date, CalendarLogic logic) {
+        recordsContainer.removeAll();
+
+        ArrayList<GroupSavings> found = logic.getGroupsWithRecords(SAVI.groups, date);
+
+        if (found.isEmpty()) {
+            recordsContainer.add(emptyMessage);
+        } else {
+            for (GroupSavings g : found) {
+                recordsContainer.add(createTrackerCard(g, date, logic));
+            }
+        }
+        recordsContainer.revalidate();
+    }
+
+    // one card per group (same design as before, but with real data)
+    private Container createTrackerCard(GroupSavings g, LocalDate date, CalendarLogic logic) {
+
+        ArrayList<Contribution> list = g.getContributionsOn(date);
+        int count = list.size();
+
+        Container trackerCard = new Container(BoxLayout.y());
 
         // HEADER: group name on the left, status on the right
         Container trackerHeader = new Container(new BorderLayout());
-
-        Label groupName = new Label("December Vacation");
-        Label status = new Label("Saved");
-
+        Label groupName = new Label(g.getGroupName());
+        Label status = new Label(logic.getStatus(g, date));
         trackerHeader.add(BorderLayout.WEST, groupName);
         trackerHeader.add(BorderLayout.EAST, status);
 
         // AMOUNT SAVED
-        Label amountSaved = new Label("Amount Saved: ₱40.00");
+        Label amountSaved = new Label("Amount Saved: " + logic.formatAmount(g.getTotalOn(date)));
 
         // CONTRIBUTIONS BUTTON for drop down
-        Button viewContributions = new Button("View contributions (4)");
+        Button viewContributions = new Button("View contributions (" + count + ")");
         viewContributions.setMaterialIcon(FontImage.MATERIAL_ARROW_DROP_DOWN);
 
-        // CONTRIBUTIONS LIST yung history or list
+        // CONTRIBUTIONS LIST: one row per contribution
         Container contributionsList = new Container(BoxLayout.y());
-
-        Container row1 = new Container(new BorderLayout());
-        Label name1 = new Label("Airesse");
-        Label amount1 = new Label("+₱10.00");
-        row1.add(BorderLayout.WEST, name1);
-        row1.add(BorderLayout.EAST, amount1);
-
-        Container row2 = new Container(new BorderLayout());
-        Label name2 = new Label("Faye");
-        Label amount2 = new Label("+₱10.00");
-        row2.add(BorderLayout.WEST, name2);
-        row2.add(BorderLayout.EAST, amount2);
-
-        Container row3 = new Container(new BorderLayout());
-        Label name3 = new Label("Sam");
-        Label amount3 = new Label("+₱10.00");
-        row3.add(BorderLayout.WEST, name3);
-        row3.add(BorderLayout.EAST, amount3);
-
-        Container row4 = new Container(new BorderLayout());
-        Label name4 = new Label("Shy");
-        Label amount4 = new Label("+₱10.00");
-        row4.add(BorderLayout.WEST, name4);
-        row4.add(BorderLayout.EAST, amount4);
-
-        contributionsList.add(row1);
-        contributionsList.add(row2);
-        contributionsList.add(row3);
-        contributionsList.add(row4);
-
-        contributionsList.setHidden(true); // dapat mag-open ng page naka-hide pa yung contributions list
+        for (Contribution c : list) {
+            contributionsList.add(createContributionRow(c.getMember(), "+" + logic.formatAmount(c.getAmount())));
+        }
+        contributionsList.setHidden(true);
 
         // EXPAND / COLLAPSE
         viewContributions.addActionListener(e -> {
             boolean isHidden = contributionsList.isHidden();
-
             contributionsList.setHidden(!isHidden);
 
             if (isHidden) {
-                viewContributions.setText("Hide contributions (4)");
-                viewContributions.setMaterialIcon(
-                        FontImage.MATERIAL_ARROW_DROP_UP
-                );
+                viewContributions.setText("Hide contributions (" + count + ")");
+                viewContributions.setMaterialIcon(FontImage.MATERIAL_ARROW_DROP_UP);
             } else {
-                viewContributions.setText("View contributions (4)");
-                viewContributions.setMaterialIcon(
-                        FontImage.MATERIAL_ARROW_DROP_DOWN
-                );
+                viewContributions.setText("View contributions (" + count + ")");
+                viewContributions.setMaterialIcon(FontImage.MATERIAL_ARROW_DROP_DOWN);
             }
-
             trackerCard.revalidate();
         });
-
-        // NOTE SECTION
-        Label noteTitle = new Label("Note");
-        Label noteText = new Label("Completed daily round");
 
         // ADD COMPONENTS IN ORDER
         trackerCard.add(trackerHeader);
         trackerCard.add(amountSaved);
         trackerCard.add(viewContributions);
         trackerCard.add(contributionsList);
-        trackerCard.add(noteTitle);
-        trackerCard.add(noteText);
 
-        // TRACKER CARD
+        // NOTE SECTION (only if there is a note)
+        String note = logic.getNoteOn(g, date);
+        if (!note.isEmpty()) {
+            Label noteTitle = new Label("Note");
+            Label noteText = new Label(note);
+            noteTitle.getAllStyles().setFgColor(SAVI.BLUE_GRAY);
+            noteTitle.getAllStyles().setFont(Font.createSystemFont(Font.FACE_SYSTEM, Font.STYLE_PLAIN, Font.SIZE_SMALL));
+            noteText.getAllStyles().setFgColor(SAVI.BLUE_GRAY);
+            noteText.getAllStyles().setFont(Font.createSystemFont(Font.FACE_SYSTEM, Font.STYLE_ITALIC, Font.SIZE_SMALL));
+            trackerCard.add(noteTitle);
+            trackerCard.add(noteText);
+        }
+
+        // TRACKER CARD STYLE
         trackerCard.getAllStyles().setBgColor(SAVI.WHITE);
-        trackerCard.getAllStyles().setBgTransparency(255); // 255 means show its background color fully. 0 is full transparent, 255 is full opaque
-        trackerCard.getAllStyles().setPadding(3, 3, 3, 3); // padding is the space inside the container
-        trackerCard.getAllStyles().setMargin(2, 2, 2, 2); // margin is the space outside the container
-        // .create() creates a rounded-rectangular border
+        trackerCard.getAllStyles().setBgTransparency(255);
+        trackerCard.getAllStyles().setPadding(3, 3, 3, 3);
+        trackerCard.getAllStyles().setMargin(2, 2, 2, 2);
         trackerCard.getAllStyles().setBorder(RoundRectBorder.create().cornerRadius(3).strokeColor(SAVI.BORDER_COLOR));
 
         // GROUP NAME
-        groupName.getAllStyles().setFgColor(SAVI.NAVY); // fg color is for text or icon color
-        // Font.createSystemFont() — changing the text style
+        groupName.getAllStyles().setFgColor(SAVI.NAVY);
         groupName.getAllStyles().setFont(Font.createSystemFont(Font.FACE_SYSTEM, Font.STYLE_BOLD, Font.SIZE_MEDIUM));
 
-        // SAVED BADGE
+        // STATUS BADGE (green for now; a yellow "Pending" style comes later)
         status.getAllStyles().setFgColor(SAVI.GREEN);
         status.getAllStyles().setBgColor(SAVI.PALE_GREEN);
         status.getAllStyles().setBgTransparency(255);
@@ -199,105 +201,23 @@ public class CalendarPage {
         viewContributions.getAllStyles().setPadding(2, 2, 2, 2);
         viewContributions.getAllStyles().setBorder(RoundRectBorder.create().cornerRadius(1));
 
-        // CONTRIBUTION ROWS
-        row1.getAllStyles().setPadding(1, 1, 2, 2);
-        row2.getAllStyles().setPadding(1, 1, 2, 2);
-        row3.getAllStyles().setPadding(1, 1, 2, 2);
-        row4.getAllStyles().setPadding(1, 1, 2, 2);
+        return trackerCard;
+    }
 
+    // one "name .... +₱10.00" row
+    private Container createContributionRow(String name, String amount) {
         Font rowFont = Font.createSystemFont(Font.FACE_SYSTEM, Font.STYLE_PLAIN, Font.SIZE_SMALL);
 
-        name1.getAllStyles().setFont(rowFont);
-        name2.getAllStyles().setFont(rowFont);
-        name3.getAllStyles().setFont(rowFont);
-        name4.getAllStyles().setFont(rowFont);
+        Label nameLabel = new Label(name);
+        Label amountLabel = new Label(amount);
+        nameLabel.getAllStyles().setFont(rowFont);
+        amountLabel.getAllStyles().setFont(rowFont);
+        amountLabel.getAllStyles().setFgColor(SAVI.GREEN);
 
-        amount1.getAllStyles().setFont(rowFont);
-        amount1.getAllStyles().setFgColor(SAVI.GREEN);
-        amount2.getAllStyles().setFont(rowFont);
-        amount2.getAllStyles().setFgColor(SAVI.GREEN);
-        amount3.getAllStyles().setFont(rowFont);
-        amount3.getAllStyles().setFgColor(SAVI.GREEN);
-        amount4.getAllStyles().setFont(rowFont);
-        amount4.getAllStyles().setFgColor(SAVI.GREEN);
-
-        // NOTE
-        noteTitle.getAllStyles().setFgColor(SAVI.BLUE_GRAY);
-        noteTitle.getAllStyles().setFont(Font.createSystemFont(Font.FACE_SYSTEM, Font.STYLE_PLAIN, Font.SIZE_SMALL));
-        noteText.getAllStyles().setFgColor(SAVI.BLUE_GRAY);
-        noteText.getAllStyles().setFont(Font.createSystemFont(Font.FACE_SYSTEM, Font.STYLE_ITALIC, Font.SIZE_SMALL));
-
-        Container recordsContainer = new Container(BoxLayout.y()); // container for date-dependent content
-
-        Label emptyMessage = new Label("No savings recorded for this date.");
-        emptyMessage.getAllStyles().setFont(Font.createSystemFont(Font.FACE_SYSTEM, Font.STYLE_BOLD, Font.SIZE_SMALL));
-        emptyMessage.getAllStyles().setFgColor(SAVI.BLUE_GRAY);
-        emptyMessage.getAllStyles().setAlignment(Component.CENTER);
-        emptyMessage.getAllStyles().setPadding(5, 5, 3, 3);
-
-        content.add(recordsContainer); // then put the container inide the main content
-
-        Date initialDate = cld.getDate();
-
-        SimpleDateFormat dateKeyFormat = new SimpleDateFormat("yyyy-MM-dd");
-        String initialDateKey = dateKeyFormat.format(initialDate);
-
-        if (initialDateKey.equals("2026-10-02")) {
-            recordsContainer.add(trackerCard);
-        } else {
-            recordsContainer.add(emptyMessage);
-        }
-
-        // runs when a day is selected
-        cld.addDayActionListener((e) -> {
-            Date selectedDate = cld.getDate(); // gets the date currently selected by the user
-            //updates date bar
-            String selectedDayText = getDayText(selectedDate); // get the current date
-            String selectedFormattedDate = formatter.format(selectedDate); //get the formatted date
-            dayTextLabel.setText(selectedDayText);
-            formattedDateLabel.setText(selectedFormattedDate);
-            // checks if the selected date has records
-            SimpleDateFormat dateKeyFormat1 = new SimpleDateFormat("yyyy-MM-dd");
-
-            String selectedDateKey = dateKeyFormat1.format(selectedDate);
-
-            if (selectedDateKey.equals("2026-10-02")) {
-                // OCTOBER 2: SHOW TRACKER CARD
-                recordsContainer.removeAll();
-                recordsContainer.add(trackerCard);
-            } else {
-                // OTHER DATES: SHOW EMPTY STATE
-                recordsContainer.removeAll();
-                recordsContainer.add(emptyMessage);
-            }
-
-            recordsContainer.revalidate();
-        });
-
-        calendarForm.add(BorderLayout.CENTER, content); //put the content inside the form and place it in the center
-
-        calendarForm.show();
+        Container row = new Container(new BorderLayout());
+        row.add(BorderLayout.WEST, nameLabel);
+        row.add(BorderLayout.EAST, amountLabel);
+        row.getAllStyles().setPadding(1, 1, 2, 2);
+        return row;
     }
-
-    //determines if the selected date is today or other days
-    private String getDayText(Date selected) {
-        Date today = new Date();
-        long difference = (today.getTime() - selected.getTime()) / (1000l * 60 * 60 * 24); // calculates the difference using milliseconds and converts it back to day
-
-        if (difference == 0){
-            return "Today";
-        }
-        if (difference == 1){
-            return "Yesterday";
-        }
-        if (difference == -1){
-            return "Tomorrow";
-        }
-        if (difference > 1){
-            return difference + " days ago";
-        }
-
-        return "In " + (-difference) + " days";
-    }
-
 }

@@ -68,31 +68,26 @@ public class SummaryPage {
     private Container header() {
         com.codename1.ui.Button back = new com.codename1.ui.Button();
         Style bs = back.getAllStyles();
-        bs.setFgColor(SAVI.DARK_PURPLE);
+        bs.setFgColor(SAVI.BLACK);
         bs.setBgTransparency(0);
         bs.setBorder(RoundBorder.create().color(SAVI.WHITE));
         bs.setPaddingUnit(Style.UNIT_TYPE_DIPS);
-        bs.setPadding(0.6f, 0.6f, 0.6f, 0.6f);
-        bs.setMargin(0, 0, 0, 0);
-        FontImage.setMaterialIcon(back, FontImage.MATERIAL_CHEVRON_LEFT, 3.5f);
+        bs.setPadding(1, 1, 1, 1);
+        bs.setMargin(0, 0, 2, 0);
+        FontImage.setMaterialIcon(back, FontImage.MATERIAL_CHEVRON_LEFT, 4);
         back.addActionListener(e -> new HomePage().show());
 
-        Label spacer = new Label();
-        spacer.getAllStyles().setMargin(0, 0, 0, 0);
-        spacer.setPreferredSize(back.getPreferredSize());
-
-        Label title = txt("Group Savings Summary", SAVI.bold(2.5f), SAVI.WHITE);
+        Label title = txt("Group Savings Summary", SAVI.bold(3f), SAVI.WHITE);
         title.getAllStyles().setAlignment(Component.CENTER);
 
-        Container pill = new Container(new BorderLayout());
-        styles(pill, SAVI.DARK_PURPLE, 1.5f, 1.5f, 2f, 1f, 0.4f);
-        pill.add(BorderLayout.WEST, back);
-        pill.add(BorderLayout.CENTER, title);
-        pill.add(BorderLayout.EAST, spacer);
+        Container headerText = new Container(new BorderLayout());
+        styles(headerText, SAVI.DARK_PURPLE, 1, 1, 2, 1, 1.5f);
+        headerText.add(BorderLayout.CENTER, title);
 
-        Container wrap = new Container(new BorderLayout());
-        wrap.add(BorderLayout.CENTER, pill);
-        return wrap;
+        Container header = new Container(new BorderLayout());
+        header.add(BorderLayout.WEST, back);
+        header.add(BorderLayout.CENTER, headerText);
+        return header;
     }
 
     private Container poolCard() {
@@ -443,6 +438,7 @@ public class SummaryPage {
         ds.setMargin(0, 0, 0, 0);
         ds.setPadding(0, 0, 0, 0);
         details.setTextPosition(Component.LEFT);
+        details.addActionListener(e-> {new PeoplePage().show();});
         FontImage.setMaterialIcon(details, FontImage.MATERIAL_CHEVRON_RIGHT, 3f);
 
         Container footer = new Container(new BorderLayout());
