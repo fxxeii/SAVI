@@ -201,15 +201,20 @@ public class RecentContributions{
         java.util.List<Home.RecentContribution> items = home.getRecentContributions();
         LocalDate newest = items.isEmpty() ? null : items.get(0).getDate();
 
-        for (Home.RecentContribution c : items) {
-            boolean recent = c.getDate().equals(newest);              // purple badge = newest day
-            String dow = c.getWeekday().substring(0, 3).toUpperCase(); // "Wednesday" -> "WED"
-            list.add(contributionCard(c.getDayNumber(), dow, c.getGroupName(), c.getMember(),
-                    Home.pesoShort(c.getAmount()), c.getNote(), recent));
+        if (items.isEmpty()) {
+            Label empty = SAVI.text("No contributions recorded.", SAVI.regular(2.5f), SAVI.SLATE_GRAY);
+            base.add(BorderLayout.CENTER, BorderLayout.centerAbsolute(empty));   // centered both ways
+        } else {
+            for (Home.RecentContribution c : items) {
+                boolean recent = c.getDate().equals(newest);               // purple badge = newest day
+                String dow = c.getWeekday().substring(0, 3).toUpperCase(); // "Wednesday" -> "WED"
+                list.add(contributionCard(c.getDayNumber(), dow, c.getGroupName(), c.getMember(),
+                        Home.pesoShort(c.getAmount()), c.getNote(), recent));
+            }
+            base.add(BorderLayout.CENTER, list);
         }
 
         base.add(BorderLayout.NORTH, header());
-        base.add(BorderLayout.CENTER, list);
         base.show();
     }
 }
