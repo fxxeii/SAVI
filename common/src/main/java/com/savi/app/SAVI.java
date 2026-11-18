@@ -11,6 +11,9 @@ import com.savi.app.backend.User;
 
 public class SAVI extends Lifecycle {
 
+    public static User user = new User();
+    public static ReminderList reminders = new ReminderList();
+
     public static final int DARK_DARK_PURPLE = 0x30205E;
     public static final int DARK_PURPLE = 0x7C3AED;
     public static final int PALE_PURPLE = 0xF4EFFE;
@@ -42,8 +45,6 @@ public class SAVI extends Lifecycle {
     public static Font boldFont;
     public static Font semiBoldFont;
     public static Font italicFont;
-
-    public static User user = new User();
 
     public static Font regular(float mm){
         if(regularFont==null){
@@ -126,15 +127,9 @@ public class SAVI extends Lifecycle {
     @Override
     public void runApp() {
         user.load();
-        //new HomePage().show();
-        //new CalendarPage().show();
-        //new SignUpPage().show();
-        //new PendingPage().show();
+        reminders.load();
+
         new LogInPage().show();
-        //new MainPage().show();
-        //new TransferPage().show();
-        //new SummaryPage().show();
-        //new TransferConfirmationPage().show(500f, "Anna", "Family", "Ben", "Friends");
-        //new RecentContributions().show();
+        //new ViewAllTransacPage().show();
     }
 }
