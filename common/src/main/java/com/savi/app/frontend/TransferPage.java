@@ -166,32 +166,6 @@ public class TransferPage {
         base.getContentPane().getAllStyles().setBgColor(SAVI.PALE_PURPLE);
         base.getContentPane().getAllStyles().setBgTransparency(255);
 
-        com.codename1.ui.Button back = new com.codename1.ui.Button();
-        Style s = back.getAllStyles();
-        s.setFgColor(SAVI.BLACK);
-        s.setBgTransparency(0);
-        s.setPaddingUnit(Style.UNIT_TYPE_DIPS);
-        s.setPadding(1, 1, 1, 1);
-        FontImage.setMaterialIcon(back, FontImage.MATERIAL_CHEVRON_LEFT, 5);
-
-        back.addActionListener(e -> {new HomePage().show();});
-
-        // put it at the top-left
-        Container top = BorderLayout.west(back);
-        Style ts = top.getAllStyles();
-        ts.setMarginUnit(Style.UNIT_TYPE_DIPS);   // or UNIT_TYPE_PIXELS / UNIT_TYPE_SCREEN_PERCENTAGE
-        ts.setMargin(2, 1, 2, 0);                 // top, bottom, left, right (in dips)
-        //base.add(BorderLayout.NORTH, top);
-
-        Container titleContainer = new Container(new BorderLayout());
-        styles(titleContainer, SAVI.DARK_PURPLE, 1f, 0f, 2f, 2, 1);
-
-        Label TransferFunds = SAVI.text("Transfer Funds", SAVI.semiBold(2.5f), SAVI.WHITE);
-        titleContainer.add(BorderLayout.WEST, TransferFunds);
-
-        Container header = new Container(new BorderLayout());
-        header.add(BorderLayout.WEST, top);
-        header.add(BorderLayout.CENTER, titleContainer);
         String[] groups = {"Family", "Friends", "Work"};
         String[] members = {"Anna", "Ben", "Carl"};
 
@@ -232,7 +206,7 @@ public class TransferPage {
         transSavS.setMargin(1, 1, 5, 5);
         mainContents.add(TransferSav);
 
-        base.add(BorderLayout.NORTH, header);
+        base.add(BorderLayout.NORTH, SAVI.buildHeader("Transfer Funds", () -> new HomePage().show()));
         base.add(BorderLayout.CENTER, mainContents);
         base.show();
     }

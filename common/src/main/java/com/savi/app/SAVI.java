@@ -2,10 +2,8 @@ package com.savi.app;
 
 import com.codename1.system.Lifecycle;
 import com.codename1.ui.*;
-import com.codename1.ui.plaf.Style;
-import com.codename1.ui.Display;
-import com.codename1.ui.Font;
-import com.codename1.ui.Label;
+import com.codename1.ui.layouts.*;
+import com.codename1.ui.plaf.*;
 import com.savi.app.frontend.*;
 import com.savi.app.backend.*;
 import java.util.ArrayList;
@@ -39,7 +37,6 @@ public class SAVI extends Lifecycle {
     public static final int RED = 0xE11D48;
     public static final int PALE_RED = 0xFFF1F2;
     public static final int PINKISH = 0xC084FC;
-
 
     public static Font regularFont;
     public static Font boldFont;
@@ -83,51 +80,61 @@ public class SAVI extends Lifecycle {
         return lbl;
     }
 
-    public static Button createBackButton(Runnable action) {
-
-        Button back = new Button();
-
-        Style s = back.getAllStyles();
-
-        s.setFgColor(SAVI.BLACK);
-        s.setBgTransparency(0);
-        s.setPaddingUnit(Style.UNIT_TYPE_DIPS);
-        s.setPadding(1, 1, 1, 1);
-
-        FontImage.setMaterialIcon(
-                back,
-                FontImage.MATERIAL_CHEVRON_LEFT,
-                5
-        );
-
-        back.addActionListener(e -> action.run());
-
-        return back;
-    }
-
     public static User users = user;
     public static ArrayList<GroupSavings> groups = new ArrayList<>();
+
+    public static Container buildHeader(String titleText, Runnable onBack) {
+        Button back = new Button();
+        Style bs = back.getAllStyles();
+        bs.setFgColor(SAVI.DARK_PURPLE);
+        bs.setBgTransparency(0);
+        bs.setBorder(RoundBorder.create().color(SAVI.WHITE));
+        bs.setPaddingUnit(Style.UNIT_TYPE_DIPS);
+        bs.setPadding(0.6f, 0.6f, 0.6f, 0.6f);
+        bs.setMargin(0, 0, 0, 0);
+        FontImage.setMaterialIcon(back, FontImage.MATERIAL_CHEVRON_LEFT, 3.5f);
+        back.addActionListener(e -> onBack.run());
+
+        Label spacer = new Label();
+        spacer.getAllStyles().setMargin(0, 0, 0, 0);
+        spacer.setPreferredSize(back.getPreferredSize());
+
+        Label title = SAVI.text(titleText, SAVI.bold(2.5f), SAVI.WHITE);
+        title.getAllStyles().setMargin(0, 0, 0, 0);
+        title.getAllStyles().setPadding(0, 0, 0, 0);
+        title.getAllStyles().setAlignment(Component.CENTER);
+
+        Container pill = new Container(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER));
+        Style ps = pill.getAllStyles();
+        ps.setBgColor(SAVI.DARK_PURPLE);
+        ps.setBgTransparency(255);
+        ps.setBorder(RoundRectBorder.create().cornerRadius(4f).shadowOpacity(50).shadowBlur(10).shadowSpread(1f).shadowX(0.5f).shadowY(0.3f).shadowColor(SAVI.SLATE_GRAY));
+        ps.setPaddingUnit(Style.UNIT_TYPE_DIPS);
+        ps.setPadding(1.5f, 1.5f, 1.5f, 1.5f);
+        ps.setMarginUnit(Style.UNIT_TYPE_DIPS);
+        ps.setMargin(1f, 0.4f, 2f, 2f);
+
+        pill.add(BorderLayout.WEST, back);
+        pill.add(BorderLayout.CENTER, title);
+        pill.add(BorderLayout.EAST, spacer);
+
+        Container wrap = new Container(new BorderLayout());
+        wrap.add(BorderLayout.CENTER, pill);
+        return wrap;
+    }
 
     @Override
     public void runApp() {
         user.load();
-//        new HomePage().show();
-//        new CalendarPage().show();
-//        new SignUpPage().show();
-//        new PendingPage().show();
-//        new LogInPage().show();
-//        new MainPage().show();
-//        new TransferPage().show();
-//        new SummaryPage().show();
-//        new TransferConfirmationPage().show(500f, "Anna", "Family", "Ben", "Friends");
-//        new RecentContributions().show();
-//        new HomePage().show();
-//        new CalendarPage().show();
-//        new SignUpPage().show();
-//        new PendingPage().show();
+        //new HomePage().show();
+        //new CalendarPage().show();
+        //new SignUpPage().show();
+        //new PendingPage().show();
         new LogInPage().show();
-//        new MainPage().show();
-//        new TransferPage().show();
-//        new SummaryPage().show();
+        //new MainPage().show();
+        //new TransferPage().show();
+        //new SummaryPage().show();
+        //new TransferConfirmationPage().show(500f, "Anna", "Family", "Ben", "Friends");
+        //new RecentContributions().show();
     }
 }
