@@ -154,7 +154,6 @@ public class LogInPage {
             }
         }
 
-
         Button forgotp = new Button("Forgot Password");
 
         Button[] forgotButton = {forgotp};

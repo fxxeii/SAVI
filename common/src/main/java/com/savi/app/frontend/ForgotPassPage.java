@@ -178,8 +178,6 @@ public class ForgotPassPage {
         box.add(fp).add(sub1).add(sub2);
         box.add(form);
 
-
-
         Button savebtn = new Button("Save Password");
 
         Button[] sbtn = {savebtn};
