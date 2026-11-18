@@ -43,6 +43,17 @@ public class SAVI extends Lifecycle {
     public static Font semiBoldFont;
     public static Font italicFont;
 
+    public static final int NAV_HOME = 0;
+    public static final int NAV_CALENDAR = 1;
+    public static final int NAV_PEOPLE = 2;
+    public static final int NAV_USER = 3;
+
+    private static final float NAV_ADD_BTN = 12f;  // width of addButton.png in mm
+    private static final float NAV_NOTCH = 2f;   // space above the bar where the + button sticks out
+    private static final float NAV_BAR_H = 14.5f;  // height of the bar itself
+    private static final float NAV_SHADOW_MM = 1.5f; // how far the shadow reaches above the bar
+    private static final int NAV_SHADOW_ALPHA = 90;  // shadow strength at the bar: 0 (none) to 255
+
     public static User user = new User();
 
     public static Font regular(float mm){
@@ -78,6 +89,101 @@ public class SAVI extends Lifecycle {
         lbl.getAllStyles().setFont(font);
         lbl.getAllStyles().setFgColor(color);
         return lbl;
+    }
+
+    /** Bottom bar with the + button; "active" is the tab drawn in purple (NAV_HOME, ...). */
+    public static Container bottomNav(int active) {
+        return bottomNav(active, null);
+    }
+
+    /** Same, and onAdd runs when the + button is tapped (null = does nothing yet). */
+    public static Container bottomNav(int active, Runnable onAdd) {
+        // the nav paints its own background: the bar and its thin top line
+        Container nav = new Container(new BorderLayout()) {
+            @Override
+            public void paintBackground(Graphics g) {
+                int x = getX(), y = getY(), w = getWidth(), h = getHeight();
+                int barTop = y + Display.getInstance().convertToPixels(NAV_NOTCH);
+
+                g.setAntiAliased(true);
+
+                // soft shadow above the bar: darkest right at the bar, fading out going up
+                int shadowH = Display.getInstance().convertToPixels(NAV_SHADOW_MM);
+                g.setColor(0x64748B);
+                for (int i = 0; i < shadowH; i++) {
+                    g.setAlpha(NAV_SHADOW_ALPHA - (NAV_SHADOW_ALPHA * i / shadowH));
+                    g.drawLine(x, barTop - 1 - i, x + w, barTop - 1 - i);
+                }
+
+                // the bar and its thin top line
+                g.setAlpha(255);
+                g.setColor(0xF8FAFC);
+                g.fillRect(x, barTop, w, h - (barTop - y));
+                g.setColor(0xE2E8F0);
+                g.drawLine(x, barTop, x + w, barTop);
+            }
+        };
+        nav.setPreferredH(Display.getInstance().convertToPixels(NAV_NOTCH + NAV_BAR_H));
+
+        Container items = new Container(new GridLayout(1, 5));
+        items.add(navItem(FontImage.MATERIAL_HOME, "Home", active == NAV_HOME,
+                () -> new HomePage().show()));
+        items.add(navItem(FontImage.MATERIAL_CALENDAR_TODAY, "Calendar", active == NAV_CALENDAR,
+                () -> new CalendarPage().show()));
+        items.add(addButton(onAdd));
+        items.add(navItem(FontImage.MATERIAL_PEOPLE_OUTLINE, "People", active == NAV_PEOPLE,
+                () -> new PeoplePage().show()));
+        items.add(navItem(FontImage.MATERIAL_PERSON_OUTLINE, "User", active == NAV_USER,
+                () -> new ProfilePage().show()));
+
+        nav.add(BorderLayout.CENTER, items);
+        return nav;
+    }
+
+    private static Container navItem(char icon, String label, boolean active, Runnable action) {
+        Button b = new Button(label);
+        b.setUIID("Label");
+        Style s = b.getAllStyles();
+        s.setFgColor(active ? DARK_PURPLE : BLACK);
+        s.setFont(bold(1.2f));
+        s.setAlignment(Component.CENTER);
+        s.setBgTransparency(0);
+        s.setMargin(0, 0, 0, 0);
+        s.setPaddingUnit(Style.UNIT_TYPE_DIPS);
+        s.setPadding(0.5f, 0.5f, 0, 0);
+        FontImage.setMaterialIcon(b, icon, 5f);   // the icon takes the fg color set above
+        b.setTextPosition(Component.BOTTOM);
+        if (!active && action != null) {          // tapping the tab you are already on does nothing
+            b.addActionListener(e -> action.run());
+        }
+
+        Container cell = BorderLayout.center(b);
+        // push the item down by the notch height so it is centered in the bar, not in the notch
+        cell.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
+        cell.getAllStyles().setMargin(NAV_NOTCH, 0, 0, 0);
+        return cell;
+    }
+
+    // the purple + button: resources/addButton.png, sticking out above the bar
+    private static Container addButton(Runnable onAdd) {
+        Button plus = new Button();
+        plus.setUIID("Label");
+        try {
+            Image img = Image.createImage("/addButton.png");
+            plus.setIcon(img.scaledWidth(Display.getInstance().convertToPixels(NAV_ADD_BTN)));
+        } catch (java.io.IOException ex) {
+            ex.printStackTrace();
+            plus.getAllStyles().setFgColor(DARK_PURPLE);
+            FontImage.setMaterialIcon(plus, FontImage.MATERIAL_ADD, 6f);   // fallback if the png is missing
+        }
+        Style s = plus.getAllStyles();
+        s.setBgTransparency(0);
+        s.setMargin(0, 0, 0, 0);
+        s.setPadding(0, 0, 0, 0);
+        if (onAdd != null) {
+            plus.addActionListener(e -> onAdd.run());
+        }
+        return FlowLayout.encloseCenter(plus);   // centered across, at the top of the nav
     }
 
     public static User users = user;
@@ -136,5 +242,9 @@ public class SAVI extends Lifecycle {
         //new SummaryPage().show();
         //new TransferConfirmationPage().show(500f, "Anna", "Family", "Ben", "Friends");
         //new RecentContributions().show();
+//        new ViewAllTransacPage().show();
+//        new ForgotPassPage().show();
+//        new MainPage().show();
+        //new ProfilePage().show();
     }
 }

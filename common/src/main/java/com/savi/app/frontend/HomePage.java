@@ -317,6 +317,7 @@ public class HomePage {
         if (r != null) {                       // contribution card only when there is a contribution
             mainContents.add(recentInfoCont);
         }
+        base.add(BorderLayout.SOUTH, SAVI.bottomNav(SAVI.NAV_HOME));
         base.add(BorderLayout.CENTER, mainContents);
         base.show();
     }
