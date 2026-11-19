@@ -6,6 +6,7 @@ import com.codename1.ui.layouts.BorderLayout;
 import com.codename1.ui.layouts.BoxLayout;
 import com.codename1.ui.*;
 import com.codename1.ui.plaf.Border;
+import com.codename1.ui.plaf.RoundBorder;
 import com.codename1.ui.plaf.RoundRectBorder;
 import com.codename1.ui.plaf.Style;
 import com.savi.app.SAVI;
@@ -16,6 +17,20 @@ public class ForgotPassPage {
         Form ForgotpForm = new Form(new BorderLayout());
         ForgotpForm.getAllStyles().setBgColor(SAVI.PALE_PURPLE);
         ForgotpForm.getAllStyles().setBgTransparency(255);
+
+        Container backHeader = new Container(new BorderLayout());
+        Button back = new Button();
+        Style bs = back.getAllStyles();
+        bs.setFgColor(SAVI.BLACK);
+        bs.setBgTransparency(0);
+        bs.setBorder(RoundBorder.create().color(SAVI.WHITE));
+        bs.setPaddingUnit(Style.UNIT_TYPE_DIPS);
+        bs.setPadding(0.6f, 0.6f, 0.6f, 0.6f);
+        bs.setMarginUnit(Style.UNIT_TYPE_DIPS);
+        bs.setMargin(1f, 0, 2f, 0);
+        FontImage.setMaterialIcon(back, FontImage.MATERIAL_CHEVRON_LEFT, 4f);
+        back.addActionListener(e -> new LogInPage().show());
+        backHeader.add(BorderLayout.WEST, back);
 
         Container box = new Container(BoxLayout.y());
         box.getAllStyles().setBgColor(SAVI.DARK_PURPLE);
@@ -30,12 +45,6 @@ public class ForgotPassPage {
                 .shadowX(0.5f)
                 .shadowY(1.5f)
                 .shadowColor(SAVI.GRANITE_GRAY)
-        );
-
-        ForgotpForm.getToolbar().addMaterialCommandToLeftBar(
-                "", FontImage.MATERIAL_CHEVRON_LEFT,e -> {
-                    LogInPage lipage = new LogInPage(); lipage.show();
-                }
         );
 
         Label fp = SAVI.text("Forgot Password", SAVI.bold(4f), SAVI.WHITE);
@@ -228,7 +237,10 @@ public class ForgotPassPage {
             }
         });
 
-        ForgotpForm.add(BorderLayout.NORTH, box).add(BorderLayout.SOUTH, savebtn);
+        Container top = new Container(BoxLayout.y());
+        top.add(backHeader).add(box);
+
+        ForgotpForm.add(BorderLayout.NORTH, top).add(BorderLayout.SOUTH, savebtn);
         ForgotpForm.show();
     }
 }
