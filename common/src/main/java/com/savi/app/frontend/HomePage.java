@@ -153,7 +153,7 @@ public class HomePage {
 
     public void show() {
         // BACKEND: one Home object feeds the cards below (SAVI.user / SAVI.groupList.getGroups: see note)
-        Home home = new Home(SAVI.user, SAVI.groupList.getGroups());
+        Home home = new Home(SAVI.user, Home.allSavings());
         GroupSavings g = home.getFeaturedGroup();                    // null if the user has no groups
 
         Form base = new Form("", new BorderLayout());
