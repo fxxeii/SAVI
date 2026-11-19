@@ -6,7 +6,6 @@ import com.codename1.ui.layouts.*;
 import com.codename1.ui.plaf.*;
 import com.savi.app.frontend.*;
 import com.savi.app.backend.*;
-import java.util.ArrayList;
 import com.savi.app.backend.User;
 
 public class SAVI extends Lifecycle {
@@ -14,6 +13,7 @@ public class SAVI extends Lifecycle {
     public static User user = new User();
     public static ReminderList reminders = new ReminderList();
     public static GroupList groupList = new GroupList();
+    public static PersonalList personalList = new PersonalList();
 
     public static final int DARK_DARK_PURPLE = 0x30205E;
     public static final int DARK_PURPLE = 0x7C3AED;
@@ -95,7 +95,7 @@ public class SAVI extends Lifecycle {
 
     /** Bottom bar with the + button; "active" is the tab drawn in purple (NAV_HOME, ...). */
     public static Container bottomNav(int active) {
-        return bottomNav(active, null);
+        return bottomNav(active, QuickAddMenu::show);
     }
 
     /** Same, and onAdd runs when the + button is tapped (null = does nothing yet). */
@@ -233,8 +233,8 @@ public class SAVI extends Lifecycle {
         user.load();
         reminders.load();
         groupList.load();
+        personalList.load();
 
         new LogInPage().show();
-        //new ViewAllTransacPage().show();
     }
 }

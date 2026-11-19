@@ -160,7 +160,7 @@ public class RecentContributions{
         s.setPadding(1.6f, 1.6f, 1.6f, 1.6f);
         s.setMargin(0, 0, 0, 0);
         FontImage.setMaterialIcon(plus, FontImage.MATERIAL_ADD, 6f);
-        // TODO: open the add contribution page
+        plus.addActionListener(e -> QuickAddMenu.show());
         return FlowLayout.encloseCenterMiddle(plus);
     }
 
