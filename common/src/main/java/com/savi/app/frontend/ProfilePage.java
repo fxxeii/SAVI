@@ -19,6 +19,7 @@ import com.codename1.ui.plaf.Border;
 import com.codename1.ui.plaf.RoundRectBorder;
 import com.codename1.ui.plaf.Style;
 import com.savi.app.SAVI;
+import com.savi.app.backend.Home;
 
 public class ProfilePage {
 
@@ -313,7 +314,7 @@ public class ProfilePage {
         setMargins(card, 0, 1, 2, 2);
 
         card.add(statCell(String.valueOf(groups), "GROUPS", SAVI.DARK_KNIGHT, false));
-        card.add(statCell("P" + String.format("%,.1f", saved), "TOTAL SAVED", SAVI.BRIGHT_VIOLET, true));
+        card.add(statCell(Home.pesoShort(saved), "TOTAL SAVED", SAVI.BRIGHT_VIOLET, true));
         card.add(statCell(String.valueOf(people), "PEOPLE", SAVI.DARK_KNIGHT, false));
         return card;
     }

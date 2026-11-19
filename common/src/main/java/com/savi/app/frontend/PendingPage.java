@@ -24,8 +24,8 @@ public class PendingPage {
         content.getAllStyles().setPaddingUnit(Style.UNIT_TYPE_DIPS);
         content.getAllStyles().setPadding(0.5f, 2f, 0, 0);
 
-        // Pull active group from SAVI.groups (or fallback preview if groups haven't been loaded yet)
-        GroupSavings activeGroup = SAVI.groups.isEmpty() ? null : SAVI.groups.get(0);
+        // Pull active group from SAVI.groupList.getGroups() (or fallback preview if groups haven't been loaded yet)
+        GroupSavings activeGroup = SAVI.groupList.getGroups().isEmpty() ? null : SAVI.groupList.getGroups().get(0);
 
         String titleStr = activeGroup != null ? activeGroup.getGroupName() : "December Vacation";
         ArrayList<String> pendingNames = new ArrayList<>();
@@ -34,7 +34,7 @@ public class PendingPage {
 
         if (activeGroup != null) {
             for (String m : activeGroup.getMembers()) {
-                double missed = activeGroup.getMissed(m);
+                double missed = activeGroup.getTotalMissed(m);
                 if (missed > 0) {
                     pendingNames.add(m);
                     pendingAmounts.add(missed);
@@ -42,7 +42,7 @@ public class PendingPage {
                 }
             }
         } else {
-            // Sample preview if SAVI.groups is empty
+            // Sample preview if SAVI.groupList.getGroups() is empty
             String[] sampleNames = {"Air", "Faye", "Shy", "Sam"};
             for (String n : sampleNames) {
                 pendingNames.add(n);

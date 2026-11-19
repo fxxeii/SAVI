@@ -212,7 +212,7 @@ public class ForgotPassPage {
         savebtn.getAllStyles().setBorder(Border.createRoundBorder(140, SAVI.BORDER_COLOR));
 
         savebtn.addActionListener(e -> {
-            String result = SAVI.users.resetPass(
+            String result = SAVI.user.resetPass(
                     usernamef.getText(),
                     psf.getText(),
                     cpsf.getText()

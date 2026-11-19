@@ -213,7 +213,7 @@ public class LogInPage {
             String name = usernamef.getText().trim();
             String pass = passf.getText().trim();
 
-            String result = SAVI.users.login(name, pass);
+            String result = SAVI.user.login(name, pass);
 
             if (result.equals("success")) {
                 Dialog.show("Success", "Login successful!", "OK", null);

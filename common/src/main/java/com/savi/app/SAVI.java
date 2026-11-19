@@ -13,10 +13,7 @@ public class SAVI extends Lifecycle {
 
     public static User user = new User();
     public static ReminderList reminders = new ReminderList();
-
-    public static User users = user;
     public static GroupList groupList = new GroupList();
-    public static ArrayList<GroupSavings> groups = groupList.getGroups();
 
     public static final int DARK_DARK_PURPLE = 0x30205E;
     public static final int DARK_PURPLE = 0x7C3AED;

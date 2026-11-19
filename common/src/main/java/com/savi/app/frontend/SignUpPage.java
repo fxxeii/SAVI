@@ -233,7 +233,7 @@ public class SignUpPage {
             String pass = passf.getText().trim();
             String cpass = cpassf.getText().trim();
 
-            String result = SAVI.users.signup(name, email, pass, cpass);
+            String result = SAVI.user.signup(name, email, pass, cpass);
 
             if (result.equals("success")) {
                 Dialog.show("Success", "Account created!", "OK", null);

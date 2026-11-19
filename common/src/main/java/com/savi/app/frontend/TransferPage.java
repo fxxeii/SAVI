@@ -190,7 +190,7 @@ public class TransferPage {
         base.getContentPane().getAllStyles().setBgTransparency(255);
 
         // BACKEND: the groups come from the logged-in user's groups, members from the chosen group
-        Transfer transfer = new Transfer(SAVI.user, SAVI.groups);
+        Transfer transfer = new Transfer(SAVI.user, SAVI.groupList.getGroups());
         String[] groups = toArray(transfer.getGroupNames());
         String[] noMembers = new String[0];     // filled in once a group is chosen
 

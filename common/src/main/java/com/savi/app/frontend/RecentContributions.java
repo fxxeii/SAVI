@@ -172,7 +172,7 @@ public class RecentContributions{
         Container list = new Container(BoxLayout.y());
         list.setScrollableY(true);
 
-        Home home = new Home(SAVI.user, SAVI.groups);
+        Home home = new Home(SAVI.user, SAVI.groupList.getGroups());
         java.util.List<Home.RecentContribution> items = home.getRecentContributions();
         LocalDate newest = items.isEmpty() ? null : items.get(0).getDate();
 

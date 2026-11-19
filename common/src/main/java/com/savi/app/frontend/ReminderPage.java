@@ -273,8 +273,8 @@ public class ReminderPage {
         titleField.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
         titleField.getAllStyles().setMargin(0.4f, 1f, 0, 0);
 
-        // Group selector: uses real groups from SAVI.groups if available, otherwise a text field
-        boolean hasGroups = SAVI.groups != null && !SAVI.groups.isEmpty();
+        // Group selector: uses real groups from SAVI.groupList.getGroups() if available, otherwise a text field
+        boolean hasGroups = SAVI.groupList.getGroups() != null && !SAVI.groupList.getGroups().isEmpty();
         Picker groupPicker = new Picker();
         TextField customGroupField = new TextField("", "Enter group name");
         customGroupField.getAllStyles().setFont(SAVI.regular(2f));
@@ -283,11 +283,11 @@ public class ReminderPage {
         customGroupField.getAllStyles().setMargin(0.4f, 1f, 0, 0);
 
         if (hasGroups) {
-            String[] groupNames = new String[SAVI.groups.size() + 1];
-            for (int i = 0; i < SAVI.groups.size(); i++) {
-                groupNames[i] = SAVI.groups.get(i).getGroupName();
+            String[] groupNames = new String[SAVI.groupList.getGroups().size() + 1];
+            for (int i = 0; i < SAVI.groupList.getGroups().size(); i++) {
+                groupNames[i] = SAVI.groupList.getGroups().get(i).getGroupName();
             }
-            groupNames[SAVI.groups.size()] = "Other";
+            groupNames[SAVI.groupList.getGroups().size()] = "Other";
             groupPicker.setType(Display.PICKER_TYPE_STRINGS);
             groupPicker.setStrings(groupNames);
             groupPicker.setSelectedStringIndex(0);

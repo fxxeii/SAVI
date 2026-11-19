@@ -126,7 +126,7 @@ public class GroupList {
     }
 
     // ---------------------------------------------------------------- FILE HANDLING (CSV)
-    // G,savingsName,targetAmount,groupName,expectedPerMember
+    // G,savingsName,targetAmount,groupName,expectedPerMember,createdDate
     // M,groupName,memberName
     // C,groupName,member,amount,date,note
     private boolean saveAll() {
@@ -136,7 +136,8 @@ public class GroupList {
             sb.append("G,").append(encode(g.getSavingsName())).append(",")
                     .append(g.getTargetAmount()).append(",")
                     .append(encode(g.getGroupName())).append(",")
-                    .append(g.getExpectedPerMember()).append("\n");
+                    .append(g.getExpectedPerMember()).append(",")
+                    .append(g.getCreatedDate()).append("\n");
 
             for (String m : g.getMembers()) {
                 sb.append("M,").append(encode(g.getGroupName())).append(",")
@@ -185,8 +186,24 @@ public class GroupList {
                 double target = Double.parseDouble(p.get(2));
                 String groupName = decode(p.get(3));
                 double expected = Double.parseDouble(p.get(4));
+
+                LocalDate createdDate;
+
+                if (p.size() >= 6) {
+                    createdDate = LocalDate.parse(p.get(5));
+                } else {
+                    // Compatibility with older CSV records
+                    createdDate = LocalDate.now();
+                }
+
                 if (findGroup(groupName) == null) {
-                    groups.add(new GroupSavings(savingsName, target, groupName, expected));
+                    groups.add(new GroupSavings(
+                            savingsName,
+                            target,
+                            groupName,
+                            expected,
+                            createdDate
+                    ));
                 }
 
             } else if (type.equals("M") && p.size() >= 3) {

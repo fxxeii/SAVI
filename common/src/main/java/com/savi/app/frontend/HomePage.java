@@ -152,8 +152,8 @@ public class HomePage {
     }
 
     public void show() {
-        // BACKEND: one Home object feeds the cards below (SAVI.user / SAVI.groups: see note)
-        Home home = new Home(SAVI.user, SAVI.groups);
+        // BACKEND: one Home object feeds the cards below (SAVI.user / SAVI.groupList.getGroups: see note)
+        Home home = new Home(SAVI.user, SAVI.groupList.getGroups());
         GroupSavings g = home.getFeaturedGroup();                    // null if the user has no groups
         Home.RecentContribution r = home.getLatestContribution();    // null if no contributions yet
 

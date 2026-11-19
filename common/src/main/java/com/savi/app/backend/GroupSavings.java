@@ -12,8 +12,17 @@ public class GroupSavings extends Savings {
     private final double expectedPerMember;
     private final LocalDate createdDate;
 
+    // implements constructor overloading
     public GroupSavings(String savingsName, double targetAmount,
                         String groupName, double expectedPerMember) {
+
+        this(savingsName, targetAmount, groupName,
+                expectedPerMember, LocalDate.now());
+    }
+
+    public GroupSavings(String savingsName, double targetAmount,
+                        String groupName, double expectedPerMember,
+                        LocalDate createdDate) {
 
         super(savingsName, targetAmount);
 
@@ -21,13 +30,19 @@ public class GroupSavings extends Savings {
             throw new IllegalArgumentException("Group name is required.");
         }
 
-        if (expectedPerMember < 0) {
-            throw new IllegalArgumentException("Expected contribution cannot be negative.");
+        if (expectedPerMember < 0 ||
+                Double.isNaN(expectedPerMember) ||
+                Double.isInfinite(expectedPerMember)) {
+            throw new IllegalArgumentException("Invalid expected contribution.");
+        }
+
+        if (createdDate == null) {
+            throw new IllegalArgumentException("Creation date is required.");
         }
 
         this.groupName = groupName.trim();
         this.expectedPerMember = expectedPerMember;
-        this.createdDate = LocalDate.now();
+        this.createdDate = createdDate;
     }
 
     public void addMember(String name) {
@@ -82,6 +97,21 @@ public class GroupSavings extends Savings {
         }
 
         return Math.max(0, expectedPerMember - contributed);
+    }
+
+    public double getTotalMissed(String member) {
+        double totalMissed = 0;
+        LocalDate today = LocalDate.now();
+        String todayStr = today.toString();
+
+        LocalDate date = createdDate;
+
+        while (date.toString().compareTo(todayStr) <= 0) {
+            totalMissed += getMissed(member, date);
+            date = date.plusDays(1);
+        }
+
+        return totalMissed;
     }
 
     public String getGroupName() {
