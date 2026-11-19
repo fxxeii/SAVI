@@ -4,6 +4,9 @@ import com.codename1.ui.*;
 import com.codename1.ui.layouts.*;
 import com.codename1.ui.plaf.*;
 import com.savi.app.SAVI;
+import java.time.LocalDate;
+import com.codename1.l10n.SimpleDateFormat;
+import java.util.Date;
 import com.savi.app.backend.GroupSavings;
 import com.savi.app.backend.Home;
 
@@ -40,14 +43,6 @@ public class PendingPage {
                     pendingAmounts.add(missed);
                     totalPending += missed;
                 }
-            }
-        } else {
-            // Sample preview if SAVI.groupList.getGroups() is empty
-            String[] sampleNames = {"Air", "Faye", "Shy", "Sam"};
-            for (String n : sampleNames) {
-                pendingNames.add(n);
-                pendingAmounts.add(35.0);
-                totalPending += 35.0;
             }
         }
 
@@ -132,11 +127,24 @@ public class PendingPage {
         remindButton.addActionListener(e -> {
             if (pendingNames.isEmpty()) {
                 Dialog.show("All Clear", "No pending members to remind.", "OK", null);
-            } else {
-                Dialog.show("Reminder Sent",
-                        "Sent payment reminder to " + pendingNames.size() + " member(s) in " + titleStr + ".",
-                        "OK", null);
+                return;
             }
+
+            LocalDate today = LocalDate.now();
+            String nowTime = new SimpleDateFormat("hh:mm a").format(new Date());
+
+            // Gumawa ng automatic reminder entry sa SAVI.reminders (at automatic na mase-save sa Reminders_Records.csv)
+            for (int i = 0; i < pendingNames.size(); i++) {
+                String member = pendingNames.get(i);
+                double missedAmt = pendingAmounts.get(i);
+                String reminderTitle = "Follow up: " + member + " (missed contribution)";
+                SAVI.reminders.addReminder(reminderTitle, titleStr, today, nowTime, missedAmt);
+            }
+
+            Dialog.show("Reminder Added",
+                    "Added " + pendingNames.size() + " pending reminder(s) for " + titleStr + " to your Reminders.",
+                    "OK", null);
+            new ReminderPage().show();
         });
 
         Button setReminder = new Button("Set reminder");

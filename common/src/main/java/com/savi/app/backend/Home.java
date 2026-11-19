@@ -18,6 +18,18 @@ public class Home {
     private double weeklyTarget = DEFAULT_WEEKLY_TARGET;
     private double weeklyProgress;              // always between 0.0 and 1.0
 
+    /** Every savings the logged-in user can see: all groups + the user's own personal savings.
+     *  Pass this to new Home(...) so the home page and the Recent Contributions page show both. */
+    public static List<Savings> allSavings() {
+        List<Savings> all = new ArrayList<Savings>();
+        all.addAll(SAVI.groupList.getGroups());
+        String me = SAVI.user == null ? null : SAVI.user.getCurrentName();
+        if (me != null) {
+            all.addAll(SAVI.personalList.getForOwner(me));
+        }
+        return all;
+    }
+
     /** Uses the week that today falls in. */
     public Home(User user, List<? extends Savings> allSavings) {
         this(user, allSavings, startOfWeek(LocalDate.now()));
@@ -164,6 +176,24 @@ public class Home {
         return groups;   // a new list, so callers can't change Home's data
     }
 
+    /** The personal savings that belong to the logged-in user. */
+    public List<PersonalSavings> getPersonals() {
+        String me = currentName();
+        List<PersonalSavings> personals = new ArrayList<PersonalSavings>();
+        if (me == null) {
+            return personals;
+        }
+        for (Savings s : allSavings) {
+            if (s instanceof PersonalSavings) {
+                PersonalSavings p = (PersonalSavings) s;
+                if (p.getOwner() != null && p.getOwner().equalsIgnoreCase(me)) {
+                    personals.add(p);
+                }
+            }
+        }
+        return personals;
+    }
+
     /** The group shown on the home card: the one with the newest contribution. */
     public GroupSavings getFeaturedGroup() {
         GroupSavings featured = null;
@@ -197,17 +227,33 @@ public class Home {
 
     // ---------------------------------------------------------------- RECENT CONTRIBUTIONS
 
-    /** Records of the user's groups, newest first. limit <= 0 means no limit (See All page). */
+    /** Records of the user's groups AND personal savings, newest first.
+     *  limit <= 0 means no limit (See All page). */
     public List<RecentContribution> getRecentContributions(int limit) {
         List<RecentContribution> all = new ArrayList<RecentContribution>();
         for (GroupSavings g : getGroups()) {
             for (Contribution c : g.getContributions()) {
-                all.add(new RecentContribution(g.getGroupName(), c));
+                all.add(new RecentContribution(g.getGroupName(), c, false));
+            }
+        }
+        for (PersonalSavings p : getPersonals()) {
+            for (Contribution c : p.getContributions()) {
+                all.add(new RecentContribution(p.getSavingsName() + " (Personal)", c, true));
             }
         }
 
         Collections.reverse(all);   // so records added later come first on the same date
-        Collections.sort(all, (a, b) -> compareDates(b.getDate(), a.getDate()));   // stable sort
+        // newest date first; on the same date, the one recorded last comes first.
+        // (records without a saved time are 0, so they keep the order above)
+        Collections.sort(all, (a, b) -> {
+            int byDate = compareDates(b.getDate(), a.getDate());
+            if (byDate != 0) {
+                return byDate;
+            }
+            long ta = a.getTimestamp();
+            long tb = b.getTimestamp();
+            return ta < tb ? 1 : (ta > tb ? -1 : 0);
+        });   // stable sort
 
         if (limit > 0 && all.size() > limit) {
             return new ArrayList<RecentContribution>(all.subList(0, limit));
@@ -311,10 +357,12 @@ public class Home {
     public static class RecentContribution {
         private final String groupName;
         private final Contribution contribution;
+        private final boolean personal;     // a personal saving: the member line says "You"
 
-        private RecentContribution(String groupName, Contribution contribution) {
+        private RecentContribution(String groupName, Contribution contribution, boolean personal) {
             this.groupName = groupName;
             this.contribution = contribution;
+            this.personal = personal;
         }
 
         public String getGroupName() {
@@ -322,7 +370,7 @@ public class Home {
         }
 
         public String getMember() {
-            return contribution.getMember();
+            return personal ? "You" : contribution.getMember();
         }
 
         public double getAmount() {
@@ -335,6 +383,11 @@ public class Home {
 
         public LocalDate getDate() {
             return contribution.getDate();
+        }
+
+        /** When it was recorded: used to order contributions made on the same day. */
+        public long getTimestamp() {
+            return contribution.getTimestamp();
         }
 
         /** "Maria contributed P24" for the middle line of the card */

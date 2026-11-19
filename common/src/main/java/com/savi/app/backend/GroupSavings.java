@@ -100,18 +100,28 @@ public class GroupSavings extends Savings {
     }
 
     public double getTotalMissed(String member) {
-        double totalMissed = 0;
         LocalDate today = LocalDate.now();
         String todayStr = today.toString();
 
+        // Bilangin kung ilang araw na mula createdDate hanggang today (inclusive)
+        int daysCount = 0;
         LocalDate date = createdDate;
-
         while (date.toString().compareTo(todayStr) <= 0) {
-            totalMissed += getMissed(member, date);
+            daysCount++;
             date = date.plusDays(1);
         }
 
-        return totalMissed;
+        double totalExpected = daysCount * expectedPerMember;
+
+        // Kunin yung overall na naibayad ng member (yung sobrang bayad sa isang araw ay automatic na ibabawas sa past missed days)
+        double totalContributed = 0;
+        for (Contribution c : contributions) {
+            if (c.getMember().equalsIgnoreCase(member) && c.getAmount() > 0) {
+                totalContributed += c.getAmount();
+            }
+        }
+
+        return Math.max(0, totalExpected - totalContributed);
     }
 
     public String getGroupName() {
