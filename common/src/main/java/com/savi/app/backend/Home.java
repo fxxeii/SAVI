@@ -341,7 +341,8 @@ public class Home {
         return getGroups().size() + getPersonals().size();
     }
 
-    /** At most MAX_OVERVIEWS savings (groups or personal): the ones with the newest contribution first. */
+    /** At most MAX_OVERVIEWS savings (groups or personal): the ones that received the latest contributions
+     *  (newest date first, then newest time on the same date), like the Recent Contributions list. */
     public List<OverviewItem> getOverviews() {
         List<OverviewItem> items = new ArrayList<OverviewItem>();
         for (GroupSavings g : getGroups()) {
@@ -352,7 +353,14 @@ public class Home {
         }
 
         // newest contribution first (savings without any go last); equal ones keep their order
-        Collections.sort(items, (a, b) -> b.latest.compareTo(a.latest));
+        Collections.sort(items, (a, b) -> {
+            int byDate = b.latest.compareTo(a.latest);
+            if (byDate != 0) {
+                return byDate;
+            }
+            // same day: the one that received a contribution last comes first
+            return a.latestTime < b.latestTime ? 1 : (a.latestTime > b.latestTime ? -1 : 0);
+        });
 
         if (items.size() > MAX_OVERVIEWS) {
             return new ArrayList<OverviewItem>(items.subList(0, MAX_OVERVIEWS));
@@ -366,6 +374,7 @@ public class Home {
         private final String name;
         private final boolean personal;
         private final String latest;      // date of its newest contribution ("" = none yet)
+        private final long latestTime;    // time of that newest contribution (0 = old record without a time)
 
         private OverviewItem(Savings savings, String name, boolean personal) {
             this.savings = savings;
@@ -373,13 +382,19 @@ public class Home {
             this.personal = personal;
 
             String newest = "";
+            long newestTime = 0;
             for (Contribution c : savings.getContributions()) {
                 String d = c.getDate().toString();
-                if (d.compareTo(newest) > 0) {
+                int cmp = d.compareTo(newest);
+                if (cmp > 0) {
                     newest = d;
+                    newestTime = c.getTimestamp();
+                } else if (cmp == 0 && c.getTimestamp() > newestTime) {
+                    newestTime = c.getTimestamp();
                 }
             }
             this.latest = newest;
+            this.latestTime = newestTime;
         }
 
         public String getName() {
