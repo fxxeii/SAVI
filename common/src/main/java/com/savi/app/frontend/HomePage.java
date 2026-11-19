@@ -153,6 +153,93 @@ public class HomePage {
         s.setPadding(paddingTB, paddingTB, paddingLR, paddingLR);
     }
 
+    // one of the two small boxes inside an overview card: label (+ optional tag) on top, amount below
+    static Container amountBox(String label, String amount, String tag,
+                               int bg, int stroke, int labelColor, int amountColor, int tagBg) {
+        Container top = new Container(new BorderLayout());
+        top.add(BorderLayout.WEST, SAVI.text(label, SAVI.semiBold(1.4f), labelColor));
+        if (!tag.isEmpty()) {
+            Label chip = SAVI.text(tag, SAVI.semiBold(1.2f), labelColor);
+            Style cs = chip.getAllStyles();
+            cs.setBgColor(tagBg);
+            cs.setBgTransparency(255);
+            cs.setBorder(RoundRectBorder.create().cornerRadius(1.5f));
+            cs.setPaddingUnit(Style.UNIT_TYPE_DIPS);
+            cs.setPadding(0.3f, 0.3f, 0.8f, 0.8f);
+            cs.setMargin(0, 0, 0, 0);
+            top.add(BorderLayout.EAST, chip);
+        }
+
+        Container box = new Container(BoxLayout.y());
+        box.add(top);
+        box.add(SAVI.text(amount, SAVI.bold(2.4f), amountColor));
+
+        Style bs = box.getAllStyles();
+        bs.setBgColor(bg);
+        bs.setBgTransparency(255);
+        bs.setBorder(RoundRectBorder.create().cornerRadius(3f)
+                .strokeColor(stroke).strokeOpacity(255).stroke(1, false));
+        bs.setPaddingUnit(Style.UNIT_TYPE_DIPS);
+        bs.setPadding(1.2f, 1.2f, 1.2f, 1.2f);
+        bs.setMarginUnit(Style.UNIT_TYPE_DIPS);
+        bs.setMargin(0, 0, 0.5f, 0.5f);
+        return box;
+    }
+
+    // one Savings Overview card (same look for a group and a personal savings)
+    static Container overviewCard(Home.OverviewItem item) {
+        int accent = item.isPersonal() ? SAVI.GREEN : SAVI.DARK_PURPLE;
+
+        // colored dot + name on the left, "Group" / "Personal" on the right
+        Label dot = new Label();
+        Style ds = dot.getAllStyles();
+        ds.setBgColor(accent);
+        ds.setBgTransparency(255);
+        ds.setBorder(RoundRectBorder.create().cornerRadius(1.1f));
+        ds.setMargin(0, 0, 0, 0);
+        ds.setPadding(0, 0, 0, 0);
+        int size = Display.getInstance().convertToPixels(2.2f);
+        dot.setPreferredSize(new Dimension(size, size));
+
+        Label name = SAVI.text(item.getName(), SAVI.semiBold(2.1f), SAVI.DARK_KNIGHT);
+        name.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
+        name.getAllStyles().setMargin(0, 0, 1.2f, 0);
+
+        Container left = new Container(new FlowLayout(Component.LEFT, Component.CENTER));
+        left.add(dot).add(name);
+
+        Container head = new Container(new BorderLayout());
+        head.add(BorderLayout.WEST, left);
+        head.add(BorderLayout.EAST, SAVI.text(item.getTypeLabel(), SAVI.semiBold(1.5f), accent));
+
+        // TOTAL SAVED (always neutral) and REMAINING (amber "Due Soon", green "All Paid", or neutral)
+        Container saved = amountBox("TOTAL SAVED", item.getTotalSavedText(), "",
+                0xF8FAFC, 0xE2E8F0, SAVI.SLATE_GRAY, SAVI.DARK_KNIGHT, 0);
+
+        String status = item.getStatus();
+        Container remaining;
+        if (status.equals("Due Soon")) {
+            remaining = amountBox("REMAINING", item.getRemainingText(), status,
+                    SAVI.PALE_YELLOW, SAVI.PASTEL_YELLOW, SAVI.AMBER, SAVI.AMBER, SAVI.YELLOW_TAG);
+        } else if (status.equals("All Paid")) {
+            remaining = amountBox("REMAINING", item.getRemainingText(), status,
+                    SAVI.PALE_GREEN, 0xA7F3D0, 0x047857, SAVI.GREEN, 0xD1FAE5);
+        } else {
+            remaining = amountBox("REMAINING", item.getRemainingText(), "",
+                    0xF8FAFC, 0xE2E8F0, SAVI.SLATE_GRAY, SAVI.DARK_KNIGHT, 0);
+        }
+
+        Container boxes = new Container(new GridLayout(1, 2));
+        boxes.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
+        boxes.getAllStyles().setMargin(1.5f, 0, 0, 0);
+        boxes.add(saved).add(remaining);
+
+        Container card = new Container(BoxLayout.y());
+        boxStyles(card, SAVI.WHITE, 2f, 2f);
+        card.add(head).add(boxes);
+        return card;
+    }
+
     public void show() {
         show(null);
     }
@@ -292,36 +379,35 @@ public class HomePage {
         Container GroupOverviewContainer = new Container(new BorderLayout());
         GroupOverviewContainer.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
         GroupOverviewContainer.getAllStyles().setMargin(0.5f, 0.5f, 2, 2);
-        Label groupOverviewText = SAVI.text("Group Overview", SAVI.bold(2f), SAVI.DARK_BLUE);
+        Label groupOverviewText = SAVI.text("Savings Overview", SAVI.bold(2f), SAVI.DARK_BLUE);
 
         Button manage = new Button("Manage");
         manage.getAllStyles().setFgColor(SAVI.DARK_PURPLE);
         manage.getAllStyles().setFont(SAVI.semiBold(2f));
         manage.addActionListener(e->{new PeoplePage().show();});
 
-        GroupOverviewContainer.add(BorderLayout.WEST, groupOverviewText);
+        // "N Active": how many savings the user has (the cards below show at most 2 of them)
+        Label activeCount = SAVI.text(home.getSavingsCount() + " Active", SAVI.semiBold(1.4f), SAVI.BRIGHT_VIOLET);
+        Style acs = activeCount.getAllStyles();
+        acs.setBgColor(0xE9E0FB);
+        acs.setBgTransparency(255);
+        acs.setBorder(RoundRectBorder.create().cornerRadius(2f));
+        acs.setPaddingUnit(Style.UNIT_TYPE_DIPS);
+        acs.setPadding(0.4f, 0.4f, 1.2f, 1.2f);
+        acs.setMarginUnit(Style.UNIT_TYPE_DIPS);
+        acs.setMargin(0, 0, 1.5f, 0);
+        Container overviewTitle = new Container(new FlowLayout(Component.LEFT, Component.CENTER));
+        overviewTitle.add(groupOverviewText).add(activeCount);
+
+        GroupOverviewContainer.add(BorderLayout.WEST, overviewTitle);
         GroupOverviewContainer.add(BorderLayout.EAST, manage);
 
-        Container singleOverview = new Container(new BorderLayout());
-        boxStyles(singleOverview, SAVI.WHITE,2f, 2f);
-
-        Label groupName = SAVI.text(g == null ? "No groups yet" : g.getGroupName(), SAVI.semiBold(2f), SAVI.DARK_BLUE);
-
-        Container totalSaved = new Container(BoxLayout.y());
-        Label totalSavedText = SAVI.text("TOTAL SAVED", SAVI.semiBold(1.5f), SAVI.DARK_BLUE);
-        Label groupSaveAmount = SAVI.text(g == null ? "P0" : Home.pesoShort(home.getTotalSaved(g)), SAVI.bold(3f), SAVI.DARK_BLUE);
-        totalSaved.add(totalSavedText);
-        totalSaved.add(groupSaveAmount);
-
-        Container remainingBal = new Container(BoxLayout.y());
-        Label remainingBalText = SAVI.text("REMAINING BALANCE", SAVI.semiBold(1.5f), SAVI.DARK_BLUE);
-        Label remainingBalAmount = SAVI.text(g == null ? "P0" : Home.pesoShort(home.getRemainingBalance(g)), SAVI.bold(3f), SAVI.DARK_BLUE);
-        remainingBal.add(remainingBalText);
-        remainingBal.add(remainingBalAmount);
-
-        singleOverview.add(BorderLayout.NORTH, groupName);
-        singleOverview.add(BorderLayout.WEST, totalSaved);
-        singleOverview.add(BorderLayout.EAST, remainingBal);
+        // SAVINGS OVERVIEW CARDS: at most 2 (groups and/or personal), newest activity first
+        java.util.List<Home.OverviewItem> overviews = home.getOverviews();
+        Container overviewCards = new Container(BoxLayout.y());
+        for (Home.OverviewItem item : overviews) {
+            overviewCards.add(overviewCard(item));
+        }
 
         Container recentsTitle = new Container(new BorderLayout());
         recentsTitle.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
@@ -356,8 +442,8 @@ public class HomePage {
         mainContents.add(weekTotalContainer);
         mainContents.add(shortcutsContainer);
         mainContents.add(GroupOverviewContainer);
-        if (g != null) {                       // group card only when the user has a group
-            mainContents.add(singleOverview);
+        if (!overviews.isEmpty()) {            // overview cards only when the user has savings
+            mainContents.add(overviewCards);
         }
         mainContents.add(recentsTitle);
         if (!latest.isEmpty()) {               // cards only when there are contributions

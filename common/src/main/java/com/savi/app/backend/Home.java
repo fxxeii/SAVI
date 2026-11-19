@@ -79,20 +79,20 @@ public class Home {
             PersonalSavings p = g == null ? findPersonalChoice(choice) : null;
 
             if (choice.equals(ALL_GROUPS)) {
-                // every weekly target added up (groups AND personal), and what this person put into all of them
+                // every weekly target added up (groups AND personal), and what was saved into all of them
                 for (GroupSavings each : getGroups()) {
-                    saved += weekTotal(each, me);
+                    saved += weekTotal(each);
                     target += each.getWeeklyTarget();
                 }
                 for (PersonalSavings each : getPersonals()) {
-                    saved += weekTotal(each, me);
+                    saved += weekTotal(each);
                     target += each.getWeeklyTarget();
                 }
             } else if (g != null) {
-                saved = weekTotal(g, me);
+                saved = weekTotal(g);
                 target = g.getWeeklyTarget();
             } else if (p != null) {
-                saved = weekTotal(p, me);
+                saved = weekTotal(p);
                 target = p.getWeeklyTarget();
             }
         }
@@ -102,15 +102,16 @@ public class Home {
         weeklyProgress = (weeklyTarget <= 0) ? 0 : Math.max(0, Math.min(1.0, weeklySaved / weeklyTarget));
     }
 
-    /** What this person put into one savings during the week shown on the calendar. */
-    private double weekTotal(Savings savings, String me) {
+    /** Everything saved into one savings during the week shown on the calendar.
+     *  Every member counts, not just the logged-in user: the weekly target belongs to the whole
+     *  group, so Faye's P20 in a group the user is in also counts toward "Amount Saved".
+     *  (A personal savings only ever holds its owner's contributions.) */
+    private double weekTotal(Savings savings) {
         double total = 0;
         for (int i = 0; i < 7; i++) {
             // the savings looks up its own records for that day
             for (Contribution c : savings.getContributionsOn(weekStart.plusDays(i))) {
-                if (c.getMember().equalsIgnoreCase(me)) {
-                    total += c.getAmount();
-                }
+                total += c.getAmount();
             }
         }
         return total;
@@ -330,6 +331,94 @@ public class Home {
     /** What is left to reach the group's target (never below 0). */
     public double getRemainingBalance(GroupSavings g) {
         return Math.max(0, g.getTargetAmount() - g.getCurrentAmount());
+    }
+
+    // ---------------------------------------------------------------- SAVINGS OVERVIEW CARDS
+    public static final int MAX_OVERVIEWS = 2;     // the home page never shows more cards than this
+
+    /** How many savings the user has (groups + personal): the "2 Active" label. */
+    public int getSavingsCount() {
+        return getGroups().size() + getPersonals().size();
+    }
+
+    /** At most MAX_OVERVIEWS savings (groups or personal): the ones with the newest contribution first. */
+    public List<OverviewItem> getOverviews() {
+        List<OverviewItem> items = new ArrayList<OverviewItem>();
+        for (GroupSavings g : getGroups()) {
+            items.add(new OverviewItem(g, g.getGroupName(), false));
+        }
+        for (PersonalSavings p : getPersonals()) {
+            items.add(new OverviewItem(p, p.getSavingsName(), true));
+        }
+
+        // newest contribution first (savings without any go last); equal ones keep their order
+        Collections.sort(items, (a, b) -> b.latest.compareTo(a.latest));
+
+        if (items.size() > MAX_OVERVIEWS) {
+            return new ArrayList<OverviewItem>(items.subList(0, MAX_OVERVIEWS));
+        }
+        return items;
+    }
+
+    // one card of the Savings Overview: works the same for a group and a personal savings
+    public static class OverviewItem {
+        private final Savings savings;
+        private final String name;
+        private final boolean personal;
+        private final String latest;      // date of its newest contribution ("" = none yet)
+
+        private OverviewItem(Savings savings, String name, boolean personal) {
+            this.savings = savings;
+            this.name = name;
+            this.personal = personal;
+
+            String newest = "";
+            for (Contribution c : savings.getContributions()) {
+                String d = c.getDate().toString();
+                if (d.compareTo(newest) > 0) {
+                    newest = d;
+                }
+            }
+            this.latest = newest;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public boolean isPersonal() {
+            return personal;
+        }
+
+        /** "Group" or "Personal" (top right of the card). */
+        public String getTypeLabel() {
+            return personal ? "Personal" : "Group";
+        }
+
+        public double getRemaining() {
+            return Math.max(0, savings.getTargetAmount() - savings.getCurrentAmount());
+        }
+
+        /** "P12,450.00" */
+        public String getTotalSavedText() {
+            return pesoFormat(savings.getCurrentAmount());
+        }
+
+        /** "P350.00" */
+        public String getRemainingText() {
+            return pesoFormat(getRemaining());
+        }
+
+        /** "All Paid" when nothing is left, "Due Soon" when 10% or less of the target is left, else "". */
+        public String getStatus() {
+            if (Math.round(getRemaining() * 100) <= 0) {
+                return "All Paid";
+            }
+            if (getRemaining() <= savings.getTargetAmount() * 0.10) {
+                return "Due Soon";
+            }
+            return "";
+        }
     }
 
     // ---------------------------------------------------------------- RECENT CONTRIBUTIONS
