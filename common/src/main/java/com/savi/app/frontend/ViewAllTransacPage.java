@@ -16,65 +16,30 @@ import com.codename1.ui.layouts.GridLayout;
 import com.codename1.ui.layouts.LayeredLayout;
 import com.codename1.ui.layouts.Layout;
 import com.codename1.ui.plaf.Border;
-import com.codename1.ui.plaf.RoundRectBorder;
 import com.codename1.ui.plaf.Style;
 import com.savi.app.SAVI;
 import com.savi.app.backend.Home;
+import com.savi.app.backend.PeopleBackend;
 
 public class ViewAllTransacPage {
-
-    static final int PAGE_BG = 0xF7F5FF;
-    static final int HEADER_START = 0x7A3BEA;
-    static final int HEADER_END = 0x5D30D2;
-    static final int HEADER_LINE = 0x9068EE;
-    static final int HEADER_LABEL = 0xD7CAFA;
-    static final int LIGHT_VIOLET = 0xEFEAFE;
-    static final int VIOLET_STROKE = 0xDDD3FB;
-    static final int LINE_GRAY = 0xE8EAF0;
-    static final int SEARCH_STROKE = 0xECE8F8;
-    static final int MUTED = 0x8B93A7;
-    static final int NAVY = 0x111827;
-
-    static final int RED = 0xE5365B;
-    static final int RED_SOFT = 0xFDE4E9;
-    static final int ROW_MISSED_BG = 0xFFF5F6;
-    static final int ROW_MISSED_STROKE = 0xFBE1E6;
-    static final int GREEN = 0x059669;
-    static final int GREEN_SOFT = 0xE3F8EE;
-
-    // ---------- sample data ----------
-
-    static class Txn {
-        final String title, date, month, type; // type: DEPOSIT, MISSED, ADJUSTMENT
-        final double amount;
-        final boolean settled;
-
-        Txn(String title, String date, String month, String type, double amount, boolean settled) {
-            this.title = title;
-            this.date = date;
-            this.month = month;
-            this.type = type;
-            this.amount = amount;
-            this.settled = settled;
-        }
-    }
-
-    static final Txn[] DATA = {
-            new Txn("Missed Contribution", "Dec 12, 2026", "DECEMBER 2026", "MISSED", 35, false),
-            new Txn("Daily Contribution", "Dec 18, 2026", "DECEMBER 2026", "DEPOSIT", 50, true),
-            new Txn("Kickoff Group Deposit", "Nov 28, 2026", "NOVEMBER 2026", "DEPOSIT", 40, true),
-            new Txn("Food Contribution", "Nov 15, 2026", "NOVEMBER 2026", "DEPOSIT", 50, true)
-    };
 
     static final String[] CHIP_NAMES = {"All", "Deposits", "Missed", "Adjustments"};
     static final String[] CHIP_TYPES = {null, "DEPOSIT", "MISSED", "ADJUSTMENT"};
 
     // screen state
     private Container listContainer;
-    private Rounded[] chips = new Rounded[4];
-    private Button[] chipButtons = new Button[4];
+    private Chip[] chips = new Chip[4];
     private int selectedChip = 0;
     private String query = "";
+
+    // data comes from the backend (PeopleBackend), for the member picked on the People page
+    private final PeopleBackend.Member member;
+    private final PeopleBackend.Txn[] txns;
+
+    public ViewAllTransacPage(PeopleBackend.Member member) {
+        this.member = member;
+        this.txns = PeopleBackend.getTransactions(member);
+    }
 
     // ---------- general helpers ----------
 
@@ -104,22 +69,6 @@ public class ViewAllTransacPage {
             s.setBgColor(color);
             s.setBgTransparency(255);
         }
-    }
-
-    static void cardStyles(Container cont, int color, float radius, float paddingTB, float paddingLR) {
-        Style s = cont.getAllStyles();
-        s.setBgColor(color);
-        s.setBgTransparency(255);
-        s.setBorder(RoundRectBorder.create().
-                cornerRadius(radius).
-                shadowOpacity(50).
-                shadowBlur(10).
-                shadowSpread(1f).
-                shadowX(0.5f).
-                shadowY(0.3f).
-                shadowColor(SAVI.BRIGHT_VIOLET));
-        setMargins(cont, 0.5f, 0.5f, 2, 2);
-        setPadding(cont, paddingTB, paddingTB, paddingLR, paddingLR);
     }
 
     static Container divider(int color, float marginTB, float marginLR) {
@@ -203,7 +152,7 @@ public class ViewAllTransacPage {
         b.addActionListener(onClick);
 
         Rounded c = new Rounded(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER), bg, 255, 0)
-                .stroke(SEARCH_STROKE, 255, 1).fixed(sizeMM);
+                .stroke(SAVI.BORDER_COLOR, 255, 1).fixed(sizeMM);
         c.add(BorderLayout.CENTER, b);
         c.setLeadComponent(b);
         return c;
@@ -219,13 +168,12 @@ public class ViewAllTransacPage {
         return c;
     }
 
-    // pill with a label inside
-    static Rounded pill(Label label, int fill, int fillAlpha, int strokeColor, int strokeAlpha) {
+    // flat pill with a label inside (no stroke)
+    static Rounded pill(Label label, int fill, int fillAlpha) {
         setPadding(label, 0, 0, 0, 0);
         setMargins(label, 0, 0, 0, 0);
 
-        Rounded p = new Rounded(new FlowLayout(Component.CENTER, Component.CENTER), fill, fillAlpha, 0)
-                .stroke(strokeColor, strokeAlpha, 1);
+        Rounded p = new Rounded(new FlowLayout(Component.CENTER, Component.CENTER), fill, fillAlpha, 0);
         setPadding(p, 0.5f, 0.5f, 1.6f, 1.6f);
         p.add(label);
         return p;
@@ -250,45 +198,7 @@ public class ViewAllTransacPage {
         return p;
     }
 
-    // ---------- gradient card background (masked image, no clipping) ----------
-
-    static Image gradientImage(int w, int h, int c1, int c2, int radiusPx) {
-        Image img = Image.createImage(w, h, 0);
-        Graphics g = img.getGraphics();
-        g.fillLinearGradient(c1, c2, 0, 0, w, h, false);
-
-        Image mask = Image.createImage(w, h, 0xff000000);
-        Graphics mg = mask.getGraphics();
-        mg.setAntiAliased(true);
-        mg.setColor(0xffffff);
-        mg.fillRoundRect(0, 0, w, h, radiusPx * 2, radiusPx * 2);
-        return img.applyMask(mask.createMask());
-    }
-
-    static class GradientCard extends Container {
-        private final float radiusMM;
-        private Image cache;
-
-        GradientCard(Layout layout, float radiusMM) {
-            super(layout);
-            this.radiusMM = radiusMM;
-        }
-
-        @Override
-        public void paintBackground(Graphics g) {
-            super.paintBackground(g); // shadow
-            int w = getWidth(), h = getHeight();
-            if (w <= 0 || h <= 0) {
-                return;
-            }
-            if (cache == null || cache.getWidth() != w || cache.getHeight() != h) {
-                cache = gradientImage(w, h, HEADER_START, HEADER_END, mm(radiusMM));
-            }
-            g.drawImage(cache, getX(), getY());
-        }
-    }
-
-    // progress bar with a translucent track (same idea as HomePage.progressBar)
+    // progress bar with a translucent track
     static Component progressBar(float progress, int trackColor, int trackAlpha, int fillColor, float heightMM) {
         final float p = Math.max(0f, Math.min(1f, progress));
 
@@ -303,12 +213,10 @@ public class ViewAllTransacPage {
                 int x = getX(), y = getY(), w = getWidth(), h = getHeight();
                 g.setAntiAliased(true);
 
-                // track
                 g.setAlpha(trackAlpha);
                 g.setColor(trackColor);
                 g.fillRoundRect(x, y, w, h, h, h);
 
-                // fill
                 g.setAlpha(255);
                 int fw = (int) (w * p);
                 if (fw > 0) {
@@ -332,7 +240,7 @@ public class ViewAllTransacPage {
                 });
 
         Label title = SAVI.text("TRANSACTIONS FOR:", SAVI.bold(1.8f), SAVI.BRIGHT_VIOLET);
-        Rounded titlePill = pill(title, LIGHT_VIOLET, 255, VIOLET_STROKE, 255);
+        Rounded titlePill = pill(title, SAVI.PALE_PURPLE, 255);
         setPadding(titlePill, 0.9f, 0.9f, 2.2f, 2.2f);
 
         bar.add(BorderLayout.WEST, back);
@@ -344,39 +252,39 @@ public class ViewAllTransacPage {
     // ---------- member summary card ----------
 
     static Container statBox(String label, String amount) {
-        Rounded box = new Rounded(BoxLayout.y(), SAVI.WHITE, 38, 3f).stroke(SAVI.WHITE, 70, 1);
+        Rounded box = new Rounded(BoxLayout.y(), SAVI.WHITE, 30, 3f);
         setPadding(box, 1.8f, 1.8f, 2.2f, 2.2f);
         setMargins(box, 0, 0, 0.5f, 0.5f);
 
-        box.add(SAVI.text(label, SAVI.regular(1.7f), HEADER_LABEL));
+        box.add(SAVI.text(label, SAVI.regular(1.7f), SAVI.PASTEL_LAVENDER));
         box.add(SAVI.text(amount, SAVI.bold(3f), SAVI.WHITE));
         return box;
     }
 
     static Container memberCard(String name, String role, String handle, String group, boolean active,
                                 double totalPaid, double missed, double goal) {
-        Container card = new GradientCard(BoxLayout.y(), 4.5f);
-        cardStyles(card, HEADER_START, 4.5f, 2.5f, 2.5f);
+        Rounded card = new Rounded(BoxLayout.y(), SAVI.BRIGHT_VIOLET, 255, 4.5f);
+        setPadding(card, 2.5f, 2.5f, 2.5f, 2.5f);
         setMargins(card, 0.5f, 1f, 2, 2);
 
         // avatar
         Label person = new Label();
         person.getAllStyles().setFgColor(SAVI.WHITE);
         FontImage.setMaterialIcon(person, FontImage.MATERIAL_PERSON_OUTLINE, 4f);
-        Rounded avatar = new Rounded(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER), SAVI.WHITE, 45, 2.4f)
-                .stroke(SAVI.WHITE, 70, 1).fixed(7.8f);
+        Rounded avatar = new Rounded(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER), SAVI.WHITE, 30, 2.4f)
+                .fixed(7.8f);
         avatar.add(BorderLayout.CENTER, person);
 
         // name + role pill, then @handle . group
         Label nameLabel = SAVI.text(name, SAVI.bold(3.2f), SAVI.WHITE);
-        Rounded rolePill = pill(SAVI.text(role, SAVI.regular(1.6f), SAVI.WHITE), SAVI.WHITE, 45, SAVI.WHITE, 0);
+        Rounded rolePill = pill(SAVI.text(role, SAVI.regular(1.6f), SAVI.WHITE), SAVI.WHITE, 30);
         setMargins(rolePill, 0, 0, 1f, 0);
         Container nameRow = new Container(new FlowLayout(Component.LEFT, Component.CENTER));
         nameRow.add(nameLabel).add(rolePill);
 
         Container textCol = new Container(BoxLayout.y());
         textCol.add(nameRow);
-        textCol.add(SAVI.text(handle + " \u2022 " + group, SAVI.regular(1.7f), HEADER_LABEL));
+        textCol.add(SAVI.text(handle + " \u2022 " + group, SAVI.regular(1.7f), SAVI.PASTEL_LAVENDER));
         setMargins(textCol, 0, 0, 1.8f, 0);
 
         Container left = new Container(new BorderLayout());
@@ -389,8 +297,7 @@ public class ViewAllTransacPage {
         Container dotWrap = BoxLayout.encloseYCenter(dot);
         Label statusText = SAVI.text(active ? "Active" : "Inactive", SAVI.bold(1.6f), SAVI.WHITE);
         setPadding(statusText, 0, 0, 0, 0);
-        Rounded status = new Rounded(new FlowLayout(Component.CENTER, Component.CENTER), SAVI.WHITE, 45, 0)
-                .stroke(SAVI.WHITE, 70, 1);
+        Rounded status = new Rounded(new FlowLayout(Component.CENTER, Component.CENTER), SAVI.WHITE, 30, 0);
         setPadding(status, 0.7f, 0.7f, 1.6f, 1.6f);
         status.add(dotWrap).add(statusText);
 
@@ -414,7 +321,7 @@ public class ViewAllTransacPage {
         Component bar = progressBar(pct, SAVI.WHITE, 60, SAVI.WHITE, 1f);
 
         card.add(topRow);
-        card.add(divider(HEADER_LINE, 2f, 0));
+        card.add(divider(SAVI.DARK_PURPLE, 2f, 0));
         card.add(stats);
         card.add(progressRow);
         card.add(bar);
@@ -425,16 +332,16 @@ public class ViewAllTransacPage {
 
     Container searchBar() {
         Label searchIcon = new Label();
-        searchIcon.getAllStyles().setFgColor(MUTED);
+        searchIcon.getAllStyles().setFgColor(SAVI.BLUE_GRAY);
         FontImage.setMaterialIcon(searchIcon, FontImage.MATERIAL_SEARCH, 3.2f);
 
         Label filterIcon = new Label();
-        filterIcon.getAllStyles().setFgColor(MUTED);
+        filterIcon.getAllStyles().setFgColor(SAVI.BLUE_GRAY);
         FontImage.setMaterialIcon(filterIcon, FontImage.MATERIAL_FILTER_LIST, 3.2f);
 
         TextField search = new TextField();
-        // own placeholder label (the built in hint ignores the page's font), shown under the field
-        final Label hint = SAVI.text("Search date...", SAVI.regular(1.9f), 0xA3A9BA);
+        // own placeholder label (the built in hint ignores the page's font)
+        final Label hint = SAVI.text("Search date...", SAVI.regular(1.9f), SAVI.BLUE_GRAY);
         setMargins(hint, 0, 0, 1f, 0);
         Style ts = search.getAllStyles();
         ts.setBorder(Border.createEmpty());
@@ -453,7 +360,7 @@ public class ViewAllTransacPage {
         field.add(search);
 
         Rounded bar = new Rounded(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER), SAVI.WHITE, 255, 0)
-                .stroke(SEARCH_STROKE, 255, 1);
+                .stroke(SAVI.BORDER_COLOR, 255, 1);
         setPadding(bar, 0.8f, 0.8f, 2.2f, 2.2f);
         setMargins(bar, 1f, 0.8f, 2, 2);
         bar.add(BorderLayout.WEST, searchIcon);
@@ -462,9 +369,9 @@ public class ViewAllTransacPage {
         return bar;
     }
 
-    static int countFor(String type) {
+    int countFor(String type) {
         int n = 0;
-        for (Txn t : DATA) {
+        for (PeopleBackend.Txn t : txns) {
             if (type == null || t.type.equals(type)) {
                 n++;
             }
@@ -472,66 +379,95 @@ public class ViewAllTransacPage {
         return n;
     }
 
-    void styleChip(int i) {
-        boolean selected = i == selectedChip;
-        chips[i].colors(selected ? NAVY : SAVI.WHITE, selected ? NAVY : LINE_GRAY);
-        chipButtons[i].getAllStyles().setFgColor(selected ? SAVI.WHITE : SAVI.DARK_KNIGHT);
-        chipButtons[i].getAllStyles().setFont(selected ? SAVI.bold(1.8f) : SAVI.semiBold(1.8f));
-        chipButtons[i].repaint();
+    // chip drawn completely by hand, so no theme state (pressed / selected / focus) can add a box behind the text
+    static class Chip extends Button {
+        private boolean selected;
+
+        Chip(String text) {
+            super(text);
+            setUIID("Label");
+            setMargins(this, 0, 0, 0, 0.8f);
+        }
+
+        // stops the row from auto-scrolling when a chip is tapped (that was moving "All")
+        @Override
+        public void scrollRectToVisible(int x, int y, int w, int h, Component coordinateSpace) {
+        }
+
+        @Override
+        public void scrollRectToVisible(com.codename1.ui.geom.Rectangle rect, Component coordinateSpace) {
+        }
+
+        void setSelectedChip(boolean s) {
+            selected = s;
+            repaint();
+        }
+
+        @Override
+        protected Dimension calcPreferredSize() {
+            Font f = SAVI.semiBold(1.7f);
+            return new Dimension(f.stringWidth(getText()) + mm(3.2f), f.getHeight() + mm(2f));
+        }
+
+        @Override
+        public void paint(Graphics g) {
+            int x = getX(), y = getY(), w = getWidth(), h = getHeight();
+            g.setAntiAliased(true);
+
+            g.setAlpha(255);
+            g.setColor(selected ? SAVI.BRIGHT_VIOLET : SAVI.WHITE);
+            g.fillRoundRect(x, y, w, h, h, h);
+
+            if (!selected) {
+                g.setColor(SAVI.BORDER_COLOR);
+                g.drawRoundRect(x, y, w - 1, h - 1, h, h);
+            }
+
+            Font f = SAVI.semiBold(1.7f);
+            g.setFont(f);
+            g.setColor(selected ? SAVI.WHITE : SAVI.DARK_KNIGHT);
+            g.drawString(getText(), x + (w - f.stringWidth(getText())) / 2, y + (h - f.getHeight()) / 2);
+        }
     }
 
     Container chipsRow() {
         Container row = new Container(BoxLayout.x());
         row.setScrollableX(true);
-        setMargins(row, 0.5f, 1f, 2, 0);
+        row.setScrollVisible(false); // hides the black scroll line
+        setMargins(row, 0.5f, 1f, 2, 2);
 
         for (int i = 0; i < CHIP_NAMES.length; i++) {
             final int index = i;
-            Button b = new Button(CHIP_NAMES[i] + " (" + countFor(CHIP_TYPES[i]) + ")");
-            b.setUIID("Label");
-            setPadding(b, 0, 0, 0, 0);
-            setMargins(b, 0, 0, 0, 0);
-            b.addActionListener(e -> {
-                int old = selectedChip;
+            Chip chip = new Chip(CHIP_NAMES[i] + " (" + countFor(CHIP_TYPES[i]) + ")");
+            chip.addActionListener(e -> {
+                chips[selectedChip].setSelectedChip(false);
                 selectedChip = index;
-                styleChip(old);
-                styleChip(index);
+                chips[index].setSelectedChip(true);
                 buildList();
             });
-
-            Rounded chip = new Rounded(new FlowLayout(Component.CENTER, Component.CENTER), SAVI.WHITE, 255, 0)
-                    .stroke(LINE_GRAY, 255, 1);
-            setPadding(chip, 1f, 1f, 2.4f, 2.4f);
-            setMargins(chip, 0, 0, 0, 1.2f);
-            chip.add(b);
-            chip.setLeadComponent(b);
-
             chips[i] = chip;
-            chipButtons[i] = b;
             row.add(chip);
         }
-        for (int i = 0; i < chips.length; i++) {
-            styleChip(i);
-        }
+        chips[selectedChip].setSelectedChip(true);
         return row;
     }
 
-    static Container txRow(Txn t) {
+    static Container txRow(PeopleBackend.Txn t) {
         boolean missed = t.type.equals("MISSED");
         boolean deposit = t.type.equals("DEPOSIT");
 
-        int accent = missed ? RED : GREEN;
-        int soft = missed ? RED_SOFT : GREEN_SOFT;
+        int accent = missed ? SAVI.RED : SAVI.GREEN;
+        int soft = missed ? SAVI.PALE_RED : SAVI.PALE_GREEN;
         char icon = missed ? FontImage.MATERIAL_WARNING : FontImage.MATERIAL_ARROW_DOWNWARD;
         Container iconBox = squareIcon(icon, 6.5f, soft, accent);
 
         Container info = new Container(BoxLayout.y());
         info.add(SAVI.text(t.title, SAVI.bold(2.1f), SAVI.DARK_KNIGHT));
-        info.add(SAVI.text(t.date, SAVI.regular(1.7f), MUTED));
+        info.add(SAVI.text(t.date, SAVI.regular(1.7f), SAVI.BLUE_GRAY));
         if (missed && !t.settled) {
-            Rounded overdue = pill(SAVI.text("Overdue", SAVI.bold(1.5f), RED), RED_SOFT, 255, RED_SOFT, 0);
+            Rounded overdue = pill(SAVI.text("Overdue", SAVI.bold(1.5f), SAVI.RED), SAVI.WHITE, 255);
             Rounded settle = pillButton("Settle Now \u2192", SAVI.semiBold(1.5f), SAVI.BRIGHT_VIOLET,
-                    SAVI.WHITE, VIOLET_STROKE, 1.8f, e -> {
+                    SAVI.WHITE, SAVI.BORDER_COLOR, 1.8f, e -> {
                         // TODO: open the settle / pay page
                     });
             setMargins(settle, 0, 0, 0.8f, 0);
@@ -547,12 +483,12 @@ public class ViewAllTransacPage {
         Container amountCol = new Container(BoxLayout.y());
         amountCol.add(text(sign + Home.pesoFormat(t.amount), SAVI.bold(2.3f), accent, Component.RIGHT));
         Label status = text(t.settled ? "Settled" : "Unpaid", missed ? SAVI.bold(1.5f) : SAVI.regular(1.5f),
-                missed ? RED : MUTED, Component.RIGHT);
+                missed ? SAVI.RED : SAVI.BLUE_GRAY, Component.RIGHT);
         amountCol.add(status);
 
         Container row;
         if (missed) {
-            Rounded r = new Rounded(new BorderLayout(), ROW_MISSED_BG, 255, 3.5f).stroke(ROW_MISSED_STROKE, 255, 1);
+            Rounded r = new Rounded(new BorderLayout(), SAVI.PALE_RED, 255, 3.5f);
             setMargins(r, 0.6f, 0.6f, 0.6f, 0.6f);
             setPadding(r, 1.8f, 1.8f, 1.8f, 1.8f);
             row = r;
@@ -573,20 +509,19 @@ public class ViewAllTransacPage {
     static Container monthHeader(String month, int entries, boolean highlight) {
         Container row = new Container(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER));
         setMargins(row, 1.5f, 0.5f, 2.4f, 2);
-        row.add(BorderLayout.WEST, SAVI.text(month, SAVI.bold(1.7f), MUTED));
+        row.add(BorderLayout.WEST, SAVI.text(month, SAVI.bold(1.7f), SAVI.BLUE_GRAY));
 
         String count = entries + (entries == 1 ? " Entry" : " Entries");
         if (highlight) {
-            Rounded pill = pill(SAVI.text(count, SAVI.bold(1.6f), SAVI.BRIGHT_VIOLET), LIGHT_VIOLET, 255,
-                    VIOLET_STROKE, 255);
+            Rounded pill = pill(SAVI.text(count, SAVI.bold(1.6f), SAVI.BRIGHT_VIOLET), SAVI.PALE_PURPLE, 255);
             row.add(BorderLayout.EAST, FlowLayout.encloseRightMiddle(pill));
         } else {
-            row.add(BorderLayout.EAST, SAVI.text(count, SAVI.regular(1.6f), MUTED));
+            row.add(BorderLayout.EAST, SAVI.text(count, SAVI.regular(1.6f), SAVI.BLUE_GRAY));
         }
         return row;
     }
 
-    boolean matches(Txn t) {
+    boolean matches(PeopleBackend.Txn t) {
         String type = CHIP_TYPES[selectedChip];
         if (type != null && !t.type.equals(type)) {
             return false;
@@ -605,33 +540,33 @@ public class ViewAllTransacPage {
         String currentMonth = null;
         Container card = null;
         int sections = 0;
-        for (int i = 0; i < DATA.length; i++) {
-            Txn t = DATA[i];
+        for (int i = 0; i < txns.length; i++) {
+            PeopleBackend.Txn t = txns[i];
             if (!matches(t)) {
                 continue;
             }
             if (!t.month.equals(currentMonth)) {
                 currentMonth = t.month;
                 int entries = 0;
-                for (Txn x : DATA) {
+                for (PeopleBackend.Txn x : txns) {
                     if (x.month.equals(currentMonth) && matches(x)) {
                         entries++;
                     }
                 }
                 listContainer.add(monthHeader(currentMonth, entries, sections == 0));
-                card = new Container(BoxLayout.y());
-                cardStyles(card, SAVI.WHITE, 5f, 0.8f, 0f);
+                card = new Rounded(BoxLayout.y(), SAVI.WHITE, 255, 5f).stroke(SAVI.BORDER_COLOR, 255, 1);
+                setPadding(card, 0.8f, 0.8f, 0, 0);
                 setMargins(card, 0.5f, 1f, 2, 2);
                 listContainer.add(card);
                 sections++;
             } else {
-                card.add(divider(LINE_GRAY, 0, 2.4f));
+                card.add(divider(SAVI.BORDER_COLOR, 0, 2.4f));
             }
             card.add(txRow(t));
         }
 
         if (sections == 0) {
-            Label empty = text("No transactions found", SAVI.regular(2f), MUTED, Component.CENTER);
+            Label empty = text("No transactions found", SAVI.regular(2f), SAVI.BLUE_GRAY, Component.CENTER);
             setMargins(empty, 4, 0, 0, 0);
             listContainer.add(empty);
         }
@@ -642,16 +577,18 @@ public class ViewAllTransacPage {
 
     public void show() {
         Form base = new Form("", new BorderLayout());
-        base.getContentPane().getAllStyles().setBgColor(PAGE_BG);
+        base.getContentPane().getAllStyles().setBgColor(SAVI.PALE_PURPLE);
         base.getContentPane().getAllStyles().setBgTransparency(255);
-        paintStatusBar(base, PAGE_BG);
+        paintStatusBar(base, SAVI.PALE_PURPLE);
 
         listContainer = new Container(BoxLayout.y());
 
         Container mainContents = new Container(BoxLayout.y());
         mainContents.setScrollableY(true);
+        mainContents.setScrollVisible(false); // hides the dark bar on the right edge
 
-        mainContents.add(memberCard("Air", "Member", "@rei", "December Vacation", true, 130, 35, 200));
+        mainContents.add(memberCard(member.name, member.role, "@" + member.handle, member.group, member.active,
+                member.totalPaid, member.missed, member.goal));
         mainContents.add(searchBar());
         mainContents.add(chipsRow());
         mainContents.add(listContainer);

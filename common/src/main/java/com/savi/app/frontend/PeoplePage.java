@@ -17,27 +17,9 @@ import com.codename1.ui.plaf.RoundRectBorder;
 import com.codename1.ui.plaf.Style;
 import com.savi.app.SAVI;
 import com.savi.app.backend.Home;
+import com.savi.app.backend.PeopleBackend;
 
 public class PeoplePage {
-
-    static final int PAGE_BG = 0xF8F9FC;
-    static final int LIGHT_VIOLET = 0xEFEAFE;
-    static final int LIGHT_VIOLET_BORDER = 0xDDD3FB;
-    static final int SOFT_GRAY = 0xF8F9FC;
-    static final int LINE_GRAY = 0xE8EAF0;
-
-    static final int BANNER_START = 0x7C3AED;
-    static final int BANNER_END = 0x3B2DA6;
-    static final int BANNER_SOFT = 0x8E6BE8;
-    static final int BANNER_LINE = 0x9468EA;
-    static final int BANNER_LABEL = 0xC9B8F5;
-
-    static final int MISSED_BG = 0xFFF3F5;
-    static final int MISSED_BORDER = 0xFBD5DC;
-    static final int MISSED_TEXT = 0xC8153F;
-    static final int PAID_BG = 0xEFFCF6;
-    static final int PAID_BORDER = 0xBDF0D6;
-    static final int PAID_TEXT = 0x0E9F6E;
 
     static void setMargins(Component c, float t, float b, float l, float r) {
         Style s = c.getAllStyles();
@@ -129,6 +111,17 @@ public class PeoplePage {
         return p;
     }
 
+    // page title (no back button, this page is reached from the bottom nav)
+    static Container header(String title) {
+        Label l = SAVI.text(title, SAVI.bold(2.6f), SAVI.DARK_KNIGHT);
+        l.getAllStyles().setAlignment(Component.CENTER);
+
+        Container header = new Container(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER));
+        setMargins(header, 1.5f, 1f, 2, 2);
+        header.add(BorderLayout.CENTER, l);
+        return header;
+    }
+
     static Container groupBanner(String name, String pool, int contributors) {
         final float radiusMM = 5f;
         Container banner = new Container(BoxLayout.y()) {
@@ -140,30 +133,30 @@ public class PeoplePage {
                     g.setAntiAliased(true);
                     g.pushClip();
                     g.setClip(roundRectPath(getX(), getY(), getWidth(), getHeight(), r));
-                    g.fillLinearGradient(BANNER_START, BANNER_END, getX(), getY(), getWidth(), getHeight(), true);
+                    g.fillLinearGradient(SAVI.DARK_PURPLE, SAVI.DARK_DARK_PURPLE, getX(), getY(), getWidth(), getHeight(), true);
                     g.popClip();
                 }
             }
         };
-        cardStyles(banner, BANNER_START, radiusMM, 2.5f, 2.5f);
+        cardStyles(banner, SAVI.DARK_PURPLE, radiusMM, 2.5f, 2.5f);
         setMargins(banner, 0.5f, 1, 2, 2);
 
         Label groupName = SAVI.text(name.toUpperCase(), SAVI.bold(3.5f), SAVI.WHITE);
-        Container chevron = circleIcon(FontImage.MATERIAL_KEYBOARD_ARROW_DOWN, 6f, 3f, BANNER_SOFT, SAVI.WHITE, false);
+        Container chevron = circleIcon(FontImage.MATERIAL_KEYBOARD_ARROW_DOWN, 6f, 3f, SAVI.BRIGHT_VIOLET, SAVI.WHITE, false);
 
         Container titleRow = new Container(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER));
         titleRow.add(BorderLayout.WEST, groupName);
         titleRow.add(BorderLayout.EAST, chevron);
 
         Container poolCont = new Container(BoxLayout.y());
-        poolCont.add(SAVI.text("Total Pool", SAVI.regular(2f), BANNER_LABEL));
+        poolCont.add(SAVI.text("Total Pool", SAVI.regular(2f), SAVI.PASTEL_LAVENDER));
         poolCont.add(SAVI.text(pool, SAVI.bold(4f), SAVI.WHITE));
 
         Container memCont = new Container(BoxLayout.y());
-        Label memText = SAVI.text("Members", SAVI.regular(2f), BANNER_LABEL);
+        Label memText = SAVI.text("Members", SAVI.regular(2f), SAVI.PASTEL_LAVENDER);
         memText.getAllStyles().setAlignment(Component.RIGHT);
         Container memPill = pill(SAVI.text(contributors + " Contributors", SAVI.semiBold(2f), SAVI.WHITE),
-                BANNER_SOFT, BANNER_SOFT);
+                SAVI.BRIGHT_VIOLET, SAVI.BRIGHT_VIOLET);
         memCont.add(memText);
         memCont.add(memPill);
 
@@ -172,7 +165,7 @@ public class PeoplePage {
         infoRow.add(BorderLayout.EAST, memCont);
 
         banner.add(titleRow);
-        banner.add(divider(BANNER_LINE));
+        banner.add(divider(SAVI.BRIGHT_VIOLET));
         banner.add(infoRow);
         return banner;
     }
@@ -183,19 +176,19 @@ public class PeoplePage {
 
         Label title = SAVI.text("MEMBER CONTRIBUTIONS", SAVI.bold(2f), SAVI.SLATE_GRAY);
         Container updated = pill(SAVI.text("Updated Today", SAVI.regular(1.8f), SAVI.BRIGHT_VIOLET),
-                LIGHT_VIOLET, LIGHT_VIOLET);
+                SAVI.PALE_PURPLE, SAVI.PALE_PURPLE);
 
         header.add(BorderLayout.WEST, title);
         header.add(BorderLayout.EAST, updated);
         return header;
     }
 
-    static Container avatar(int color) {
+    static Container avatar() {
         Container av = new Container(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER));
         av.setPreferredW(Display.getInstance().convertToPixels(12f));
         av.setPreferredH(Display.getInstance().convertToPixels(12f));
         Style s = av.getAllStyles();
-        s.setBgColor(color);
+        s.setBgColor(SAVI.BRIGHT_VIOLET);
         s.setBgTransparency(255);
         s.setBorder(RoundRectBorder.create().
                 cornerRadius(3.5f).
@@ -203,7 +196,7 @@ public class PeoplePage {
                 shadowBlur(8).
                 shadowSpread(1f).
                 shadowY(0.4f).
-                shadowColor(color));
+                shadowColor(SAVI.BRIGHT_VIOLET));
 
         Label icon = new Label();
         icon.getAllStyles().setFgColor(SAVI.WHITE);
@@ -230,20 +223,19 @@ public class PeoplePage {
         return box;
     }
 
-    static Container memberCard(String name, String handle, double total, double missed, int avatarColor,
-                                ActionListener<ActionEvent> onViewAll) {
+    static Container memberCard(PeopleBackend.Member m, ActionListener<ActionEvent> onViewAll) {
         Container card = new Container(BoxLayout.y());
         cardStyles(card, SAVI.WHITE, 4, 2f, 2f);
         setMargins(card, 0.5f, 1f, 2, 2);
 
         // header: avatar + name on the left, view all on the right
         Container nameCont = new Container(BoxLayout.y());
-        nameCont.add(SAVI.text(name, SAVI.bold(3f), SAVI.DARK_KNIGHT));
-        nameCont.add(SAVI.text("@" + handle, SAVI.regular(2f), SAVI.SLATE_GRAY));
+        nameCont.add(SAVI.text(m.name, SAVI.bold(3f), SAVI.DARK_KNIGHT));
+        nameCont.add(SAVI.text("@" + m.handle, SAVI.regular(2f), SAVI.SLATE_GRAY));
         setMargins(nameCont, 0, 0, 1.5f, 0);
 
         Container left = new Container(new FlowLayout());
-        left.add(avatar(avatarColor)).add(nameCont);
+        left.add(avatar()).add(nameCont);
 
         Button viewAll = new Button("View all transactions");
         viewAll.setUIID("Label");
@@ -258,56 +250,51 @@ public class PeoplePage {
         header.add(BorderLayout.EAST, BorderLayout.north(viewAll));
 
         // stats
-        boolean hasMissed = missed > 0;
-        Container totalBox = statBox("Total Contribution", Home.pesoFormat(total),
-                SOFT_GRAY, SOFT_GRAY, SAVI.SLATE_GRAY, SAVI.DARK_KNIGHT);
-        Container missedBox = statBox("Missed Contribution", Home.pesoFormat(missed),
-                hasMissed ? MISSED_BG : PAID_BG,
-                hasMissed ? MISSED_BORDER : PAID_BORDER,
-                hasMissed ? MISSED_TEXT : PAID_TEXT,
-                hasMissed ? MISSED_TEXT : PAID_TEXT);
+        boolean hasMissed = m.missed > 0;
+        Container totalBox = statBox("Total Contribution", Home.pesoFormat(m.totalPaid),
+                SAVI.POWDER_WHITE, SAVI.BORDER_COLOR, SAVI.SLATE_GRAY, SAVI.DARK_KNIGHT);
+        Container missedBox = statBox("Missed Contribution", Home.pesoFormat(m.missed),
+                hasMissed ? SAVI.PALE_RED : SAVI.PALE_GREEN,
+                hasMissed ? SAVI.RED : SAVI.GREEN,
+                hasMissed ? SAVI.RED : SAVI.GREEN,
+                hasMissed ? SAVI.RED : SAVI.GREEN);
 
         Container stats = new Container(new GridLayout(1, 2));
         stats.add(totalBox).add(missedBox);
 
         card.add(header);
-        card.add(divider(LINE_GRAY));
+        card.add(divider(SAVI.BORDER_COLOR));
         card.add(stats);
         return card;
     }
 
     public void show() {
         Form base = new Form("", new BorderLayout());
-        base.getContentPane().getAllStyles().setBgColor(PAGE_BG);
+        base.getContentPane().getAllStyles().setBgColor(SAVI.POWDER_WHITE);
         base.getContentPane().getAllStyles().setBgTransparency(255);
         // status bar area uses the same background instead of white
-        base.getTitleArea().getAllStyles().setBgColor(PAGE_BG);
+        base.getTitleArea().getAllStyles().setBgColor(SAVI.POWDER_WHITE);
         base.getTitleArea().getAllStyles().setBgTransparency(255);
 
-        // member data (hardcoded for now)
-        String[] names = {"Air", "Faye", "Sam"};
-        String[] handles = {"rei", "faye", "sami"};
-        double[] totals = {130, 150, 95};
-        double[] missed = {35, 0, 20};
-        int[] avatarColors = {0x6C4BEB, 0xA970F7, 0x5B45E6};
+        // member data comes from the backend (hardcoded there for now)
+        PeopleBackend.Member[] members = PeopleBackend.getMembers();
 
         Container mainContents = new Container(BoxLayout.y());
         mainContents.setScrollableY(true);
 
-        mainContents.add(groupBanner("December Vacation", "P12,450.00", 4));
+        mainContents.add(groupBanner(PeopleBackend.getGroupName(), Home.pesoFormat(PeopleBackend.getGroupPool()), members.length));
         mainContents.add(sectionHeader());
 
-        for (int i = 0; i < names.length; i++) {
-            mainContents.add(memberCard(names[i], handles[i], totals[i], missed[i], avatarColors[i],
-                    e -> {
-                        // TODO: open transactions page
-                    }));
+        for (int i = 0; i < members.length; i++) {
+            final PeopleBackend.Member member = members[i];
+            // connects to the View All Transactions page for this member
+            mainContents.add(memberCard(member, e -> new ViewAllTransacPage(member).show()));
         }
 
-        base.add(BorderLayout.NORTH, SAVI.buildHeader("Group Members", () -> new HomePage().show()));
+        base.add(BorderLayout.NORTH, header("Group Members"));
         base.add(BorderLayout.CENTER, mainContents);
 
-        base.add(BorderLayout.SOUTH,SAVI.bottomNav(SAVI.NAV_PEOPLE));
+        base.add(BorderLayout.SOUTH, SAVI.bottomNav(SAVI.NAV_PEOPLE));
         base.show();
     }
 }
