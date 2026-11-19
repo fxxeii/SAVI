@@ -74,6 +74,24 @@ public class GroupList {
         return "success";
     }
 
+    // same as addGroup, plus the weekly target (0 = no weekly target)
+    public String addGroup(String savingsName, double target, String groupName,
+                           double expectedPerMember, double weeklyTarget) {
+
+        if (weeklyTarget < 0 || Double.isNaN(weeklyTarget) || Double.isInfinite(weeklyTarget)) {
+            return "Invalid weekly target.";
+        }
+
+        String result = addGroup(savingsName, target, groupName, expectedPerMember);
+
+        if (result.equals("success")) {
+            findGroup(groupName).setWeeklyTarget(weeklyTarget);
+            saveAll();
+        }
+
+        return result;
+    }
+
     public boolean addMember(String groupName, String member) {
 
         GroupSavings g = findGroup(groupName);
@@ -126,7 +144,7 @@ public class GroupList {
     }
 
     // ---------------------------------------------------------------- FILE HANDLING (CSV)
-    // G,savingsName,targetAmount,groupName,expectedPerMember,createdDate
+    // G,savingsName,targetAmount,groupName,expectedPerMember,createdDate,weeklyTarget
     // M,groupName,memberName
     // C,groupName,member,amount,date,note,timestamp
     private boolean saveAll() {
@@ -137,7 +155,8 @@ public class GroupList {
                     .append(g.getTargetAmount()).append(",")
                     .append(encode(g.getGroupName())).append(",")
                     .append(g.getExpectedPerMember()).append(",")
-                    .append(g.getCreatedDate()).append("\n");
+                    .append(g.getCreatedDate()).append(",")
+                    .append(g.getWeeklyTarget()).append("\n");
 
             for (String m : g.getMembers()) {
                 sb.append("M,").append(encode(g.getGroupName())).append(",")
@@ -205,6 +224,15 @@ public class GroupList {
                             expected,
                             createdDate
                     ));
+
+                    // optional 7th column: the weekly target (older records don't have it: 0)
+                    if (p.size() >= 7) {
+                        try {
+                            findGroup(groupName).setWeeklyTarget(Double.parseDouble(p.get(6)));
+                        } catch (Exception ignored) {
+                            // keep 0
+                        }
+                    }
                 }
 
             } else if (type.equals("M") && p.size() >= 3) {

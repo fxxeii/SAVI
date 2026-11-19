@@ -59,6 +59,25 @@ public class PersonalList {
         return "success";
     }
 
+    // same as addPersonalSavings, plus the weekly target (0 = no weekly target)
+    public String addPersonalSavings(String savingsName, double targetAmount, String ownerName,
+                                     double weeklyTarget) {
+        if (weeklyTarget < 0 || Double.isNaN(weeklyTarget) || Double.isInfinite(weeklyTarget)) {
+            return "Invalid weekly target.";
+        }
+
+        String result = addPersonalSavings(savingsName, targetAmount, ownerName);
+
+        if (result.equals("success")) {
+            PersonalSavings p = findSavings(savingsName, ownerName);
+            if (p != null) {
+                p.setWeeklyTarget(weeklyTarget);
+                saveAll();
+            }
+        }
+        return result;
+    }
+
     public boolean addContribution(String savingsName, String ownerName, double amount, LocalDate date, String note) {
         PersonalSavings p = findSavings(savingsName, ownerName);
         if (p == null) return false;
@@ -68,14 +87,15 @@ public class PersonalList {
     }
 
     // ---------------------------------------------------------------- FILE HANDLING (CSV)
-    // P,savingsName,targetAmount,ownerName
+    // P,savingsName,targetAmount,ownerName,weeklyTarget
     // C,savingsName,ownerName,amount,date,note,timestamp
     private void saveAll() {
         StringBuilder sb = new StringBuilder();
         for (PersonalSavings p : list) {
             sb.append("P,").append(encode(p.getSavingsName())).append(",")
                     .append(p.getTargetAmount()).append(",")
-                    .append(encode(p.getOwner())).append("\n");
+                    .append(encode(p.getOwner())).append(",")
+                    .append(p.getWeeklyTarget()).append("\n");
 
             for (Contribution c : p.getContributions()) {
                 sb.append("C,").append(encode(p.getSavingsName())).append(",")
@@ -119,6 +139,15 @@ public class PersonalList {
                 String owner = decode(p.get(3));
                 if (findSavings(savingsName, owner) == null) {
                     list.add(new PersonalSavings(savingsName, target, owner));
+
+                    // optional 5th column: the weekly target (older records don't have it: 0)
+                    if (p.size() >= 5) {
+                        try {
+                            findSavings(savingsName, owner).setWeeklyTarget(Double.parseDouble(p.get(4)));
+                        } catch (Exception ignored) {
+                            // keep 0
+                        }
+                    }
                 }
             } else if (type.equals("C") && p.size() >= 6) {
                 String savingsName = decode(p.get(1));

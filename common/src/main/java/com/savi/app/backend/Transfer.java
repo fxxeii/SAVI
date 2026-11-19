@@ -295,7 +295,7 @@ public class Transfer {
         }
 
         if (from.sameAs(to) && fm.equalsIgnoreCase(tm)) {
-            return "You can't transfer to the same savings.";
+            return "You can't transfer to the same savings member.";
         }
 
         // a personal savings belongs to one person: it may only exchange funds with that

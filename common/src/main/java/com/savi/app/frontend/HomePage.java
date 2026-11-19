@@ -14,8 +14,10 @@ import com.codename1.ui.layouts.BorderLayout;
 import com.codename1.ui.layouts.BoxLayout;
 import com.codename1.ui.layouts.FlowLayout;
 import com.codename1.ui.layouts.GridLayout;
+import com.codename1.ui.plaf.Border;
 import com.codename1.ui.plaf.RoundRectBorder;
 import com.codename1.ui.plaf.Style;
+import com.codename1.ui.spinner.Picker;
 import com.savi.app.SAVI;
 import com.savi.app.backend.GroupSavings;
 import com.savi.app.backend.Home;
@@ -152,8 +154,16 @@ public class HomePage {
     }
 
     public void show() {
+        show(null);
+    }
+
+    // opens with the weekly card on this choice ("All Groups", a group name or a personal savings)
+    public void show(String weeklyChoice) {
         // BACKEND: one Home object feeds the cards below (SAVI.user / SAVI.groupList.getGroups: see note)
         Home home = new Home(SAVI.user, Home.allSavings());
+        if (weeklyChoice != null) {
+            home.setWeeklyChoice(weeklyChoice);
+        }
         GroupSavings g = home.getFeaturedGroup();                    // null if the user has no groups
 
         Form base = new Form("", new BorderLayout());
@@ -200,18 +210,63 @@ public class HomePage {
         Container weekTotalContainer = new Container(new BorderLayout());
         boxStyles(weekTotalContainer, SAVI.WHITE, 2, 3);
 
+        // WEEKLY CARD CHOICE: "All Groups" (every group's weekly target added up) or one savings.
+        // The name is a Picker (same wheel as the Transfer page): tapping the name or the arrow opens it.
+        Container choiceRow = null;
+        java.util.List<String> choices = home.getWeeklyChoices();
+        if (!choices.isEmpty()) {
+            final String shown = home.getWeeklyChoice();
+            String[] items = new String[choices.size()];
+            for (int i = 0; i < items.length; i++) {
+                items[i] = choices.get(i).toUpperCase();
+            }
+
+            final Picker choicePicker = new Picker();
+            choicePicker.setUIID("Label");
+            choicePicker.setType(Display.PICKER_TYPE_STRINGS);
+            choicePicker.setStrings(items);
+            choicePicker.setSelectedString(shown.toUpperCase());
+            Style ps = choicePicker.getAllStyles();
+            ps.setFont(SAVI.bold(2.5f));
+            ps.setFgColor(SAVI.DARK_KNIGHT);
+            ps.setBgTransparency(0);
+            ps.setBorder(Border.createEmpty());
+            ps.setMargin(0, 0, 0, 0);
+            ps.setPadding(0, 0, 0, 0);
+            choicePicker.addActionListener(e -> {
+                String chosen = choicePicker.getSelectedString();
+                if (chosen != null && !chosen.equalsIgnoreCase(shown)) {
+                    new HomePage().show(chosen);       // reload the page on the chosen savings
+                }
+            });
+
+            Label chev = new Label();
+            chev.getAllStyles().setFgColor(SAVI.DARK_KNIGHT);
+            chev.getAllStyles().setBgTransparency(0);
+            chev.getAllStyles().setMargin(0, 0, 0, 0);
+            FontImage.setMaterialIcon(chev, FontImage.MATERIAL_KEYBOARD_ARROW_DOWN, 4f);
+
+            choiceRow = new Container(new BorderLayout());
+            choiceRow.add(BorderLayout.WEST, choicePicker);
+            choiceRow.add(BorderLayout.EAST, chev);
+            choiceRow.setLeadComponent(choicePicker);
+        }
+
         Label amountSaved = SAVI.text("AMOUNT SAVED", SAVI.bold(2.5f), SAVI.SLATE_GRAY);
         float pct = (float) home.getWeeklyProgress();
 
         Label amount = SAVI.text(Home.pesoFormat(home.getWeeklySaved()), SAVI.bold(4), SAVI.DARK_KNIGHT);
 
         Container targetPercent = new Container(new BorderLayout());
-        Label weekTarget = SAVI.text("Weekly Target: " + Home.pesoShort(home.getWeeklyTarget()), SAVI.regular(2f), SAVI.SLATE_GRAY);
+        Label weekTarget = SAVI.text(home.getWeeklyTargetLabel(), SAVI.regular(2f), SAVI.SLATE_GRAY);
         Label percentage = SAVI.text(home.getWeeklyPercent() + "%", SAVI.bold(2f), SAVI.BRIGHT_VIOLET);
         targetPercent.add(BorderLayout.WEST, weekTarget);
         targetPercent.add(BorderLayout.EAST, percentage);
 
         Container weekTotalContent = new Container(BoxLayout.y());
+        if (choiceRow != null) {               // the name + arrow of the savings being shown
+            weekTotalContent.add(choiceRow);
+        }
         weekTotalContent.add(amountSaved);
         weekTotalContent.add(amount);
         weekTotalContent.add(targetPercent);

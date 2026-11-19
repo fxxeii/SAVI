@@ -15,8 +15,12 @@ public class Home {
     private List<? extends Savings> allSavings;  // every savings object (group or personal)
     private LocalDate weekStart;                // first day (Sunday) of the week on the calendar
     private double weeklySaved;
-    private double weeklyTarget = DEFAULT_WEEKLY_TARGET;
+    private double weeklyTarget;               // taken from the savings chosen on the weekly card (0 = not set)
     private double weeklyProgress;              // always between 0.0 and 1.0
+
+    public static final String ALL_GROUPS = "All Savings";   // choice that adds up every savings' weekly target (groups + personal)
+    private static final String PERSONAL_TAG = " (Personal)";
+    private String weeklyChoice = "";           // what the weekly card shows ("" = the default choice)
 
     /** Every savings the logged-in user can see: all groups + the user's own personal savings.
      *  Pass this to new Home(...) so the home page and the Recent Contributions page show both. */
@@ -66,23 +70,126 @@ public class Home {
     /** Recomputes the weekly numbers. Call it again after a new contribution is added. */
     public void refresh() {
         String me = currentName();             // null if nobody is logged in
-        double total = 0;
+        double saved = 0;
+        double target = 0;
 
         if (me != null) {
-            for (GroupSavings g : getGroups()) {
-                for (int i = 0; i < 7; i++) {
-                    // the group looks up its own records for that day
-                    for (Contribution c : g.getContributionsOn(weekStart.plusDays(i))) {
-                        if (c.getMember().equalsIgnoreCase(me)) {
-                            total += c.getAmount();
-                        }
-                    }
+            String choice = getWeeklyChoice();
+            GroupSavings g = findGroupChoice(choice);
+            PersonalSavings p = g == null ? findPersonalChoice(choice) : null;
+
+            if (choice.equals(ALL_GROUPS)) {
+                // every weekly target added up (groups AND personal), and what this person put into all of them
+                for (GroupSavings each : getGroups()) {
+                    saved += weekTotal(each, me);
+                    target += each.getWeeklyTarget();
                 }
+                for (PersonalSavings each : getPersonals()) {
+                    saved += weekTotal(each, me);
+                    target += each.getWeeklyTarget();
+                }
+            } else if (g != null) {
+                saved = weekTotal(g, me);
+                target = g.getWeeklyTarget();
+            } else if (p != null) {
+                saved = weekTotal(p, me);
+                target = p.getWeeklyTarget();
             }
         }
 
-        weeklySaved = total;
-        weeklyProgress = (weeklyTarget <= 0) ? 0 : Math.min(1.0, weeklySaved / weeklyTarget);
+        weeklySaved = saved;
+        weeklyTarget = target;
+        weeklyProgress = (weeklyTarget <= 0) ? 0 : Math.max(0, Math.min(1.0, weeklySaved / weeklyTarget));
+    }
+
+    /** What this person put into one savings during the week shown on the calendar. */
+    private double weekTotal(Savings savings, String me) {
+        double total = 0;
+        for (int i = 0; i < 7; i++) {
+            // the savings looks up its own records for that day
+            for (Contribution c : savings.getContributionsOn(weekStart.plusDays(i))) {
+                if (c.getMember().equalsIgnoreCase(me)) {
+                    total += c.getAmount();
+                }
+            }
+        }
+        return total;
+    }
+
+    // ---------------------------------------------------------------- WEEKLY CARD CHOICE
+    // The weekly card shows ONE of: "All Groups", a group, or a personal savings.
+
+    /** The dropdown texts: "All Savings" (when there is any savings), each group, each personal savings. */
+    public List<String> getWeeklyChoices() {
+        List<String> choices = new ArrayList<String>();
+        List<GroupSavings> groups = getGroups();
+        if (!groups.isEmpty() || !getPersonals().isEmpty()) {
+            choices.add(ALL_GROUPS);
+        }
+        for (GroupSavings g : groups) {
+            choices.add(g.getGroupName());
+        }
+        for (PersonalSavings p : getPersonals()) {
+            choices.add(p.getSavingsName() + PERSONAL_TAG);
+        }
+        return choices;
+    }
+
+    /** What the weekly card shows now: the picked one, else the first choice, else "" (no savings). */
+    public String getWeeklyChoice() {
+        String picked = matchChoice(weeklyChoice);
+        if (picked != null) {
+            return picked;
+        }
+        List<String> choices = getWeeklyChoices();
+        return choices.isEmpty() ? "" : choices.get(0);
+    }
+
+    /** Picks what the weekly card shows (capitals don't matter). False if there is no such choice. */
+    public boolean setWeeklyChoice(String choice) {
+        String picked = matchChoice(choice);
+        if (picked == null) {
+            return false;
+        }
+        this.weeklyChoice = picked;
+        refresh();
+        return true;
+    }
+
+    /** "Weekly Target: P5,000", or "No weekly target set" when nothing was set. */
+    public String getWeeklyTargetLabel() {
+        return weeklyTarget > 0 ? "Weekly Target: " + pesoShort(weeklyTarget) : "No weekly target set";
+    }
+
+    // the official text of a choice, or null if it is not one of the choices
+    private String matchChoice(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return null;
+        }
+        for (String c : getWeeklyChoices()) {
+            if (c.equalsIgnoreCase(text.trim())) {
+                return c;
+            }
+        }
+        return null;
+    }
+
+    private GroupSavings findGroupChoice(String choice) {
+        for (GroupSavings g : getGroups()) {
+            if (g.getGroupName().equalsIgnoreCase(choice)) {
+                return g;
+            }
+        }
+        return null;
+    }
+
+    private PersonalSavings findPersonalChoice(String choice) {
+        for (PersonalSavings p : getPersonals()) {
+            if ((p.getSavingsName() + PERSONAL_TAG).equalsIgnoreCase(choice)) {
+                return p;
+            }
+        }
+        return null;
     }
 
     // ---------------------------------------------------------------- THIS WEEK (calendar strip)

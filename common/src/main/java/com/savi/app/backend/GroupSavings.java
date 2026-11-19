@@ -11,6 +11,7 @@ public class GroupSavings extends Savings {
     private final ArrayList<String> members = new ArrayList<>();
     private final double expectedPerMember;
     private final LocalDate createdDate;
+    private double weeklyTarget;   // goal for each week (0 = not set)
 
     // implements constructor overloading
     public GroupSavings(String savingsName, double targetAmount,
@@ -85,6 +86,17 @@ public class GroupSavings extends Savings {
 
     public LocalDate getCreatedDate() {
         return createdDate;
+    }
+
+    public double getWeeklyTarget() {
+        return weeklyTarget;
+    }
+
+    public void setWeeklyTarget(double weeklyTarget) {
+        if (weeklyTarget < 0 || Double.isNaN(weeklyTarget) || Double.isInfinite(weeklyTarget)) {
+            throw new IllegalArgumentException("Invalid weekly target.");
+        }
+        this.weeklyTarget = weeklyTarget;
     }
 
     public double getMissed(String member, LocalDate date) {
