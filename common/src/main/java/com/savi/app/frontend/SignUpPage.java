@@ -19,18 +19,12 @@ public class SignUpPage {
         signUpForm.getAllStyles().setBgTransparency(255);
 
         Container header = new Container(BoxLayout.yCenter());
-        header.getAllStyles().setBgColor(SAVI.DARK_PURPLE);
-        header.getAllStyles().setBgTransparency(255);
-        header.getAllStyles().setPadding(20, 50, 0, 0);
+
         Style cont = header.getAllStyles();
-        /*cont.setBorder(RoundRectBorder.create()
-                .cornerRadius(5)
-                .shadowOpacity(50)
-                .shadowBlur(10)
-                .shadowSpread(1f)
-                .shadowX(1f)
-                .shadowY(1f)
-                .shadowColor(darkDarkPurple));*/
+
+        cont.setBgColor(SAVI.DARK_PURPLE);
+        cont.setBgTransparency(255);
+        cont.setPadding(20, 50, 0, 0);
         cont.setMarginUnit(Style.UNIT_TYPE_DIPS);
         cont.setBackgroundType(Style.BACKGROUND_GRADIENT_LINEAR_HORIZONTAL);
         cont.setBackgroundGradientStartColor(SAVI.PINKISH);
@@ -64,21 +58,72 @@ public class SignUpPage {
         form.getAllStyles().setBgTransparency(255);
         form.getAllStyles().setPadding(70, 5, 10, 10);
 
-        TextField usernamef = new TextField("","Enter username");
-        TextField emailf = new TextField("", "Enter email");
-        TextField passf = new TextField("", "Enter password");
-        TextField cpassf = new TextField("", "Confirm password");
+        Label usn = SAVI.text("Username", SAVI.regular(2f), SAVI.DEEP_SLATE);
+        Label eml = SAVI.text("Email", SAVI.regular(2f), SAVI.DEEP_SLATE);
+        Label ps = SAVI.text("Password", SAVI.regular(2f), SAVI.DEEP_SLATE);
+        Label cps = SAVI.text("Confirm Password", SAVI.regular(2f), SAVI.DEEP_SLATE);
+
+        TextField usernamef = new TextField("","username");
+        TextField emailf = new TextField("", "example@mail.com");
+        TextField passf = new TextField("", "password");
+        TextField cpassf = new TextField("", "confirm password");
+
+        Label[] labels = {usn, eml, ps, cps};
+
+        for (Label lbl : labels) {
+            lbl.getAllStyles().setMargin(0, 0, 0, 0);
+            lbl.getAllStyles().setPadding(0, 0, 9, 0);
+        }
+
+        TextField[] fields = {usernamef, emailf, passf, cpassf};
+
+        for (TextField tf : fields) {
+            tf.getAllStyles().setFont(SAVI.regular(2.5f));
+            tf.getAllStyles().setFgColor(SAVI.BLACK);
+            tf.getAllStyles().setPadding(2, 1.5f, 3, 4);
+            tf.getAllStyles().setMargin(1, 2, 9, 9);
+
+            tf.getHintLabel().getAllStyles().setFont(SAVI.italic(1.9f));
+            tf.getHintLabel().getAllStyles().setFgColor(SAVI.GRANITE_GRAY);
+            tf.getHintLabel().getAllStyles().setPadding(2, 1.5f, 3, 0);
+
+            tf.setSingleLineTextArea(true);
+        }
+
+        for (TextField tf : fields) {
+            Style[] styles = {
+                    tf.getUnselectedStyle(),
+                    tf.getSelectedStyle(),
+                    tf.getPressedStyle()
+            };
+
+            for (Style s : styles) {
+                s.setBgColor(SAVI.WHITE);
+                s.setBgTransparency(255);
+                s.setBgImage(null);
+                s.setBorder(Border.createEmpty());
+                s.setBorder(RoundRectBorder.create()
+                        .cornerRadius(3f)
+                        .shadowOpacity(25)
+                        .shadowBlur(1)
+                        .shadowSpread(0.3f)
+                        .shadowX(0.5f)
+                        .shadowY(1.5f)
+                        .shadowColor(SAVI.GRANITE_GRAY)
+                );
+            }
+        }
+
+        passf.getAllStyles().setPadding(2, 1.5f, 3, 3);
+        passf.getAllStyles().setMargin(1, 2, 9, 1);
+        cpassf.getAllStyles().setPadding(2, 1.5f, 3, 3);
+        cpassf.getAllStyles().setMargin(1, 2, 9, 1);
+
+        passf.setConstraint(TextField.PASSWORD);
+        cpassf.setConstraint(TextField.PASSWORD);
 
         Button showPass = new Button("Show");
         Button showCpass = new Button("Show");
-
-        Container passContainer = new Container(new BorderLayout());
-        passContainer.add(BorderLayout.CENTER, passf);
-        passContainer.add(BorderLayout.EAST, showPass);
-
-        Container cpassContainer = new Container(new BorderLayout());
-        cpassContainer.add(BorderLayout.CENTER, cpassf);
-        cpassContainer.add(BorderLayout.EAST, showCpass);
 
         showPass.addActionListener(e -> {
             if (passf.getConstraint() == TextField.PASSWORD) {
@@ -124,130 +169,25 @@ public class SignUpPage {
             }
         }
 
-        TextField[] fields = {usernamef, emailf};
+        Container usnContainer = new Container(new BorderLayout());
+        usnContainer.add(BorderLayout.NORTH, usn);
+        usnContainer.add(BorderLayout.CENTER, usernamef);
 
-        for (TextField field : fields) {
-            field.getAllStyles().setFont(SAVI.regular(3f));
-            field.getAllStyles().setFgColor(SAVI.BLACK);
-            field.getHintLabel().getAllStyles().setFont(SAVI.regular(2.5f));
-            field.getHintLabel().getAllStyles().setFgColor(SAVI.BLUE_GRAY);
+        Container emlContainer = new Container(new BorderLayout());
+        emlContainer.add(BorderLayout.NORTH, eml);
+        emlContainer.add(BorderLayout.CENTER, emailf);
 
-            field.getAllStyles().setPadding(2, 1, 3, 4);
-            field.getAllStyles().setMargin(2, 2, 9, 9);
-            field.setSingleLineTextArea(true);
+        Container passContainer = new Container(new BorderLayout());
+        passContainer.add(BorderLayout.NORTH, ps);
+        passContainer.add(BorderLayout.CENTER, passf);
+        passContainer.add(BorderLayout.EAST, showPass);
 
-            Style normal = field.getUnselectedStyle();
-            Style focused = field.getSelectedStyle();
-            Style pressed = field.getPressedStyle();
+        Container cpassContainer = new Container(new BorderLayout());
+        cpassContainer.add(BorderLayout.NORTH, cps);
+        cpassContainer.add(BorderLayout.CENTER, cpassf);
+        cpassContainer.add(BorderLayout.EAST, showCpass);
 
-            normal.setBgColor(SAVI.WHITE);
-            normal.setBgTransparency(255);
-            normal.setBgImage(null);
-            normal.setBorder(Border.createEmpty());
-            normal.setBorder(RoundRectBorder.create()
-                    .cornerRadius(3f)
-                    .shadowOpacity(50)
-                    .shadowBlur(1)
-                    .shadowSpread(0.3f)
-                    .shadowX(0.5f)
-                    .shadowY(2f)
-                    .shadowColor(SAVI.DARK_DARK_PURPLE)
-            );
-
-            focused.setBgColor(SAVI.WHITE);
-            focused.setBgTransparency(255);
-            focused.setBgImage(null);
-            focused.setBorder(Border.createEmpty());
-            focused.setBorder(RoundRectBorder.create()
-                    .cornerRadius(3f)
-                    .shadowOpacity(50)
-                    .shadowBlur(1)
-                    .shadowSpread(0.3f)
-                    .shadowX(0.5f)
-                    .shadowY(2f)
-                    .shadowColor(SAVI.DARK_DARK_PURPLE)
-            );
-
-            pressed.setBgColor(SAVI.WHITE);
-            pressed.setBgTransparency(255);
-            pressed.setBgImage(null);
-            pressed.setBorder(Border.createEmpty());
-            pressed.setBorder(RoundRectBorder.create()
-                    .cornerRadius(3f)
-                    .shadowOpacity(50)
-                    .shadowBlur(1)
-                    .shadowSpread(0.3f)
-                    .shadowX(0.5f)
-                    .shadowY(2f)
-                    .shadowColor(SAVI.DARK_DARK_PURPLE)
-            );
-
-        }
-
-        TextField[] field = {passf, cpassf};
-
-        for (TextField f : field) {
-            f.getAllStyles().setFont(SAVI.regular(3f));
-            f.getAllStyles().setFgColor(SAVI.BLACK);
-            f.getHintLabel().getAllStyles().setFont(SAVI.regular(2.5f));
-            f.getHintLabel().getAllStyles().setFgColor(SAVI.BLUE_GRAY);
-
-            f.getAllStyles().setPadding(2, 1, 3, 4);
-            f.getAllStyles().setMargin(2, 2, 9, 1);
-            f.setSingleLineTextArea(true);
-
-            Style n = f.getUnselectedStyle();
-            Style fc = f.getSelectedStyle();
-            Style p = f.getPressedStyle();
-
-            n.setBgColor(SAVI.WHITE);
-            n.setBgTransparency(255);
-            n.setBgImage(null);
-            n.setBorder(Border.createEmpty());
-            n.setBorder(RoundRectBorder.create()
-                    .cornerRadius(3f)
-                    .shadowOpacity(50)
-                    .shadowBlur(1)
-                    .shadowSpread(0.3f)
-                    .shadowX(0.5f)
-                    .shadowY(2f)
-                    .shadowColor(SAVI.DARK_DARK_PURPLE)
-            );
-
-            fc.setBgColor(SAVI.WHITE);
-            fc.setBgTransparency(255);
-            fc.setBgImage(null);
-            fc.setBorder(Border.createEmpty());
-            fc.setBorder(RoundRectBorder.create()
-                    .cornerRadius(3f)
-                    .shadowOpacity(50)
-                    .shadowBlur(1)
-                    .shadowSpread(0.3f)
-                    .shadowX(0.5f)
-                    .shadowY(2f)
-                    .shadowColor(SAVI.DARK_DARK_PURPLE)
-            );
-
-            p.setBgColor(SAVI.WHITE);
-            p.setBgTransparency(255);
-            p.setBgImage(null);
-            p.setBorder(Border.createEmpty());
-            p.setBorder(RoundRectBorder.create()
-                    .cornerRadius(3f)
-                    .shadowOpacity(50)
-                    .shadowBlur(1)
-                    .shadowSpread(0.3f)
-                    .shadowX(0.5f)
-                    .shadowY(2f)
-                    .shadowColor(SAVI.DARK_DARK_PURPLE)
-            );
-
-        }
-
-        passf.setConstraint(TextField.PASSWORD);
-        cpassf.setConstraint(TextField.PASSWORD);
-
-        form.add(usernamef).add(emailf);
+        form.add(usnContainer).add(emlContainer);
         form.add(passContainer).add(cpassContainer);
 
         Button signupbtn = new Button("Sign Up");
@@ -255,35 +195,35 @@ public class SignUpPage {
         Button[] sbtn = {signupbtn};
 
         for (Button btn : sbtn) {
-            btn.getAllStyles().setMargin(8,0,3,3);
+            btn.getAllStyles().setMargin(8,0,5,5);
             btn.getAllStyles().setPadding(2f, 2f, 0f, 0f);
-            btn.getAllStyles().setFont(SAVI.bold(3f));
+            btn.getAllStyles().setFont(SAVI.bold(2.5f));
 
-            Style normal = signupbtn.getUnselectedStyle();
-            Style hover = signupbtn.getSelectedStyle();
-            Style pressed = signupbtn.getPressedStyle();
+            Style n = signupbtn.getUnselectedStyle();
+            Style h = signupbtn.getSelectedStyle();
+            Style p = signupbtn.getPressedStyle();
 
-            normal.setBgImage(null);
-            normal.setBorder(Border.createEmpty());
-            normal.setBgTransparency(255);
-            normal.setBackgroundType(Style.BACKGROUND_GRADIENT_LINEAR_HORIZONTAL);
-            normal.setBackgroundGradientStartColor(SAVI.DARK_PURPLE);
-            normal.setBackgroundGradientEndColor(SAVI.BLUISH_PURPLE);
-            normal.setFgColor(SAVI.WHITE);
+            n.setBgImage(null);
+            n.setBorder(Border.createEmpty());
+            n.setBgTransparency(255);
+            n.setBackgroundType(Style.BACKGROUND_GRADIENT_LINEAR_HORIZONTAL);
+            n.setBackgroundGradientStartColor(SAVI.DARK_PURPLE);
+            n.setBackgroundGradientEndColor(SAVI.BLUISH_PURPLE);
+            n.setFgColor(SAVI.WHITE);
 
-            hover.setBgImage(null);
-            hover.setBorder(Border.createEmpty());
-            hover.setFgColor(SAVI.WHITE);
-            hover.setBgTransparency(255);
-            hover.setBackgroundType(Style.BACKGROUND_GRADIENT_LINEAR_HORIZONTAL);
-            hover.setBackgroundGradientStartColor(SAVI.BLUISH_PURPLE);
-            hover.setBackgroundGradientEndColor(SAVI.DARK_PURPLE);
+            h.setBgImage(null);
+            h.setBorder(Border.createEmpty());
+            h.setFgColor(SAVI.WHITE);
+            h.setBgTransparency(255);
+            h.setBackgroundType(Style.BACKGROUND_GRADIENT_LINEAR_HORIZONTAL);
+            h.setBackgroundGradientStartColor(SAVI.BLUISH_PURPLE);
+            h.setBackgroundGradientEndColor(SAVI.DARK_PURPLE);
 
-            pressed.setBgImage(null);
-            pressed.setBorder(Border.createEmpty());
-            pressed.setBgTransparency(255);
-            pressed.setFgColor(SAVI.WHITE);
-            pressed.setBgColor(SAVI.DARK_PURPLE);
+            p.setBgImage(null);
+            p.setBorder(Border.createEmpty());
+            p.setBgTransparency(255);
+            p.setFgColor(SAVI.WHITE);
+            p.setBgColor(SAVI.DARK_PURPLE);
         }
 
         signupbtn.getAllStyles().setBorder(Border.createRoundBorder(140, SAVI.BORDER_COLOR));
@@ -293,7 +233,7 @@ public class SignUpPage {
             String pass = passf.getText().trim();
             String cpass = cpassf.getText().trim();
 
-            String result = SAVI.users.signup(name, email, pass, cpass);
+            String result = SAVI.user.signup(name, email, pass, cpass);
 
             if (result.equals("success")) {
                 Dialog.show("Success", "Account created!", "OK", null);
@@ -307,18 +247,14 @@ public class SignUpPage {
         Container footer = new Container(BoxLayout.y());
         footer.getAllStyles().setBgColor(SAVI.PALE_PURPLE);
         footer.getAllStyles().setBgTransparency(255);
-        footer.getAllStyles().setPadding(50, 20, 0, 0);
-        Label last = SAVI.text("Already have an account?", SAVI.regular(2.3f), SAVI.SLATE_GRAY);
+        footer.getAllStyles().setMargin(50,0,0,0);
+        footer.getAllStyles().setPadding(40, 20, 10, 10);
 
-        last.getAllStyles().setMargin(2,0,9,9);
-        last.setAlignment(Component.CENTER);
-        footer.add(last);
+        Label last = SAVI.text("Already have an account? ", SAVI.regular(2.3f), SAVI.SLATE_GRAY);
+        last.getAllStyles().setPadding(6,0,0,0);
+        last.getAllStyles().setMargin(0,4,0,0);
 
         Button loginbtn = new Button("Log In");
-
-        Container login = new Container(new BorderLayout());
-        login.add(BorderLayout.SOUTH, loginbtn);
-        //login.add(BorderLayout.EAST, loginbtn);
 
         Style btn = loginbtn.getAllStyles();
         btn.setBgTransparency(0);
@@ -326,11 +262,16 @@ public class SignUpPage {
         btn.setBorder(Border.createEmpty());
         btn.setFgColor(SAVI.DARK_PURPLE);
         btn.setFont(SAVI.bold(2.3f));
-        btn.setPadding(0, 0, 0, 0);
+        btn.setPadding(6, 0, 0, 0);
         btn.setMargin(0, 4,0 , 0);
 
-        footer.add(login);
         loginbtn.addActionListener(e -> { LogInPage loginp = new LogInPage(); loginp.show();});
+
+        Container f1 = new Container(new FlowLayout(Component.CENTER, Component.BOTTOM));
+        f1.add(last);
+        f1.add(loginbtn);
+
+        footer.add(f1);
 
         signUpForm.add(BorderLayout.CENTER, form).add(BorderLayout.NORTH, header).add(BorderLayout.SOUTH, footer);
         signUpForm.show();

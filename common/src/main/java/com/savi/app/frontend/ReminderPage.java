@@ -1,7 +1,425 @@
 package com.savi.app.frontend;
 
-public class ReminderPage {
-    public void show(){
+import com.codename1.l10n.SimpleDateFormat;
+import com.codename1.ui.*;
+import com.codename1.ui.layouts.*;
+import com.codename1.ui.plaf.*;
+import com.codename1.ui.spinner.Picker;
+import com.savi.app.SAVI;
+import com.savi.app.backend.GroupSavings;
+import com.savi.app.backend.Home;
+import com.savi.app.backend.Reminder;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+
+public class ReminderPage {
+
+    private boolean showCompleted = false;
+
+    public void show() {
+        Form reminderForm = new Form("", new BorderLayout());
+        reminderForm.getContentPane().getAllStyles().setBgColor(SAVI.PALE_PURPLE);
+        reminderForm.getContentPane().getAllStyles().setBgTransparency(255);
+
+        Container body = new Container(BoxLayout.y());
+        body.setScrollableY(true);
+        body.getAllStyles().setBgColor(SAVI.PALE_PURPLE);
+        body.getAllStyles().setBgTransparency(255);
+        body.getAllStyles().setPaddingUnit(Style.UNIT_TYPE_DIPS);
+        body.getAllStyles().setPadding(0.5f, 2f, 0, 0);
+
+        // Segmented Tab Bar: [ Upcomings (0) | Completed (0) ]
+        Container tabWrapper = new Container(new GridLayout(1, 2));
+        Style tws = tabWrapper.getAllStyles();
+        tws.setBgColor(SAVI.WHITE);
+        tws.setBgTransparency(255);
+        tws.setPaddingUnit(Style.UNIT_TYPE_DIPS);
+        tws.setPadding(0.6f, 0.6f, 0.6f, 0.6f);
+        tws.setMarginUnit(Style.UNIT_TYPE_DIPS);
+        tws.setMargin(0.5f, 1.2f, 2f, 2f);
+        tws.setBorder(RoundRectBorder.create()
+                .cornerRadius(4f)
+                .shadowOpacity(35)
+                .shadowBlur(8)
+                .shadowSpread(1f)
+                .shadowX(0.5f)
+                .shadowY(0.3f)
+                .shadowColor(SAVI.SLATE_GRAY));
+
+        Container listContainer = new Container(BoxLayout.y());
+
+        Runnable refreshUI = new Runnable() {
+            @Override
+            public void run() {
+                tabWrapper.removeAll();
+                int upCount = SAVI.reminders.countUpcoming();
+                int doneCount = SAVI.reminders.countCompleted();
+
+                tabWrapper.add(buildTab("Upcomings", upCount, !showCompleted, () -> {
+                    showCompleted = false;
+                    this.run();
+                }));
+                tabWrapper.add(buildTab("Completed", doneCount, showCompleted, () -> {
+                    showCompleted = true;
+                    this.run();
+                }));
+
+                listContainer.removeAll();
+                ArrayList<Reminder> items = showCompleted
+                        ? SAVI.reminders.getCompleted()
+                        : SAVI.reminders.getUpcoming();
+
+                if (items.isEmpty()) {
+                    Label empty = SAVI.text(
+                            showCompleted ? "No completed reminders yet." : "No upcoming reminders yet.",
+                            SAVI.semiBold(2.1f), SAVI.SLATE_GRAY);
+                    empty.getAllStyles().setAlignment(Component.CENTER);
+                    empty.getAllStyles().setPaddingUnit(Style.UNIT_TYPE_DIPS);
+                    empty.getAllStyles().setPadding(4f, 4f, 2f, 2f);
+                    listContainer.add(empty);
+                } else {
+                    ArrayList<String> shownGroups = new ArrayList<>();
+                    for (Reminder r : items) {
+                        String grp = (r.getGroupName() == null || r.getGroupName().trim().isEmpty())
+                                ? "General" : r.getGroupName().trim();
+                        if (!shownGroups.contains(grp)) {
+                            shownGroups.add(grp);
+                            listContainer.add(buildGroupHeader(grp));
+                            for (Reminder item : items) {
+                                String itemGrp = (item.getGroupName() == null || item.getGroupName().trim().isEmpty())
+                                        ? "General" : item.getGroupName().trim();
+                                if (itemGrp.equals(grp)) {
+                                    listContainer.add(buildReminderCard(item, this));
+                                }
+                            }
+                        }
+                    }
+                }
+                tabWrapper.revalidate();
+                listContainer.revalidate();
+            }
+        };
+
+        refreshUI.run();
+
+        body.add(tabWrapper);
+        body.add(listContainer);
+
+        // Bottom "+ Add New Reminder" Pill Button
+        Button addBtn = new Button("+  Add New Reminder");
+        Style abs = addBtn.getAllStyles();
+        abs.setFgColor(SAVI.WHITE);
+        abs.setBgColor(SAVI.DARK_PURPLE);
+        abs.setBgTransparency(255);
+        abs.setFont(SAVI.semiBold(2.2f));
+        abs.setAlignment(Component.CENTER);
+        abs.setPaddingUnit(Style.UNIT_TYPE_DIPS);
+        abs.setPadding(1.6f, 1.6f, 3f, 3f);
+        abs.setMarginUnit(Style.UNIT_TYPE_DIPS);
+        abs.setMargin(0.5f, 1.5f, 4f, 4f);
+        abs.setBorder(RoundRectBorder.create()
+                .cornerRadius(4f)
+                .shadowOpacity(50)
+                .shadowBlur(10)
+                .shadowSpread(1f)
+                .shadowX(0.5f)
+                .shadowY(0.3f)
+                .shadowColor(SAVI.BRIGHT_VIOLET));
+
+        addBtn.addActionListener(e -> showAddReminderDialog(refreshUI));
+
+        Container bottomBar = new Container(new BorderLayout());
+        bottomBar.getAllStyles().setBgColor(SAVI.PALE_PURPLE);
+        bottomBar.getAllStyles().setBgTransparency(255);
+        bottomBar.add(BorderLayout.CENTER, addBtn);
+
+        reminderForm.add(BorderLayout.NORTH, SAVI.buildHeader("Reminders", () -> new HomePage().show()));
+        reminderForm.add(BorderLayout.CENTER, body);
+        reminderForm.add(BorderLayout.SOUTH, bottomBar);
+        reminderForm.show();
+    }
+
+    private Container buildTab(String label, int count, boolean active, Runnable onClick) {
+        Label textLbl = SAVI.text(label, active ? SAVI.bold(2f) : SAVI.semiBold(2f),
+                active ? SAVI.WHITE : SAVI.SLATE_GRAY);
+        textLbl.getAllStyles().setMargin(0, 0, 0, 0);
+
+        Label countBadge = SAVI.text("(" + count + ")", SAVI.bold(1.7f),
+                active ? SAVI.WHITE : SAVI.SLATE_GRAY);
+        Style cbs = countBadge.getAllStyles();
+        cbs.setBgColor(active ? SAVI.BRIGHT_VIOLET : SAVI.POWDER_WHITE);
+        cbs.setBgTransparency(255);
+        cbs.setPaddingUnit(Style.UNIT_TYPE_DIPS);
+        cbs.setPadding(0.3f, 0.3f, 1f, 1f);
+        cbs.setMarginUnit(Style.UNIT_TYPE_DIPS);
+        cbs.setMargin(0, 0, 0.8f, 0);
+        cbs.setBorder(RoundRectBorder.create().cornerRadius(2f));
+
+        Button hit = new Button();
+        hit.setUIID("Label");
+        hit.addActionListener(e -> onClick.run());
+
+        Container inner = new Container(new FlowLayout(Component.CENTER, Component.CENTER));
+        inner.add(textLbl).add(countBadge).add(hit);
+
+        Container pill = new Container(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER));
+        Style ps = pill.getAllStyles();
+        ps.setBgColor(active ? SAVI.DARK_PURPLE : SAVI.WHITE);
+        ps.setBgTransparency(255);
+        ps.setPaddingUnit(Style.UNIT_TYPE_DIPS);
+        ps.setPadding(1.2f, 1.2f, 1f, 1f);
+        ps.setBorder(RoundRectBorder.create().cornerRadius(3.5f));
+        pill.add(BorderLayout.CENTER, inner);
+        pill.setLeadComponent(hit);
+        return pill;
+    }
+
+    private Container buildGroupHeader(String groupTitle) {
+        Label dot = SAVI.text("● ", SAVI.bold(1.8f), SAVI.DARK_PURPLE);
+        Label name = SAVI.text(groupTitle, SAVI.semiBold(1.9f), SAVI.DARK_PURPLE);
+        dot.getAllStyles().setMargin(0, 0, 0, 0);
+        name.getAllStyles().setMargin(0, 0, 0, 0);
+
+        Container bar = new Container(new FlowLayout(Component.LEFT, Component.CENTER));
+        Style bs = bar.getAllStyles();
+        bs.setBgColor(0xEFEAFE);
+        bs.setBgTransparency(255);
+        bs.setPaddingUnit(Style.UNIT_TYPE_DIPS);
+        bs.setPadding(1f, 1f, 1.8f, 1.8f);
+        bs.setMarginUnit(Style.UNIT_TYPE_DIPS);
+        bs.setMargin(0.4f, 0.8f, 2f, 2f);
+        bs.setBorder(RoundRectBorder.create()
+                .cornerRadius(2.5f)
+                .strokeColor(0xDDD3FB)
+                .strokeOpacity(255)
+                .stroke(0.2f, true));
+        bar.add(dot).add(name);
+        return bar;
+    }
+
+    private Container buildReminderCard(Reminder r, Runnable onToggle) {
+        Container card = new Container(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER));
+        HomePage.boxStyles(card, SAVI.WHITE, 1.6f, 1.8f);
+        card.getAllStyles().setMarginBottom(0.8f);
+
+        // Left: Circular check icon button (tap to mark completed)
+        Button checkBtn = new Button();
+        checkBtn.setUIID("Label");
+        Style cbs = checkBtn.getAllStyles();
+        cbs.setFgColor(r.isCompleted() ? SAVI.WHITE : SAVI.DARK_PURPLE);
+        cbs.setAlignment(Component.CENTER);
+        FontImage.setMaterialIcon(checkBtn,
+                r.isCompleted() ? FontImage.MATERIAL_CHECK : FontImage.MATERIAL_RADIO_BUTTON_UNCHECKED, 3.2f);
+        checkBtn.addActionListener(e -> {
+            if (!r.isCompleted()) {
+                SAVI.reminders.markCompleted(r);
+                onToggle.run();
+            }
+        });
+
+        Container circle = new Container(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER));
+        int sz = Display.getInstance().convertToPixels(6.5f);
+        circle.setPreferredW(sz);
+        circle.setPreferredH(sz);
+        Style cs = circle.getAllStyles();
+        cs.setBgColor(r.isCompleted() ? SAVI.DARK_PURPLE : SAVI.PALE_PURPLE);
+        cs.setBgTransparency(255);
+        cs.setMarginUnit(Style.UNIT_TYPE_DIPS);
+        cs.setMargin(0, 0, 0, 1.5f);
+        cs.setBorder(RoundRectBorder.create().cornerRadius(3.25f));
+        circle.add(BorderLayout.CENTER, checkBtn);
+        circle.setLeadComponent(checkBtn);
+
+        // Center: Title + formatted date & time
+        Label titleLbl = SAVI.text(r.getTitle(), SAVI.bold(2.1f), SAVI.DARK_KNIGHT);
+        Label subLbl = SAVI.text(formatDate(r.getDate()) + " • " + r.getTime(),
+                SAVI.regular(1.7f), SAVI.SLATE_GRAY);
+        titleLbl.getAllStyles().setMargin(0, 0, 0, 0);
+        subLbl.getAllStyles().setMargin(0, 0, 0, 0);
+
+        Container infoBox = BoxLayout.encloseY(titleLbl, subLbl);
+
+        // Right: Amount status pill ("Due P..." vs "Paid P...")
+        String tagText = (r.isCompleted() ? "Paid " : "Due ") + Home.pesoFormat(r.getAmount());
+        Label amountTag = SAVI.text(tagText, SAVI.bold(1.7f), r.isCompleted() ? SAVI.GREEN : SAVI.AMBER);
+        Style ats = amountTag.getAllStyles();
+        ats.setBgColor(r.isCompleted() ? SAVI.PALE_GREEN : SAVI.YELLOW_TAG);
+        ats.setBgTransparency(255);
+        ats.setPaddingUnit(Style.UNIT_TYPE_DIPS);
+        ats.setPadding(0.7f, 0.7f, 1.4f, 1.4f);
+        ats.setBorder(RoundRectBorder.create().cornerRadius(2.5f));
+
+        card.add(BorderLayout.WEST, circle);
+        card.add(BorderLayout.CENTER, infoBox);
+        card.add(BorderLayout.EAST, amountTag);
+        return card;
+    }
+
+    private void showAddReminderDialog(Runnable onAdded) {
+        Dialog dlg = new Dialog("New Reminder", new BorderLayout());
+        dlg.getContentPane().getAllStyles().setBgColor(SAVI.WHITE);
+        dlg.getContentPane().getAllStyles().setBgTransparency(255);
+
+        Container fields = new Container(BoxLayout.y());
+        fields.getAllStyles().setPaddingUnit(Style.UNIT_TYPE_DIPS);
+        fields.getAllStyles().setPadding(1f, 1f, 1.5f, 1.5f);
+
+        TextField titleField = new TextField("", "Enter reminder title");
+        titleField.getAllStyles().setFont(SAVI.regular(2f));
+        titleField.getAllStyles().setFgColor(SAVI.DARK_KNIGHT);
+        titleField.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
+        titleField.getAllStyles().setMargin(0.4f, 1f, 0, 0);
+
+        // Group selector: uses real groups from SAVI.groupList.getGroups() if available, otherwise a text field
+        boolean hasGroups = SAVI.groupList.getGroups() != null && !SAVI.groupList.getGroups().isEmpty();
+        Picker groupPicker = new Picker();
+        TextField customGroupField = new TextField("", "Enter group name");
+        customGroupField.getAllStyles().setFont(SAVI.regular(2f));
+        customGroupField.getAllStyles().setFgColor(SAVI.DARK_KNIGHT);
+        customGroupField.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
+        customGroupField.getAllStyles().setMargin(0.4f, 1f, 0, 0);
+
+        if (hasGroups) {
+            String[] groupNames = new String[SAVI.groupList.getGroups().size() + 1];
+            for (int i = 0; i < SAVI.groupList.getGroups().size(); i++) {
+                groupNames[i] = SAVI.groupList.getGroups().get(i).getGroupName();
+            }
+            groupNames[SAVI.groupList.getGroups().size()] = "Other";
+            groupPicker.setType(Display.PICKER_TYPE_STRINGS);
+            groupPicker.setStrings(groupNames);
+            groupPicker.setSelectedStringIndex(0);
+            groupPicker.getAllStyles().setFont(SAVI.regular(2f));
+            groupPicker.getAllStyles().setFgColor(SAVI.DARK_KNIGHT);
+            groupPicker.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
+            groupPicker.getAllStyles().setMargin(0.4f, 0.6f, 0, 0);
+
+            customGroupField.setHidden(true);
+            groupPicker.addActionListener(e -> {
+                boolean isOther = "Other".equals(groupPicker.getSelectedString());
+                customGroupField.setHidden(!isOther);
+                fields.revalidate();
+                dlg.revalidate();
+            });
+        }
+
+        // Date & Time pickers defaulting to current date/time
+        Picker datePicker = new Picker();
+        datePicker.setType(Display.PICKER_TYPE_DATE);
+        datePicker.setDate(new Date());
+        datePicker.getAllStyles().setFont(SAVI.regular(2f));
+        datePicker.getAllStyles().setFgColor(SAVI.DARK_KNIGHT);
+        datePicker.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
+        datePicker.getAllStyles().setMargin(0.4f, 1f, 0, 0);
+
+        Picker timePicker = new Picker();
+        timePicker.setType(Display.PICKER_TYPE_TIME);
+        timePicker.getAllStyles().setFont(SAVI.regular(2f));
+        timePicker.getAllStyles().setFgColor(SAVI.DARK_KNIGHT);
+        timePicker.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
+        timePicker.getAllStyles().setMargin(0.4f, 1f, 0, 0);
+
+        TextField amountField = new TextField("", "0.00");
+        amountField.setConstraint(TextArea.DECIMAL);
+        amountField.getAllStyles().setFont(SAVI.regular(2f));
+        amountField.getAllStyles().setFgColor(SAVI.DARK_KNIGHT);
+        amountField.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
+        amountField.getAllStyles().setMargin(0.4f, 1f, 0, 0);
+
+        fields.add(SAVI.text("Reminder Title", SAVI.semiBold(1.8f), SAVI.SLATE_GRAY)).add(titleField);
+        fields.add(SAVI.text("Savings Group", SAVI.semiBold(1.8f), SAVI.SLATE_GRAY));
+        if (hasGroups) {
+            fields.add(groupPicker);
+        }
+        fields.add(customGroupField);
+        fields.add(SAVI.text("Date", SAVI.semiBold(1.8f), SAVI.SLATE_GRAY)).add(datePicker);
+        fields.add(SAVI.text("Time", SAVI.semiBold(1.8f), SAVI.SLATE_GRAY)).add(timePicker);
+        fields.add(SAVI.text("Amount (P)", SAVI.semiBold(1.8f), SAVI.SLATE_GRAY)).add(amountField);
+
+        Button cancel = new Button("Cancel");
+        cancel.getAllStyles().setFgColor(SAVI.SLATE_GRAY);
+        cancel.getAllStyles().setBgTransparency(0);
+        cancel.getAllStyles().setBorder(Border.createEmpty());
+        cancel.addActionListener(e -> dlg.dispose());
+
+        Button save = new Button("Save");
+        save.getAllStyles().setFgColor(SAVI.WHITE);
+        save.getAllStyles().setBgColor(SAVI.DARK_PURPLE);
+        save.getAllStyles().setBgTransparency(255);
+        save.getAllStyles().setPaddingUnit(Style.UNIT_TYPE_DIPS);
+        save.getAllStyles().setPadding(1f, 1f, 2f, 2f);
+        save.getAllStyles().setBorder(RoundRectBorder.create().cornerRadius(2.5f));
+        save.addActionListener(e -> {
+            String t = titleField.getText().trim();
+            String g;
+            if (hasGroups && !"Other".equals(groupPicker.getSelectedString())) {
+                g = groupPicker.getSelectedString();
+            } else {
+                g = customGroupField.getText().trim();
+            }
+            if (g == null || g.isEmpty()) {
+                g = "General";
+            }
+
+            double amt = 0;
+            try {
+                amt = Double.parseDouble(amountField.getText().trim());
+            } catch (Exception ignored) { }
+
+            if (t.isEmpty() || amt <= 0) {
+                Dialog.show("Missing Info", "Please enter a title and a valid amount.", "OK", null);
+                return;
+            }
+
+            LocalDate pickedDate = toLocalDate(datePicker.getDate());
+            String pickedTime = formatTime(timePicker.getTime());
+
+            SAVI.reminders.addReminder(t, g, pickedDate, pickedTime, amt);
+            dlg.dispose();
+            onAdded.run();
+        });
+
+        Container actions = new Container(new FlowLayout(Component.RIGHT, Component.CENTER));
+        actions.add(cancel).add(save);
+
+        dlg.add(BorderLayout.CENTER, fields);
+        dlg.add(BorderLayout.SOUTH, actions);
+        dlg.show();
+    }
+
+    private LocalDate toLocalDate(Date d) {
+        if (d == null) return LocalDate.now();
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(d);
+        return LocalDate.of(
+                cal.get(Calendar.YEAR),
+                cal.get(Calendar.MONTH) + 1,
+                cal.get(Calendar.DAY_OF_MONTH)
+        );
+    }
+
+    private String formatTime(int minutesFromMidnight) {
+        if (minutesFromMidnight < 0) {
+            return new SimpleDateFormat("hh:mm a").format(new Date());
+        }
+        int h24 = (minutesFromMidnight / 60) % 24;
+        int min = minutesFromMidnight % 60;
+        String ampm = h24 >= 12 ? "PM" : "AM";
+        int h12 = h24 % 12;
+        if (h12 == 0) h12 = 12;
+        return (h12 < 10 ? "0" : "") + h12 + ":" + (min < 10 ? "0" : "") + min + " " + ampm;
+    }
+
+    private String formatDate(LocalDate d) {
+        if (d == null) return "";
+        String[] months = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+        String s = d.toString(); // yyyy-MM-dd
+        int year = Integer.parseInt(s.substring(0, 4));
+        int month = Integer.parseInt(s.substring(5, 7));
+        int day = Integer.parseInt(s.substring(8, 10));
+        return (day < 10 ? "0" : "") + day + " " + months[month - 1] + " " + year;
     }
 }

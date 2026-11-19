@@ -1,35 +1,117 @@
 package com.savi.app.backend;
+// this class represents one actual group savings record.
+// this stores the group's information, members, and contributions, and performs group-related calculations.
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 
 public class GroupSavings extends Savings {
 
-    private String groupName;
-    private ArrayList<String> members = new ArrayList<>();
-    private double expectedPerMember;
+    private final String groupName;
+    private final ArrayList<String> members = new ArrayList<>();
+    private final double expectedPerMember;
+    private final LocalDate createdDate;
 
-    public GroupSavings(String savingsName, double targetAmount, String groupName, double expectedPerMember) {
+    // implements constructor overloading
+    public GroupSavings(String savingsName, double targetAmount,
+                        String groupName, double expectedPerMember) {
+
+        this(savingsName, targetAmount, groupName,
+                expectedPerMember, LocalDate.now());
+    }
+
+    public GroupSavings(String savingsName, double targetAmount,
+                        String groupName, double expectedPerMember,
+                        LocalDate createdDate) {
+
         super(savingsName, targetAmount);
-        this.groupName = groupName;
+
+        if (groupName == null || groupName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Group name is required.");
+        }
+
+        if (expectedPerMember < 0 ||
+                Double.isNaN(expectedPerMember) ||
+                Double.isInfinite(expectedPerMember)) {
+            throw new IllegalArgumentException("Invalid expected contribution.");
+        }
+
+        if (createdDate == null) {
+            throw new IllegalArgumentException("Creation date is required.");
+        }
+
+        this.groupName = groupName.trim();
         this.expectedPerMember = expectedPerMember;
+        this.createdDate = createdDate;
     }
 
     public void addMember(String name) {
-        members.add(name);
+        if (name == null || name.trim().isEmpty()) {
+            return;
+        }
+
+        String cleanName = name.trim();
+
+        for (String m : members) {
+            if (m.equalsIgnoreCase(cleanName)) {
+                return;
+            }
+        }
+
+        members.add(cleanName);
+    }
+
+    public boolean hasMember(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            return false;
+        }
+
+        for (String m : members) {
+            if (m.equalsIgnoreCase(name.trim())) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public ArrayList<String> getMembers() {
-        return members;
+        return new ArrayList<>(members);
     }
 
-    public double getMissed(String member) {
-        double paid = 0;
+    public double getExpectedPerMember() {
+        return expectedPerMember;
+    }
+
+    public LocalDate getCreatedDate() {
+        return createdDate;
+    }
+
+    public double getMissed(String member, LocalDate date) {
+        double contributed = 0;
+
         for (Contribution c : contributions) {
-            if (c.getMember().equalsIgnoreCase(member)) {
-                paid += c.getAmount();
+            if (c.getMember().equalsIgnoreCase(member) && c.getDate().equals(date)) {
+                contributed += c.getAmount();
             }
         }
-        return Math.max(0, expectedPerMember - paid);
+
+        return Math.max(0, expectedPerMember - contributed);
+    }
+
+    public double getTotalMissed(String member) {
+        double totalMissed = 0;
+        LocalDate today = LocalDate.now();
+        String todayStr = today.toString();
+
+        LocalDate date = createdDate;
+
+        while (date.toString().compareTo(todayStr) <= 0) {
+            totalMissed += getMissed(member, date);
+            date = date.plusDays(1);
+        }
+
+        return totalMissed;
     }
 
     public String getGroupName() {

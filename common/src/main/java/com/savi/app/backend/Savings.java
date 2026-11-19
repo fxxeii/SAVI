@@ -5,10 +5,10 @@ import java.util.ArrayList;
 
 public abstract class Savings {
 
-    protected String savingsName;
-    protected double targetAmount;
+    protected final String savingsName;
+    protected final double targetAmount;
     protected double currentAmount;
-    protected ArrayList<Contribution> contributions = new ArrayList<>();
+    protected final ArrayList<Contribution> contributions = new ArrayList<>();
 
     public Savings(String savingsName, double targetAmount) {
         this.savingsName = savingsName;
@@ -17,7 +17,24 @@ public abstract class Savings {
     }
 
     public void addContribution(String member, double amount, LocalDate date, String note) {
-        contributions.add(new Contribution(member, amount, date, note));
+
+        if (member == null || member.trim().isEmpty()) {
+            throw new IllegalArgumentException("Member name is required.");
+        }
+
+        if (amount <= 0 || Double.isNaN(amount) || Double.isInfinite(amount)) {
+            throw new IllegalArgumentException("Contribution must be positive.");
+        }
+
+        if (date == null) {
+            throw new IllegalArgumentException("Contribution date is required.");
+        }
+
+        Contribution contribution = new Contribution(
+                member.trim(), amount, date, note
+        );
+
+        contributions.add(contribution);
         currentAmount += amount;
     }
 

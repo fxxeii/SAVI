@@ -160,7 +160,7 @@ public class RecentContributions{
         s.setPadding(1.6f, 1.6f, 1.6f, 1.6f);
         s.setMargin(0, 0, 0, 0);
         FontImage.setMaterialIcon(plus, FontImage.MATERIAL_ADD, 6f);
-        // TODO: open the add contribution page
+        plus.addActionListener(e -> QuickAddMenu.show());
         return FlowLayout.encloseCenterMiddle(plus);
     }
 
@@ -172,7 +172,7 @@ public class RecentContributions{
         Container list = new Container(BoxLayout.y());
         list.setScrollableY(true);
 
-        Home home = new Home(SAVI.user, SAVI.groups);
+        Home home = new Home(SAVI.user, SAVI.groupList.getGroups());
         java.util.List<Home.RecentContribution> items = home.getRecentContributions();
         LocalDate newest = items.isEmpty() ? null : items.get(0).getDate();
 

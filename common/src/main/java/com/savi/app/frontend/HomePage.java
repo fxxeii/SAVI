@@ -152,8 +152,8 @@ public class HomePage {
     }
 
     public void show() {
-        // BACKEND: one Home object feeds the cards below (SAVI.user / SAVI.groups: see note)
-        Home home = new Home(SAVI.user, SAVI.groups);
+        // BACKEND: one Home object feeds the cards below (SAVI.user / SAVI.groupList.getGroups: see note)
+        Home home = new Home(SAVI.user, SAVI.groupList.getGroups());
         GroupSavings g = home.getFeaturedGroup();                    // null if the user has no groups
         Home.RecentContribution r = home.getLatestContribution();    // null if no contributions yet
 
@@ -317,6 +317,7 @@ public class HomePage {
         if (r != null) {                       // contribution card only when there is a contribution
             mainContents.add(recentInfoCont);
         }
+        base.add(BorderLayout.SOUTH, SAVI.bottomNav(SAVI.NAV_HOME));
         base.add(BorderLayout.CENTER, mainContents);
         base.show();
     }

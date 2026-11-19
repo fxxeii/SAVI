@@ -19,7 +19,7 @@ import com.codename1.ui.plaf.Border;
 import com.codename1.ui.plaf.RoundRectBorder;
 import com.codename1.ui.plaf.Style;
 import com.savi.app.SAVI;
-
+import com.savi.app.backend.Home;
 
 public class ViewAllTransacPage {
 
@@ -400,13 +400,13 @@ public class ViewAllTransacPage {
 
         // stat boxes
         Container stats = new Container(new GridLayout(1, 2));
-        stats.add(statBox("Total Paid", "P" + String.format("%,.2f", totalPaid)));
-        stats.add(statBox("Missed / Unsettled", "P" + String.format("%,.2f", missed)));
+        stats.add(statBox("Total Paid", Home.pesoFormat(totalPaid)));
+        stats.add(statBox("Missed / Unsettled", Home.pesoFormat(missed)));
 
         // progress to goal
         float pct = (float) (totalPaid / goal);
         Container progressRow = new Container(new BorderLayout());
-        progressRow.add(BorderLayout.WEST, SAVI.text("Progress to Goal (P" + String.format("%,.2f", goal) + ")",
+        progressRow.add(BorderLayout.WEST, SAVI.text("Progress to Goal (" + Home.pesoFormat(goal) + ")",
                 SAVI.regular(1.7f), SAVI.WHITE));
         progressRow.add(BorderLayout.EAST, SAVI.text((int) (pct * 100) + "%", SAVI.bold(1.7f), SAVI.WHITE));
         setMargins(progressRow, 2f, 0.8f, 0, 0);
@@ -545,7 +545,7 @@ public class ViewAllTransacPage {
         // right column: amount + status
         String sign = deposit ? "+" : "";
         Container amountCol = new Container(BoxLayout.y());
-        amountCol.add(text(sign + "P" + String.format("%,.2f", t.amount), SAVI.bold(2.3f), accent, Component.RIGHT));
+        amountCol.add(text(sign + Home.pesoFormat(t.amount), SAVI.bold(2.3f), accent, Component.RIGHT));
         Label status = text(t.settled ? "Settled" : "Unpaid", missed ? SAVI.bold(1.5f) : SAVI.regular(1.5f),
                 missed ? RED : MUTED, Component.RIGHT);
         amountCol.add(status);

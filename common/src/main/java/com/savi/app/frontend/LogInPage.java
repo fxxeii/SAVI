@@ -63,18 +63,8 @@ public class LogInPage {
 
         Container txt = new Container(BoxLayout.y());
 
-        Label usn = SAVI.text("Username", SAVI.regular(2f), SAVI.WHITE);
-        Label ps = SAVI.text("New Password", SAVI.regular(2f), SAVI.WHITE);
-
-        TextField usernamef = new TextField("","e.g username");
-        TextField passf = new TextField("", "e.g 012345savi");
-
-        Label[] labels = {usn, ps};
-
-        for (Label lbl : labels) {
-            lbl.getAllStyles().setMargin(0, 0, 0, 0);
-            lbl.getAllStyles().setPadding(0, 0, 9, 0);
-        }
+        TextField usernamef = new TextField("","Username");
+        TextField passf = new TextField("", "Password");
 
         TextField[] fields = {usernamef, passf};
 
@@ -179,11 +169,9 @@ public class LogInPage {
         forgotp.addActionListener(e -> {ForgotPassPage fppage = new ForgotPassPage(); fppage.show();});
 
         Container usnContainer = new Container(new BorderLayout());
-        usnContainer.add(BorderLayout.NORTH, usn);
         usnContainer.add(BorderLayout.CENTER, usernamef);
 
         Container passContainer = new Container(new BorderLayout());
-        passContainer.add(BorderLayout.NORTH, ps);
         passContainer.add(BorderLayout.CENTER, passf);
         passContainer.add(BorderLayout.EAST, showPass);
         passContainer.add(BorderLayout.SOUTH, forgotp);
@@ -204,8 +192,8 @@ public class LogInPage {
             n.setBgImage(null);
             n.setBorder(Border.createEmpty());
             n.setBgTransparency(255);
-            n.setBgColor(SAVI.WHITE);
-            n.setFgColor(SAVI.DARK_DARK_PURPLE);
+            h.setBgColor(SAVI.WHITE);
+            n.setFgColor(SAVI.DARK_PURPLE);
 
             h.setBgImage(null);
             h.setBorder(Border.createEmpty());
@@ -217,7 +205,7 @@ public class LogInPage {
             p.setBorder(Border.createEmpty());
             p.setBgTransparency(255);
             p.setFgColor(SAVI.WHITE);
-            p.setBgColor(SAVI.DARK_PURPLE);
+            p.setBgColor(SAVI.DARK_DARK_PURPLE);
         }
 
         loginbtn.getAllStyles().setBorder(Border.createRoundBorder(140, SAVI.BORDER_COLOR));
@@ -225,7 +213,7 @@ public class LogInPage {
             String name = usernamef.getText().trim();
             String pass = passf.getText().trim();
 
-            String result = SAVI.users.login(name, pass);
+            String result = SAVI.user.login(name, pass);
 
             if (result.equals("success")) {
                 Dialog.show("Success", "Login successful!", "OK", null);

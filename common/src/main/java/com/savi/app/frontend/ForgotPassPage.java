@@ -211,8 +211,22 @@ public class ForgotPassPage {
         }
         savebtn.getAllStyles().setBorder(Border.createRoundBorder(140, SAVI.BORDER_COLOR));
 
+        savebtn.addActionListener(e -> {
+            String result = SAVI.user.resetPass(
+                    usernamef.getText(),
+                    psf.getText(),
+                    cpsf.getText()
+            );
 
+            if (result.equals("success")) {
+                Dialog.show("Success", "Password changed successfully!", "OK", null);
 
+                LogInPage lipage = new LogInPage();
+                lipage.show();
+            } else {
+                Dialog.show("Error", result, "OK", null);
+            }
+        });
 
         ForgotpForm.add(BorderLayout.NORTH, box).add(BorderLayout.SOUTH, savebtn);
         ForgotpForm.show();

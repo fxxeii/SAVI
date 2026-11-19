@@ -16,6 +16,7 @@ import com.codename1.ui.layouts.GridLayout;
 import com.codename1.ui.plaf.RoundRectBorder;
 import com.codename1.ui.plaf.Style;
 import com.savi.app.SAVI;
+import com.savi.app.backend.Home;
 
 public class PeoplePage {
 
@@ -258,9 +259,9 @@ public class PeoplePage {
 
         // stats
         boolean hasMissed = missed > 0;
-        Container totalBox = statBox("Total Contribution", "P" + String.format("%,.2f", total),
+        Container totalBox = statBox("Total Contribution", Home.pesoFormat(total),
                 SOFT_GRAY, SOFT_GRAY, SAVI.SLATE_GRAY, SAVI.DARK_KNIGHT);
-        Container missedBox = statBox("Missed Contribution", "P" + String.format("%,.2f", missed),
+        Container missedBox = statBox("Missed Contribution", Home.pesoFormat(missed),
                 hasMissed ? MISSED_BG : PAID_BG,
                 hasMissed ? MISSED_BORDER : PAID_BORDER,
                 hasMissed ? MISSED_TEXT : PAID_TEXT,

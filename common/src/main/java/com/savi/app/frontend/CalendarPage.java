@@ -72,6 +72,7 @@ public class CalendarPage {
 
         calendarForm.add(BorderLayout.NORTH, SAVI.buildHeader("Savings Calendar", () -> new HomePage().show()));
         calendarForm.add(BorderLayout.CENTER, content);
+        calendarForm.add(BorderLayout.SOUTH, SAVI.bottomNav(SAVI.NAV_CALENDAR));
         calendarForm.show();
     }
 
@@ -79,7 +80,7 @@ public class CalendarPage {
     private void showRecords(Container recordsContainer, Label emptyMessage, LocalDate date, CalendarLogic logic) {
         recordsContainer.removeAll();
 
-        ArrayList<GroupSavings> found = logic.getGroupsWithRecords(SAVI.groups, date);
+        ArrayList<GroupSavings> found = logic.getGroupsWithRecords(SAVI.groupList.getGroups(), date);
 
         if (found.isEmpty()) {
             recordsContainer.add(emptyMessage);
