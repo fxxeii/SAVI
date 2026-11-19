@@ -22,7 +22,7 @@ public abstract class Savings {
             throw new IllegalArgumentException("Member name is required.");
         }
 
-        if (amount <= 0 || Double.isNaN(amount) || Double.isInfinite(amount)) {
+        if (amount == 0 || Double.isNaN(amount) || Double.isInfinite(amount)) {
             throw new IllegalArgumentException("Contribution must be positive.");
         }
 

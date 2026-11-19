@@ -161,7 +161,7 @@ public class HomePage {
         base.getContentPane().getAllStyles().setBgTransparency(255);
 
         Container weekContainer = new Container(new BorderLayout());
-        boxStyles(weekContainer, SAVI.DARK_DARK_PURPLE, 1.5f, 1.5f);
+        boxStyles(weekContainer, SAVI.DARK_PURPLE, 1.5f, 1.5f);
         weekContainer.getAllStyles().setMarginBottom(0.4f);
         weekContainer.getAllStyles().setMarginTop(1f);
 

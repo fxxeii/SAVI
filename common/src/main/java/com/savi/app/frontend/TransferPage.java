@@ -137,7 +137,7 @@ public class TransferPage {
 
         // ---- dropdowns ----
         Container dropdowns = new Container(BoxLayout.y());
-        dropdowns.add(dropdown(groupPicker, "Select group", groups));
+        dropdowns.add(dropdown(groupPicker, "Select savings", groups));
         dropdowns.add(dropdown(memberPicker, "Select member", members));
 
         card.add(BorderLayout.NORTH, headRow);
@@ -173,8 +173,15 @@ public class TransferPage {
         return arr;
     }
 
-    // refills a dropdown (placeholder first) and goes back to the placeholder
-    private void setOptions(Picker picker, String placeholder, java.util.List<String> options) {
+    // refills a dropdown (placeholder first) and goes back to the placeholder.
+    // onlyChoice = a personal savings: its owner is the only member, so no placeholder is needed
+    private void setOptions(Picker picker, String placeholder, java.util.List<String> options,
+                            boolean onlyChoice) {
+        if (onlyChoice && options.size() == 1) {
+            picker.setStrings(options.get(0));
+            picker.setSelectedStringIndex(0);
+            return;
+        }
         String[] items = new String[options.size() + 1];
         items[0] = placeholder;
         for (int i = 0; i < options.size(); i++) {
@@ -189,9 +196,9 @@ public class TransferPage {
         base.getContentPane().getAllStyles().setBgColor(SAVI.PALE_PURPLE);
         base.getContentPane().getAllStyles().setBgTransparency(255);
 
-        // BACKEND: the groups come from the logged-in user's groups, members from the chosen group
+        // BACKEND: every savings of the logged-in user (groups AND personal), members of the chosen one
         Transfer transfer = new Transfer(SAVI.user, SAVI.groupList.getGroups());
-        String[] groups = toArray(transfer.getGroupNames());
+        String[] groups = toArray(transfer.getSavingsNames());
         String[] noMembers = new String[0];     // filled in once a group is chosen
 
         Picker fromGroup = new Picker();
@@ -200,14 +207,16 @@ public class TransferPage {
         Picker toMember = new Picker();
 
         fromGroup.addActionListener(e -> {
-            transfer.setFromGroup(fromGroup.getSelectedString());   // also clears the member
-            setOptions(fromMember, "Select member", transfer.getMemberNames(transfer.getFromGroup()));
+            transfer.setFromSavings(fromGroup.getSelectedString());   // also resets the member
+            setOptions(fromMember, "Select member", transfer.getMemberNames(transfer.getFromSavings()),
+                    transfer.isPersonal(transfer.getFromSavings()));
         });
         fromMember.addActionListener(e -> transfer.setFromMember(fromMember.getSelectedString()));
 
         toGroup.addActionListener(e -> {
-            transfer.setToGroup(toGroup.getSelectedString());
-            setOptions(toMember, "Select member", transfer.getMemberNames(transfer.getToGroup()));
+            transfer.setToSavings(toGroup.getSelectedString());
+            setOptions(toMember, "Select member", transfer.getMemberNames(transfer.getToSavings()),
+                    transfer.isPersonal(transfer.getToSavings()));
         });
         toMember.addActionListener(e -> transfer.setToMember(toMember.getSelectedString()));
 
@@ -255,8 +264,8 @@ public class TransferPage {
                 return;
             }
             new TransferConfirmationPage().show((float) transfer.getAmount(),
-                    transfer.getFromMember(), transfer.getFromGroup(),
-                    transfer.getToMember(), transfer.getToGroup());
+                    transfer.getFromMember(), transfer.getFromName(),
+                    transfer.getToMember(), transfer.getToName());
         });
         mainContents.add(TransferSav);
 

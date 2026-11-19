@@ -105,7 +105,7 @@ public class GroupList {
             return false;
         }
 
-        if (amount <= 0 || Double.isNaN(amount) || Double.isInfinite(amount)) {
+        if (amount == 0 || Double.isNaN(amount) || Double.isInfinite(amount)) {   // negative = money moved out (transfer)
             return false;
         }
 
@@ -225,7 +225,7 @@ public class GroupList {
                 String note = decode(p.get(5));
 
                 if (g != null && g.hasMember(member)
-                        && amount > 0
+                        && amount != 0
                         && !Double.isInfinite(amount)
                         && !Double.isNaN(amount)) {
 

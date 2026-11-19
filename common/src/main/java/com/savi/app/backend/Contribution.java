@@ -16,7 +16,7 @@ public class Contribution {
             throw new IllegalArgumentException("Member name is required.");
         }
 
-        if (amount <= 0 || Double.isNaN(amount) || Double.isInfinite(amount)) {
+        if (amount == 0 || Double.isNaN(amount) || Double.isInfinite(amount)) {   // negative = money moved out (transfer)
             throw new IllegalArgumentException("Amount must be positive.");
         }
 

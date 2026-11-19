@@ -5,73 +5,191 @@ import java.util.ArrayList;
 import java.util.List;
 import com.savi.app.SAVI;
 
+/**
+ * Backend of TransferPage (Transfer Funds).
+ *
+ * Money can move between ANY two savings of the logged-in user:
+ *   group -> group, group -> personal, personal -> group, personal -> personal.
+ * The dropdowns list every savings as "Name (Group)" or "Name (Personal)".
+ *
+ * A transfer is saved as two contribution records (through GroupList / PersonalList, so they
+ * are written to the CSV files too):
+ *   sending side   : a NEGATIVE contribution  ("Transferred to ...")
+ *   receiving side : a POSITIVE contribution  ("Transferred from ...")
+ */
 public class Transfer {
     public static final String SUCCESS = "success";
 
+    private static final String GROUP_TAG = " (Group)";
+    private static final String PERSONAL_TAG = " (Personal)";
+
     // ---------------------------------------------------------------- ENCAPSULATION
+    private User user;
     private Home home;                    // gives us the groups of the logged-in user
-    private String fromGroup = "";
+    private String fromSavings = "";      // the dropdown text, e.g. "Gala sa December (Group)"
     private String fromMember = "";
-    private String toGroup = "";
+    private String toSavings = "";
     private String toMember = "";
     private String amountText = "";
 
     public Transfer(User user, List<? extends Savings> allSavings) {
+        this.user = user;
         // Home does the "which groups is the logged-in user in" work, so it is reused here
         this.home = new Home(user, allSavings);
     }
 
-    // ---------------------------------------------------------------- DROPDOWN CONTENTS
+    // ---------------------------------------------------------------- ONE SAVINGS (group OR personal)
+    // The page only talks about "savings"; this small class hides which kind it is, so
+    // validate() and confirm() have almost no group/personal special cases.
+    private static class Account {
+        private final GroupSavings group;          // set when it is a group savings
+        private final PersonalSavings personal;    // set when it is a personal savings
 
-    /** Names for the "Select group" dropdowns (the groups of the logged-in user). */
-    public List<String> getGroupNames() {
-        List<String> names = new ArrayList<String>();
+        Account(GroupSavings group, PersonalSavings personal) {
+            this.group = group;
+            this.personal = personal;
+        }
+
+        boolean isPersonal() {
+            return personal != null;
+        }
+
+        /** "Gala sa December" */
+        String name() {
+            return group != null ? group.getGroupName() : personal.getSavingsName();
+        }
+
+        /** "Gala sa December (Group)" / "Emergency Fund (Personal)" */
+        String label() {
+            return name() + (group != null ? GROUP_TAG : PERSONAL_TAG);
+        }
+
+        /** Group: its members. Personal: only the owner. */
+        List<String> members() {
+            List<String> names = new ArrayList<String>();
+            if (group != null) {
+                names.addAll(group.getMembers());
+            } else {
+                names.add(personal.getOwner());
+            }
+            return names;
+        }
+
+        /** The member's name exactly as stored, or null if not a member of this savings. */
+        String memberOf(String name) {
+            for (String m : members()) {
+                if (m.equalsIgnoreCase(name)) {
+                    return m;
+                }
+            }
+            return null;
+        }
+
+        /** What this member has put in (transfers included), never below 0. */
+        double balance(String member) {
+            double total = 0;
+            List<Contribution> all = group != null ? group.getContributions() : personal.getContributions();
+            for (Contribution c : all) {
+                if (c.getMember().equalsIgnoreCase(member)) {
+                    total += c.getAmount();
+                }
+            }
+            return Math.max(0, total);
+        }
+
+        /** Records the contribution AND saves it to the CSV. */
+        boolean add(String member, double amount, LocalDate date, String note) {
+            if (group != null) {
+                return SAVI.groupList.addContribution(group.getGroupName(), member, amount, date, note);
+            }
+            return SAVI.personalList.addContribution(personal.getSavingsName(), personal.getOwner(),
+                    amount, date, note);
+        }
+
+        boolean sameAs(Account other) {
+            return group != null ? group == other.group : personal == other.personal;
+        }
+    }
+
+    // ---------------------------------------------------------------- FINDING SAVINGS
+
+    /** Every savings the logged-in user can use: their groups, then their personal savings. */
+    private List<Account> allAccounts() {
+        List<Account> list = new ArrayList<Account>();
         for (GroupSavings g : home.getGroups()) {
-            names.add(g.getGroupName());
+            list.add(new Account(g, null));
         }
-        return names;
-    }
-
-    /** Names for the "Select member" dropdown of the chosen group (empty if no such group). */
-    public List<String> getMemberNames(String groupName) {
-        List<String> names = new ArrayList<String>();
-        GroupSavings g = findGroup(clean(groupName));
-        if (g != null) {
-            names.addAll(g.getMembers());   // a copy, so the group's own list can't be changed
-        }
-        return names;
-    }
-
-    /** What a member has put into a group so far (transfers in/out included, never below 0). */
-    public double getBalance(String groupName, String memberName) {
-        GroupSavings g = findGroup(clean(groupName));
-        if (g == null) {
-            return 0;
-        }
-        double total = 0;
-        for (Contribution c : g.getContributions()) {
-            if (c.getMember().equalsIgnoreCase(clean(memberName))) {
-                total += c.getAmount();
+        String me = user == null ? null : user.getCurrentName();
+        if (me != null) {
+            for (PersonalSavings p : SAVI.personalList.getForOwner(me)) {
+                list.add(new Account(null, p));
             }
         }
-        return Math.max(0, total);
+        return list;
+    }
+
+    private Account find(String label) {
+        if (label == null || label.isEmpty()) {
+            return null;
+        }
+        for (Account a : allAccounts()) {
+            if (a.label().equalsIgnoreCase(label)) {
+                return a;
+            }
+        }
+        for (Account a : allAccounts()) {     // the text had no "(Group)" / "(Personal)" tag
+            if (a.name().equalsIgnoreCase(label)) {
+                return a;
+            }
+        }
+        return null;
+    }
+
+    // ---------------------------------------------------------------- DROPDOWN CONTENTS
+
+    /** For both "Select savings" dropdowns: all groups and all personal savings. */
+    public List<String> getSavingsNames() {
+        List<String> names = new ArrayList<String>();
+        for (Account a : allAccounts()) {
+            names.add(a.label());
+        }
+        return names;
+    }
+
+    /** For the "Select member" dropdown: the group's members, or just the owner of a personal savings. */
+    public List<String> getMemberNames(String savings) {
+        Account a = find(clean(savings));
+        return a == null ? new ArrayList<String>() : a.members();
+    }
+
+    /** True for a personal savings: the page can skip the member choice (the owner is the only one). */
+    public boolean isPersonal(String savings) {
+        Account a = find(clean(savings));
+        return a != null && a.isPersonal();
+    }
+
+    /** What a member has put into a savings so far (transfers in/out included, never below 0). */
+    public double getBalance(String savings, String memberName) {
+        Account a = find(clean(savings));
+        return a == null ? 0 : a.balance(clean(memberName));
     }
 
     // ---------------------------------------------------------------- SETTERS
-    // Choosing another group clears the member, because the member list belongs to that group.
+    // Choosing another savings clears the member, because the member list belongs to that savings.
+    // For a personal savings the owner is picked automatically.
 
-    public void setFromGroup(String groupName) {
-        this.fromGroup = clean(groupName);
-        this.fromMember = "";
+    public void setFromSavings(String savings) {
+        this.fromSavings = clean(savings);
+        this.fromMember = onlyMember(this.fromSavings);
     }
 
     public void setFromMember(String memberName) {
         this.fromMember = clean(memberName);
     }
 
-    public void setToGroup(String groupName) {
-        this.toGroup = clean(groupName);
-        this.toMember = "";
+    public void setToSavings(String savings) {
+        this.toSavings = clean(savings);
+        this.toMember = onlyMember(this.toSavings);
     }
 
     public void setToMember(String memberName) {
@@ -85,29 +203,41 @@ public class Transfer {
 
     /** Empties every choice (call it when the page is opened again). */
     public void clear() {
-        fromGroup = "";
+        fromSavings = "";
         fromMember = "";
-        toGroup = "";
+        toSavings = "";
         toMember = "";
         amountText = "";
     }
 
     // ---------------------------------------------------------------- GETTERS (confirmation page)
 
-    public String getFromGroup() {
-        return fromGroup;
+    /** The dropdown text, e.g. "Gala sa December (Group)". */
+    public String getFromSavings() {
+        return fromSavings;
     }
 
     public String getFromMember() {
         return fromMember;
     }
 
-    public String getToGroup() {
-        return toGroup;
+    public String getToSavings() {
+        return toSavings;
     }
 
     public String getToMember() {
         return toMember;
+    }
+
+    /** The savings name without the tag, e.g. "Gala sa December" (for the confirmation text). */
+    public String getFromName() {
+        Account a = find(fromSavings);
+        return a == null ? fromSavings : a.name();
+    }
+
+    public String getToName() {
+        Account a = find(toSavings);
+        return a == null ? toSavings : a.name();
     }
 
     /** The amount as a number, rounded to centavos. 0 if the text is not a valid amount. */
@@ -125,14 +255,14 @@ public class Transfer {
 
     /** Returns "success" or the message to show to the user. Changes nothing. */
     public String validate() {
-        if (fromGroup.isEmpty()) {
-            return "Please choose a group where the funds will come from.";
+        if (fromSavings.isEmpty()) {
+            return "Please choose the savings where the funds will come from.";
         }
         if (fromMember.isEmpty()) {
             return "Please choose the member who will send the funds.";
         }
-        if (toGroup.isEmpty()) {
-            return "Please choose the group that will receive the funds.";
+        if (toSavings.isEmpty()) {
+            return "Please choose the savings that will receive the funds.";
         }
         if (toMember.isEmpty()) {
             return "Please choose the member who will receive the funds.";
@@ -149,47 +279,63 @@ public class Transfer {
             return "Amount must be greater than 0.";
         }
 
-        GroupSavings from = findGroup(fromGroup);
-        GroupSavings to = findGroup(toGroup);
+        Account from = find(fromSavings);
+        Account to = find(toSavings);
         if (from == null || to == null) {
-            return "Group not found.";
+            return "Savings not found.";
         }
 
-        String fm = memberOf(from, fromMember);
-        String tm = memberOf(to, toMember);
+        String fm = from.memberOf(fromMember);
+        String tm = to.memberOf(toMember);
         if (fm == null) {
-            return fromMember + " is not a member of " + from.getGroupName() + ".";
+            return fromMember + " is not a member of " + from.name() + ".";
         }
         if (tm == null) {
-            return toMember + " is not a member of " + to.getGroupName() + ".";
+            return toMember + " is not a member of " + to.name() + ".";
         }
 
-        if (from == to && fm.equalsIgnoreCase(tm)) {
-            return "You can't transfer to the same member in the same group.";
+        if (from.sameAs(to) && fm.equalsIgnoreCase(tm)) {
+            return "You can't transfer to the same savings.";
         }
 
-        double available = getBalance(fromGroup, fm);
+        // a personal savings belongs to one person: it may only exchange funds with that
+        // person's own share in a group (nobody can move other members' money into it)
+        if (from.isPersonal() != to.isPersonal()) {
+            String groupSide = from.isPersonal() ? tm : fm;
+            String owner = from.isPersonal() ? fm : tm;
+            if (!groupSide.equalsIgnoreCase(owner)) {
+                return "Personal savings can only exchange funds with your own share in a group.";
+            }
+        }
+
+        double available = from.balance(fm);
         if (Math.round(amount * 100) > Math.round(available * 100)) {
-            return fm + " only has " + Home.pesoShort(available) + " in " + from.getGroupName() + ".";
+            return fm + " only has " + Home.pesoShort(available) + " in " + from.name() + ".";
         }
         return SUCCESS;
     }
 
+    /** Moves the money. Returns "success" or the same messages as validate(). */
     public String confirm() {
         String result = validate();
         if (!result.equals(SUCCESS)) {
             return result;
         }
 
-        GroupSavings from = findGroup(fromGroup);
-        GroupSavings to = findGroup(toGroup);
-        String fm = memberOf(from, fromMember);
-        String tm = memberOf(to, toMember);
+        Account from = find(fromSavings);
+        Account to = find(toSavings);
+        String fm = from.memberOf(fromMember);
+        String tm = to.memberOf(toMember);
         double amount = parseAmount(amountText);
         LocalDate today = LocalDate.now();
 
-        SAVI.groupList.addContribution(from.getGroupName(), fm, -amount, today, "Transferred to " + tm + " (" + to.getGroupName() + ")");
-        SAVI.groupList.addContribution(to.getGroupName(), tm, amount, today, "Transferred from " + fm + " (" + from.getGroupName() + ")");
+        if (!from.add(fm, -amount, today, "Transferred to " + tm + " (" + to.name() + ")")) {
+            return "The transfer could not be recorded.";
+        }
+        if (!to.add(tm, amount, today, "Transferred from " + fm + " (" + from.name() + ")")) {
+            from.add(fm, amount, today, "Transfer reversed");   // put the money back
+            return "The transfer could not be recorded.";
+        }
 
         home.refresh();   // weekly numbers change when the logged-in user is part of the transfer
         return SUCCESS;
@@ -197,38 +343,23 @@ public class Transfer {
 
     // ---------------------------------------------------------------- helpers
 
+    /** For a personal savings: its owner (the only member). Otherwise "" (nothing chosen yet). */
+    private String onlyMember(String savings) {
+        Account a = find(savings);
+        return (a != null && a.isPersonal()) ? a.members().get(0) : "";
+    }
+
     /** The dropdown placeholders count as "nothing chosen". */
     private String clean(String value) {
         if (value == null) {
             return "";
         }
         String v = value.trim();
-        if (v.equalsIgnoreCase("Select group") || v.equalsIgnoreCase("Select member")) {
+        if (v.equalsIgnoreCase("Select savings") || v.equalsIgnoreCase("Select group")
+                || v.equalsIgnoreCase("Select member")) {
             return "";
         }
         return v;
-    }
-
-    private GroupSavings findGroup(String name) {
-        if (name == null || name.isEmpty()) {
-            return null;
-        }
-        for (GroupSavings g : home.getGroups()) {
-            if (g.getGroupName().equalsIgnoreCase(name)) {
-                return g;
-            }
-        }
-        return null;
-    }
-
-    /** The member's name exactly as the group stores it, or null if not in the group. */
-    private String memberOf(GroupSavings g, String name) {
-        for (String m : g.getMembers()) {
-            if (m.equalsIgnoreCase(name)) {
-                return m;
-            }
-        }
-        return null;
     }
 
     /** "1,250.50" / "P250" -> 1250.5 / 250, rounded to centavos. Returns -1 if not a number. */
