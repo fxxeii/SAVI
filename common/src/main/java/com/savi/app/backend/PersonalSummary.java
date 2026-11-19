@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Backend of PersonalSummaryPage (Personal Savings Summary).
+ * Backend of PersonalSummaryPage (Personal Savings GroupSummary).
  *
  *  PersonalSummaryPage part                 -> PersonalSummary method
  *  ---------------------------------------------------------------------------
@@ -31,7 +31,7 @@ public class PersonalSummary implements ChartData {
 
     private final List<PersonalSavings> all = new ArrayList<PersonalSavings>();
     private PersonalSavings current;
-    private int chartMode = Summary.MONTH;
+    private int chartMode = GroupSummary.MONTH;
 
     public PersonalSummary(List<? extends Savings> allSavings) {
         for (Savings s : allSavings) {
@@ -89,7 +89,7 @@ public class PersonalSummary implements ChartData {
 
     @Override
     public void setChartMode(int mode) {
-        if (mode != Summary.WEEK && mode != Summary.MONTH && mode != Summary.YEAR) {
+        if (mode != GroupSummary.WEEK && mode != GroupSummary.MONTH && mode != GroupSummary.YEAR) {
             throw new IllegalArgumentException("Unknown chart mode");
         }
         this.chartMode = mode;
@@ -102,16 +102,16 @@ public class PersonalSummary implements ChartData {
 
     @Override
     public String getChartTitle() {
-        if (chartMode == Summary.WEEK) {
+        if (chartMode == GroupSummary.WEEK) {
             return "WEEKLY CHART";
         }
-        return chartMode == Summary.YEAR ? "YEARLY CHART" : "MONTHLY CHART";
+        return chartMode == GroupSummary.YEAR ? "YEARLY CHART" : "MONTHLY CHART";
     }
 
     @Override
     public String getChartSubtitle() {
         String[] labels = getChartLabels();
-        if (chartMode == Summary.WEEK) {
+        if (chartMode == GroupSummary.WEEK) {
             return "Growth over the last " + POINTS + " weeks";
         }
         return "Growth from " + labels[0] + " to " + labels[POINTS - 1];
@@ -194,7 +194,7 @@ public class PersonalSummary implements ChartData {
     }
 
     // ---------------------------------------------------------------- helpers
-    // (same date math as Summary: Codename One's java.time is small, so dates are read from text)
+    // (same date math as GroupSummary: Codename One's java.time is small, so dates are read from text)
 
     private double[] cumulative() {
         double[] totals = new double[POINTS];
@@ -215,20 +215,20 @@ public class PersonalSummary implements ChartData {
 
     private long periodIndex(LocalDate date) {
         int[] ymd = ymd(date);
-        if (chartMode == Summary.YEAR) {
+        if (chartMode == GroupSummary.YEAR) {
             return ymd[0];
         }
-        if (chartMode == Summary.MONTH) {
+        if (chartMode == GroupSummary.MONTH) {
             return ymd[0] * 12L + (ymd[1] - 1);
         }
         return (epochDay(date) + 4) / 7;      // weeks start on Sunday
     }
 
     private String periodLabel(long period) {
-        if (chartMode == Summary.YEAR) {
+        if (chartMode == GroupSummary.YEAR) {
             return String.valueOf(period);
         }
-        if (chartMode == Summary.MONTH) {
+        if (chartMode == GroupSummary.MONTH) {
             return MONTHS[(int) (period % 12)];
         }
         int[] start = civil(period * 7 - 4);

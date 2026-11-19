@@ -16,7 +16,7 @@ import com.codename1.ui.table.TableLayout;
 import com.savi.app.SAVI;
 import com.codename1.util.SuccessCallback;
 import com.savi.app.backend.ChartData;
-import com.savi.app.backend.Summary;
+import com.savi.app.backend.GroupSummary;
 
 public class SummaryPage {
 
@@ -26,7 +26,7 @@ public class SummaryPage {
     private static final int[] SHARE_COLORS = {0x6D0FD6, 0xA066FF, 0x047857, 0x5EE0B0};
 
     // BACKEND: every number and text on this page comes from here
-    private Summary summary;
+    private GroupSummary summary;
 
     void styles(Container cont, int bgColor, float padLR, float padTB, float marLR, float marT, float marB) {
         Style contS = cont.getAllStyles();
@@ -160,7 +160,7 @@ public class SummaryPage {
 
     // TOP DROPDOWN: switches between the Personal and the Group savings summary
     Container summaryHeader(boolean personalMode) {
-        final String[] modes = {"Personal Savings Summary", "Group Savings Summary"};
+        final String[] modes = {"Personal Savings GroupSummary", "Group Savings GroupSummary"};
         String current = personalMode ? modes[0] : modes[1];
 
         com.codename1.ui.Button back = new com.codename1.ui.Button();
@@ -291,7 +291,7 @@ public class SummaryPage {
 
                 if (empty) {
                     Font mf = SAVI.semiBold(1.5f);
-                    String[] lines = SummaryPage.this.wrap(Summary.NO_SHARES_MESSAGE, mf, (int) ((size - 2 * t) * 0.85f));
+                    String[] lines = SummaryPage.this.wrap(GroupSummary.NO_SHARES_MESSAGE, mf, (int) ((size - 2 * t) * 0.85f));
                     int lh = mf.getHeight();
                     int ty = cy + (size - lines.length * lh) / 2;
                     g.setColor(SAVI.SLATE_GRAY);
@@ -350,9 +350,9 @@ public class SummaryPage {
 
         // the legend is only shown when there are shares to list
         if (hasShares) {
-            java.util.List<Summary.MemberShare> members = summary.getMembers();
+            java.util.List<GroupSummary.MemberShare> members = summary.getMembers();
             Container legend = new Container(new GridLayout((members.size() + 1) / 2, 2));
-            for (Summary.MemberShare m : members) {
+            for (GroupSummary.MemberShare m : members) {
                 legend.add(txt(m.getLegendText(), SAVI.bold(1.7f), SAVI.DARK_BLUE));
             }
             for (int i = 0; i < legend.getComponentCount(); i++) {
@@ -399,7 +399,7 @@ public class SummaryPage {
         styles(card, SAVI.WHITE, 2f, 2f, 2f, 1, 1);
 
         Container title = new Container(new BorderLayout());
-        title.add(BorderLayout.WEST, txt("Member Summary", SAVI.regular(1.9f), SAVI.BLACK));
+        title.add(BorderLayout.WEST, txt("Member GroupSummary", SAVI.regular(1.9f), SAVI.BLACK));
         title.add(BorderLayout.EAST, txt("Active Cycle", SAVI.bold(1.9f), SAVI.BLACK));
 
         Container tableHead = tableRow(
@@ -413,8 +413,8 @@ public class SummaryPage {
         rows.add(tableHead);
 
         // one row per member (biggest share first); the logged-in user is shown in bold as "You"
-        java.util.List<Summary.MemberShare> members = summary.getMembers();
-        for (Summary.MemberShare m : members) {
+        java.util.List<GroupSummary.MemberShare> members = summary.getMembers();
+        for (GroupSummary.MemberShare m : members) {
             rows.add(memberRow(m.isYou() ? "You" : m.getInitial(), m.getDisplayName(), m.getPaidText(),
                     m.getAmountText(), m.getPercentText(), m.isYou()));
         }
@@ -560,16 +560,16 @@ public class SummaryPage {
 
         int mode = summary.getChartMode();
         Container toggles = new Container(new FlowLayout(Component.RIGHT, Component.TOP));
-        toggles.add(toggle("W", mode == Summary.WEEK, () -> {
-            summary.setChartMode(Summary.WEEK);
+        toggles.add(toggle("W", mode == GroupSummary.WEEK, () -> {
+            summary.setChartMode(GroupSummary.WEEK);
             onModeChange.run();
         }));
-        toggles.add(toggle("M", mode == Summary.MONTH, () -> {
-            summary.setChartMode(Summary.MONTH);
+        toggles.add(toggle("M", mode == GroupSummary.MONTH, () -> {
+            summary.setChartMode(GroupSummary.MONTH);
             onModeChange.run();
         }));
-        toggles.add(toggle("Y", mode == Summary.YEAR, () -> {
-            summary.setChartMode(Summary.YEAR);
+        toggles.add(toggle("Y", mode == GroupSummary.YEAR, () -> {
+            summary.setChartMode(GroupSummary.YEAR);
             onModeChange.run();
         }));
 
@@ -652,7 +652,7 @@ public class SummaryPage {
 
     // opens on the group with this name (used by the group popup)
     public void show(String groupName) {
-        summary = new Summary(SAVI.user, SAVI.groupList.getGroups());
+        summary = new GroupSummary(SAVI.user, SAVI.groupList.getGroups());
         if (groupName != null) {
             summary.selectGroup(groupName);
         }

@@ -103,7 +103,7 @@ public class HomePage {
         s.setMarginUnit(Style.UNIT_TYPE_DIPS);
         s.setMargin(0, 0, 1, 0);
         s.setPaddingUnit(Style.UNIT_TYPE_DIPS);
-        s.setPadding(1, 1, 0.8f, 0.5f);
+        s.setPadding(1, 1, 0.5f, 0.5f);
     }
 
     static Container makeShortcut(String title, float mm, ActionListener<ActionEvent> onClick, String imgPath) {
@@ -113,8 +113,13 @@ public class HomePage {
 
         Button b = new Button(title);
         b.setUIID("Label");
-        b.getAllStyles().setFgColor(SAVI.DEEP_SLATE);
-        b.getAllStyles().setFont(SAVI.semiBold(mm));
+        Style bs = b.getAllStyles();
+        bs.setFgColor(SAVI.DEEP_SLATE);
+        bs.setFont(SAVI.semiBold(mm));
+        bs.setAlignment(Component.CENTER);
+        bs.setPadding(0, 0, 0, 0);
+        bs.setMargin(0, 0, 0, 0);
+        b.setEndsWith3Points(false);
         b.addActionListener(onClick);
 
         c.add(BorderLayout.SOUTH, b);
@@ -244,7 +249,7 @@ public class HomePage {
         show(null);
     }
 
-    // opens with the weekly card on this choice ("All Groups", a group name or a personal savings)
+    // opens with the weekly card on this choice (a group name or a personal savings)
     public void show(String weeklyChoice) {
         // BACKEND: one Home object feeds the cards below (SAVI.user / SAVI.groupList.getGroups: see note)
         Home home = new Home(SAVI.user, Home.allSavings());
@@ -297,7 +302,7 @@ public class HomePage {
         Container weekTotalContainer = new Container(new BorderLayout());
         boxStyles(weekTotalContainer, SAVI.WHITE, 2, 3);
 
-        // WEEKLY CARD CHOICE: "All Groups" (every group's weekly target added up) or one savings.
+        // WEEKLY CARD CHOICE: one savings (a group or a personal savings) with its own weekly target.
         // The name is a Picker (same wheel as the Transfer page): tapping the name or the arrow opens it.
         Container choiceRow = null;
         java.util.List<String> choices = home.getWeeklyChoices();
@@ -386,14 +391,13 @@ public class HomePage {
         manage.getAllStyles().setFont(SAVI.semiBold(2f));
         manage.addActionListener(e->{new PeoplePage().show();});
 
-        // "N Active": how many savings the user has (the cards below show at most 2 of them)
         Label activeCount = SAVI.text(home.getSavingsCount() + " Active", SAVI.semiBold(1.4f), SAVI.BRIGHT_VIOLET);
         Style acs = activeCount.getAllStyles();
         acs.setBgColor(0xE9E0FB);
         acs.setBgTransparency(255);
         acs.setBorder(RoundRectBorder.create().cornerRadius(2f));
         acs.setPaddingUnit(Style.UNIT_TYPE_DIPS);
-        acs.setPadding(0.4f, 0.4f, 1.2f, 1.2f);
+        acs.setPadding(0, 0, 1.2f, 1.2f);
         acs.setMarginUnit(Style.UNIT_TYPE_DIPS);
         acs.setMargin(0, 0, 1.5f, 0);
         Container overviewTitle = new Container(new FlowLayout(Component.LEFT, Component.CENTER));

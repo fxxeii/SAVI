@@ -9,8 +9,6 @@ import java.util.List;
 
 public class Home {
     // ---------------------------------------------------------------- ENCAPSULATION
-    private static final double DEFAULT_WEEKLY_TARGET = 5000;   // same value HomePage shows
-
     private User user = SAVI.user;                          // gives us the logged-in name
     private List<? extends Savings> allSavings;  // every savings object (group or personal)
     private LocalDate weekStart;                // first day (Sunday) of the week on the calendar
@@ -18,7 +16,6 @@ public class Home {
     private double weeklyTarget;               // taken from the savings chosen on the weekly card (0 = not set)
     private double weeklyProgress;              // always between 0.0 and 1.0
 
-    public static final String ALL_GROUPS = "All Savings";   // choice that adds up every savings' weekly target (groups + personal)
     private static final String PERSONAL_TAG = " (Personal)";
     private String weeklyChoice = "";           // what the weekly card shows ("" = the default choice)
 
@@ -78,17 +75,8 @@ public class Home {
             GroupSavings g = findGroupChoice(choice);
             PersonalSavings p = g == null ? findPersonalChoice(choice) : null;
 
-            if (choice.equals(ALL_GROUPS)) {
-                // every weekly target added up (groups AND personal), and what was saved into all of them
-                for (GroupSavings each : getGroups()) {
-                    saved += weekTotal(each);
-                    target += each.getWeeklyTarget();
-                }
-                for (PersonalSavings each : getPersonals()) {
-                    saved += weekTotal(each);
-                    target += each.getWeeklyTarget();
-                }
-            } else if (g != null) {
+            // the weekly card shows ONE savings: its own weekly target, nothing is added up
+            if (g != null) {
                 saved = weekTotal(g);
                 target = g.getWeeklyTarget();
             } else if (p != null) {
@@ -118,16 +106,12 @@ public class Home {
     }
 
     // ---------------------------------------------------------------- WEEKLY CARD CHOICE
-    // The weekly card shows ONE of: "All Groups", a group, or a personal savings.
+    // The weekly card shows ONE of: a group or a personal savings (each with its own weekly target).
 
-    /** The dropdown texts: "All Savings" (when there is any savings), each group, each personal savings. */
+    /** The dropdown texts: each group, then each personal savings. */
     public List<String> getWeeklyChoices() {
         List<String> choices = new ArrayList<String>();
-        List<GroupSavings> groups = getGroups();
-        if (!groups.isEmpty() || !getPersonals().isEmpty()) {
-            choices.add(ALL_GROUPS);
-        }
-        for (GroupSavings g : groups) {
+        for (GroupSavings g : getGroups()) {
             choices.add(g.getGroupName());
         }
         for (PersonalSavings p : getPersonals()) {
