@@ -488,6 +488,10 @@ public class ProfilePage {
         mainContents.add(settingsCard(icons, titles, badges));
 
         base.add(BorderLayout.CENTER, mainContents);
+
+        base.add(BorderLayout.SOUTH,SAVI.bottomNav(SAVI.NAV_USER));
         base.show();
+
+
     }
 }
