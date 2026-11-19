@@ -9,11 +9,15 @@ import com.savi.app.backend.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 
+// CALENDAR PAGE (frontend)
+// FLOW: open the page -> show today's records -> the user taps a date -> the page asks the backend
+// (CalendarLogic + the groups) -> the cards for that date are rebuilt.
+// This page only READS data. It never changes or saves anything.
 public class CalendarPage {
 
     public void show() {
 
-        CalendarLogic logic = new CalendarLogic(); //backend
+        CalendarLogic logic = new CalendarLogic(); //backend: the page asks it questions about dates and groups
 
         Form calendarForm = new Form("", new BorderLayout());
         calendarForm.getContentPane().getAllStyles().setBgColor(SAVI.PALE_PURPLE);
@@ -26,7 +30,7 @@ public class CalendarPage {
         content.getAllStyles().setPaddingUnit(Style.UNIT_TYPE_DIPS);
         content.getAllStyles().setPadding(0.5f, 2f, 0, 0);
 
-        MonthCalendar cld = new MonthCalendar();
+        MonthCalendar cld = new MonthCalendar();   // our own month calendar (see MonthCalendar.java)
 
         // date labels [Today     (the date)]
         Label dayTextLabel = SAVI.text("", SAVI.bold(2.3f), SAVI.WHITE);
@@ -35,8 +39,8 @@ public class CalendarPage {
 
         // show the starting date immediately
         LocalDate initialDate = logic.toLocalDate(cld.getDate());
-        dayTextLabel.setText(logic.getDayText(initialDate));
-        formattedDateLabel.setText(formatter.format(cld.getDate()));
+        dayTextLabel.setText(logic.getDayText(initialDate));          // "Today"
+        formattedDateLabel.setText(formatter.format(cld.getDate()));  // "Nov 20, 2026"
 
         // date bar
         Container dateBar = new Container(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER));
@@ -49,9 +53,10 @@ public class CalendarPage {
         content.add(cld);
         content.add(dateBar);
 
-        // Date-dependent records container
+        // Date-dependent records container: its content is rebuilt every time a date is selected
         Container recordsContainer = new Container(BoxLayout.y());
 
+        // shown when the selected date has no records
         Label emptyMessage = SAVI.text("No savings recorded for this date.", SAVI.semiBold(2.1f), SAVI.SLATE_GRAY);
         emptyMessage.getAllStyles().setAlignment(Component.CENTER);
         emptyMessage.getAllStyles().setPaddingUnit(Style.UNIT_TYPE_DIPS);
@@ -62,14 +67,16 @@ public class CalendarPage {
         // load the cards for the starting date
         showRecords(recordsContainer, emptyMessage, initialDate, logic);
 
-        // runs when a day is selected
+        // runs when a day is selected: update the date bar, then rebuild the cards
         cld.addDayActionListener(e -> {
             LocalDate selected = logic.toLocalDate(cld.getDate());
             dayTextLabel.setText(logic.getDayText(selected));
             formattedDateLabel.setText(formatter.format(cld.getDate()));
             showRecords(recordsContainer, emptyMessage, selected, logic);
+            content.revalidate();
         });
 
+        // layout: shared header on top, scrolling content in the middle, shared bottom nav at the bottom
         calendarForm.add(BorderLayout.NORTH, SAVI.buildHeader("Savings Calendar", () -> new HomePage().show()));
         calendarForm.add(BorderLayout.CENTER, content);
         calendarForm.add(BorderLayout.SOUTH, SAVI.bottomNav(SAVI.NAV_CALENDAR));
@@ -80,13 +87,14 @@ public class CalendarPage {
     private void showRecords(Container recordsContainer, Label emptyMessage, LocalDate date, CalendarLogic logic) {
         recordsContainer.removeAll();
 
+        // ask the backend: which groups have contributions on this date?
         ArrayList<GroupSavings> found = logic.getGroupsWithRecords(SAVI.groupList.getGroups(), date);
 
         if (found.isEmpty()) {
             recordsContainer.add(emptyMessage);
         } else {
             for (GroupSavings g : found) {
-                recordsContainer.add(createTrackerCard(g, date, logic));
+                recordsContainer.add(createTrackerCard(g, date, logic));   // one card per group
             }
         }
         recordsContainer.revalidate();
@@ -94,7 +102,7 @@ public class CalendarPage {
 
     // one card per group (same design as before, but with real data)
     private Container createTrackerCard(GroupSavings g, LocalDate date, CalendarLogic logic) {
-        ArrayList<Contribution> list = g.getContributionsOn(date);
+        ArrayList<Contribution> list = g.getContributionsOn(date);   // inherited from Savings
         int count = list.size();
 
         Container trackerCard = new Container(BoxLayout.y());
@@ -104,6 +112,7 @@ public class CalendarPage {
         Container trackerHeader = new Container(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER));
         Label groupName = SAVI.text(g.getGroupName(), SAVI.bold(2.3f), SAVI.DARK_KNIGHT);
 
+        // status badge: green for "Saved", yellow for anything else
         String statusStr = logic.getStatus(g, date);
         boolean isSaved = "Saved".equalsIgnoreCase(statusStr);
         Label status = SAVI.text(statusStr, SAVI.bold(1.7f), isSaved ? SAVI.GREEN : SAVI.AMBER);
@@ -117,7 +126,7 @@ public class CalendarPage {
         trackerHeader.add(BorderLayout.WEST, groupName);
         trackerHeader.add(BorderLayout.EAST, status);
 
-        // AMOUNT SAVED
+        // AMOUNT SAVED: the total of this date's contributions (getTotalOn is from Savings)
         Label amountSaved = SAVI.text("Amount Saved: " + Home.pesoFormat(g.getTotalOn(date)), SAVI.bold(2.2f), SAVI.GREEN);
         amountSaved.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
         amountSaved.getAllStyles().setMargin(0.8f, 1f, 0, 0);
@@ -134,14 +143,14 @@ public class CalendarPage {
         vs.setPadding(1.2f, 1.2f, 1.5f, 1.5f);
         vs.setBorder(RoundRectBorder.create().cornerRadius(2.5f));
 
-        // CONTRIBUTIONS LIST: one row per contribution
+        // CONTRIBUTIONS LIST: one row per contribution (hidden until the button is tapped)
         Container contributionsList = new Container(BoxLayout.y());
         for (Contribution c : list) {
             contributionsList.add(createContributionRow(c.getMember(), "+" + Home.pesoFormat(c.getAmount())));
         }
         contributionsList.setHidden(true);
 
-        // EXPAND / COLLAPSE
+        // EXPAND / COLLAPSE: show or hide the list and swap the button text and arrow
         viewContributions.addActionListener(e -> {
             boolean isHidden = contributionsList.isHidden();
             contributionsList.setHidden(!isHidden);

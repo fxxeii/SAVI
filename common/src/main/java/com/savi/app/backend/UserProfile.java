@@ -64,15 +64,7 @@ public class UserProfile {
         return notificationsEnabled;
     }
 
-    public void setNotificationsEnabled(boolean notificationsEnabled) {
-        this.notificationsEnabled = notificationsEnabled;
-    }
-
     public boolean isAppLockEnabled() {
         return appLockEnabled;
-    }
-
-    public void setAppLockEnabled(boolean appLockEnabled) {
-        this.appLockEnabled = appLockEnabled;
     }
 }

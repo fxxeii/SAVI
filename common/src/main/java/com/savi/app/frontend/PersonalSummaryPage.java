@@ -9,7 +9,7 @@ import com.savi.app.SAVI;
 import com.savi.app.backend.PersonalSummary;
 
 /**
- * Personal Savings Summary: the purple card (name picker, Total Pool, Target Amount)
+ * Personal Savings GroupSummary: the purple card (name picker, Total Pool, Target Amount)
  * and the monthly chart. It shares its header, card and chart with SummaryPage.
  */
 public class PersonalSummaryPage {

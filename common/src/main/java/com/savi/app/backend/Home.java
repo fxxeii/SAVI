@@ -9,14 +9,15 @@ import java.util.List;
 
 public class Home {
     // ---------------------------------------------------------------- ENCAPSULATION
-    private static final double DEFAULT_WEEKLY_TARGET = 5000;   // same value HomePage shows
-
     private User user = SAVI.user;                          // gives us the logged-in name
     private List<? extends Savings> allSavings;  // every savings object (group or personal)
     private LocalDate weekStart;                // first day (Sunday) of the week on the calendar
     private double weeklySaved;
-    private double weeklyTarget = DEFAULT_WEEKLY_TARGET;
+    private double weeklyTarget;               // taken from the savings chosen on the weekly card (0 = not set)
     private double weeklyProgress;              // always between 0.0 and 1.0
+
+    private static final String PERSONAL_TAG = " (Personal)";
+    private String weeklyChoice = "";           // what the weekly card shows ("" = the default choice)
 
     /** Every savings the logged-in user can see: all groups + the user's own personal savings.
      *  Pass this to new Home(...) so the home page and the Recent Contributions page show both. */
@@ -55,34 +56,117 @@ public class Home {
         refresh();
     }
 
-    public void setWeeklyTarget(double target) {
-        if (target < 0) {
-            throw new IllegalArgumentException("Target cannot be negative");
-        }
-        this.weeklyTarget = target;
-        refresh();
-    }
-
     /** Recomputes the weekly numbers. Call it again after a new contribution is added. */
     public void refresh() {
         String me = currentName();             // null if nobody is logged in
-        double total = 0;
+        double saved = 0;
+        double target = 0;
 
         if (me != null) {
-            for (GroupSavings g : getGroups()) {
-                for (int i = 0; i < 7; i++) {
-                    // the group looks up its own records for that day
-                    for (Contribution c : g.getContributionsOn(weekStart.plusDays(i))) {
-                        if (c.getMember().equalsIgnoreCase(me)) {
-                            total += c.getAmount();
-                        }
-                    }
-                }
+            String choice = getWeeklyChoice();
+            GroupSavings g = findGroupChoice(choice);
+            PersonalSavings p = g == null ? findPersonalChoice(choice) : null;
+
+            // the weekly card shows ONE savings: its own weekly target, nothing is added up
+            if (g != null) {
+                saved = weekTotal(g);
+                target = g.getWeeklyTarget();
+            } else if (p != null) {
+                saved = weekTotal(p);
+                target = p.getWeeklyTarget();
             }
         }
 
-        weeklySaved = total;
-        weeklyProgress = (weeklyTarget <= 0) ? 0 : Math.min(1.0, weeklySaved / weeklyTarget);
+        weeklySaved = saved;
+        weeklyTarget = target;
+        weeklyProgress = (weeklyTarget <= 0) ? 0 : Math.max(0, Math.min(1.0, weeklySaved / weeklyTarget));
+    }
+
+    /** Everything saved into one savings during the week shown on the calendar.
+     *  Every member counts, not just the logged-in user: the weekly target belongs to the whole
+     *  group, so Faye's P20 in a group the user is in also counts toward "Amount Saved".
+     *  (A personal savings only ever holds its owner's contributions.) */
+    private double weekTotal(Savings savings) {
+        double total = 0;
+        for (int i = 0; i < 7; i++) {
+            // the savings looks up its own records for that day
+            for (Contribution c : savings.getContributionsOn(weekStart.plusDays(i))) {
+                total += c.getAmount();
+            }
+        }
+        return total;
+    }
+
+    // ---------------------------------------------------------------- WEEKLY CARD CHOICE
+    // The weekly card shows ONE of: a group or a personal savings (each with its own weekly target).
+
+    /** The dropdown texts: each group, then each personal savings. */
+    public List<String> getWeeklyChoices() {
+        List<String> choices = new ArrayList<String>();
+        for (GroupSavings g : getGroups()) {
+            choices.add(g.getGroupName());
+        }
+        for (PersonalSavings p : getPersonals()) {
+            choices.add(p.getSavingsName() + PERSONAL_TAG);
+        }
+        return choices;
+    }
+
+    /** What the weekly card shows now: the picked one, else the first choice, else "" (no savings). */
+    public String getWeeklyChoice() {
+        String picked = matchChoice(weeklyChoice);
+        if (picked != null) {
+            return picked;
+        }
+        List<String> choices = getWeeklyChoices();
+        return choices.isEmpty() ? "" : choices.get(0);
+    }
+
+    /** Picks what the weekly card shows (capitals don't matter). False if there is no such choice. */
+    public boolean setWeeklyChoice(String choice) {
+        String picked = matchChoice(choice);
+        if (picked == null) {
+            return false;
+        }
+        this.weeklyChoice = picked;
+        refresh();
+        return true;
+    }
+
+    /** "Weekly Target: P5,000", or "No weekly target set" when nothing was set. */
+    public String getWeeklyTargetLabel() {
+        return weeklyTarget > 0 ? "Weekly Target: " + pesoShort(weeklyTarget) : "No weekly target set";
+    }
+
+    // the official text of a choice, or null if it is not one of the choices
+    private String matchChoice(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return null;
+        }
+        for (String c : getWeeklyChoices()) {
+            if (c.equalsIgnoreCase(text.trim())) {
+                return c;
+            }
+        }
+        return null;
+    }
+
+    private GroupSavings findGroupChoice(String choice) {
+        for (GroupSavings g : getGroups()) {
+            if (g.getGroupName().equalsIgnoreCase(choice)) {
+                return g;
+            }
+        }
+        return null;
+    }
+
+    private PersonalSavings findPersonalChoice(String choice) {
+        for (PersonalSavings p : getPersonals()) {
+            if ((p.getSavingsName() + PERSONAL_TAG).equalsIgnoreCase(choice)) {
+                return p;
+            }
+        }
+        return null;
     }
 
     // ---------------------------------------------------------------- THIS WEEK (calendar strip)
@@ -101,11 +185,6 @@ public class Home {
             days.add(start.plusDays(i));
         }
         return days;
-    }
-
-    /** The 7 days of the week this Home object is showing. */
-    public List<LocalDate> getWeekDays() {
-        return getWeekDays(weekStart);
     }
 
     public static boolean isToday(LocalDate date) {
@@ -130,18 +209,10 @@ public class Home {
         return months[monthOf(LocalDate.now()) - 1];
     }
 
-    public LocalDate getWeekStart() {
-        return weekStart;
-    }
-
     // ---------------------------------------------------------------- AMOUNT SAVED CARD
 
     public double getWeeklySaved() {
         return weeklySaved;
-    }
-
-    public double getWeeklyTarget() {
-        return weeklyTarget;
     }
 
     /** 0.0 to 1.0, used by the progress bar. */
@@ -225,6 +296,109 @@ public class Home {
         return Math.max(0, g.getTargetAmount() - g.getCurrentAmount());
     }
 
+    // ---------------------------------------------------------------- SAVINGS OVERVIEW CARDS
+    public static final int MAX_OVERVIEWS = 2;     // the home page never shows more cards than this
+
+    /** How many savings the user has (groups + personal): the "2 Active" label. */
+    public int getSavingsCount() {
+        return getGroups().size() + getPersonals().size();
+    }
+
+    /** At most MAX_OVERVIEWS savings (groups or personal): the ones that received the latest contributions
+     *  (newest date first, then newest time on the same date), like the Recent Contributions list. */
+    public List<OverviewItem> getOverviews() {
+        List<OverviewItem> items = new ArrayList<OverviewItem>();
+        for (GroupSavings g : getGroups()) {
+            items.add(new OverviewItem(g, g.getGroupName(), false));
+        }
+        for (PersonalSavings p : getPersonals()) {
+            items.add(new OverviewItem(p, p.getSavingsName(), true));
+        }
+
+        // newest contribution first (savings without any go last); equal ones keep their order
+        Collections.sort(items, (a, b) -> {
+            int byDate = b.latest.compareTo(a.latest);
+            if (byDate != 0) {
+                return byDate;
+            }
+            // same day: the one that received a contribution last comes first
+            return a.latestTime < b.latestTime ? 1 : (a.latestTime > b.latestTime ? -1 : 0);
+        });
+
+        if (items.size() > MAX_OVERVIEWS) {
+            return new ArrayList<OverviewItem>(items.subList(0, MAX_OVERVIEWS));
+        }
+        return items;
+    }
+
+    // one card of the Savings Overview: works the same for a group and a personal savings
+    public static class OverviewItem {
+        private final Savings savings;
+        private final String name;
+        private final boolean personal;
+        private final String latest;      // date of its newest contribution ("" = none yet)
+        private final long latestTime;    // time of that newest contribution (0 = old record without a time)
+
+        private OverviewItem(Savings savings, String name, boolean personal) {
+            this.savings = savings;
+            this.name = name;
+            this.personal = personal;
+
+            String newest = "";
+            long newestTime = 0;
+            for (Contribution c : savings.getContributions()) {
+                String d = c.getDate().toString();
+                int cmp = d.compareTo(newest);
+                if (cmp > 0) {
+                    newest = d;
+                    newestTime = c.getTimestamp();
+                } else if (cmp == 0 && c.getTimestamp() > newestTime) {
+                    newestTime = c.getTimestamp();
+                }
+            }
+            this.latest = newest;
+            this.latestTime = newestTime;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public boolean isPersonal() {
+            return personal;
+        }
+
+        /** "Group" or "Personal" (top right of the card). */
+        public String getTypeLabel() {
+            return personal ? "Personal" : "Group";
+        }
+
+        public double getRemaining() {
+            return Math.max(0, savings.getTargetAmount() - savings.getCurrentAmount());
+        }
+
+        /** "P12,450.00" */
+        public String getTotalSavedText() {
+            return pesoFormat(savings.getCurrentAmount());
+        }
+
+        /** "P350.00" */
+        public String getRemainingText() {
+            return pesoFormat(getRemaining());
+        }
+
+        /** "All Paid" when nothing is left, "Due Soon" when 10% or less of the target is left, else "". */
+        public String getStatus() {
+            if (Math.round(getRemaining() * 100) <= 0) {
+                return "All Paid";
+            }
+            if (getRemaining() <= savings.getTargetAmount() * 0.10) {
+                return "Due Soon";
+            }
+            return "";
+        }
+    }
+
     // ---------------------------------------------------------------- RECENT CONTRIBUTIONS
 
     /** Records of the user's groups AND personal savings, newest first.
@@ -264,12 +438,6 @@ public class Home {
     // OVERLOADING: no limit given -> return everything
     public List<RecentContribution> getRecentContributions() {
         return getRecentContributions(0);
-    }
-
-    /** The single row shown on the home card, or null if there are no contributions yet. */
-    public RecentContribution getLatestContribution() {
-        List<RecentContribution> latest = getRecentContributions(1);
-        return latest.isEmpty() ? null : latest.get(0);
     }
 
     // ---------------------------------------------------------------- helpers
@@ -388,11 +556,6 @@ public class Home {
         /** When it was recorded: used to order contributions made on the same day. */
         public long getTimestamp() {
             return contribution.getTimestamp();
-        }
-
-        /** "Maria contributed P24" for the middle line of the card */
-        public String getSummary() {
-            return getMember() + " contributed " + pesoShort(getAmount());
         }
 
         /** "Note: Birthday fund" for the last line of the card */

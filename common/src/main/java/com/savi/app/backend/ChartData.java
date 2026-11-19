@@ -1,6 +1,6 @@
 package com.savi.app.backend;
 
-/** What the monthly chart card needs. Implemented by Summary (group) and PersonalSummary (personal). */
+/** What the monthly chart card needs. Implemented by GroupSummary (group) and PersonalSummary (personal). */
 public interface ChartData {
     String getChartTitle();
     String getChartSubtitle();

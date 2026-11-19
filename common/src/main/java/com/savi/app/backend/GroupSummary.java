@@ -6,15 +6,15 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Backend of SummaryPage (Group Savings Summary).
+ * Backend of SummaryPage (Group Savings GroupSummary).
  *
- *  SummaryPage part                         -> Summary method
+ *  SummaryPage part                         -> GroupSummary method
  *  ---------------------------------------------------------------------------
  *  purple card: group name + arrow          -> getGroupTitle(), getGroupNames(), selectGroup()
  *  purple card: Total Pool, Contributors    -> getTotalPoolText(), getContributorsText()
  *  donut chart + legend                     -> hasShares(), getShareValues(), getMembers(),
  *                                              getGoalLabel(), getGoalPercent(), getStatusText()
- *  Member Summary table                     -> getMembers()  (name, amount, share, "Paid Dec 12")
+ *  Member GroupSummary table                     -> getMembers()  (name, amount, share, "Paid Dec 12")
  *  monthly chart (W / M / Y)                -> setChartMode(), getChartTitle(), getChartSubtitle(),
  *                                              getChartLabels(), getChartValues(), getChartTip()
  *  chart footer                             -> isTargetAchieved(), getFooterText()
@@ -22,7 +22,7 @@ import java.util.List;
  * A group "has shares" when its members have put money in (contributions that add up to more
  * than 0). When it has none, the page draws the charts in gray and shows NO_SHARES_MESSAGE.
  */
-public class Summary implements ChartData {
+public class GroupSummary implements ChartData {
     public static final String NO_SHARES_MESSAGE = "No shares has been made for this group.";
 
     // chart modes (the W / M / Y toggles)
@@ -42,7 +42,7 @@ public class Summary implements ChartData {
     private int chartMode = MONTH;
 
     /** Starts on the group with the newest contribution. */
-    public Summary(User user, List<? extends Savings> allSavings) {
+    public GroupSummary(User user, List<? extends Savings> allSavings) {
         this.user = user;
         this.home = new Home(user, allSavings);
 
@@ -113,7 +113,7 @@ public class Summary implements ChartData {
 
     // ---------------------------------------------------------------- DONUT + MEMBER SUMMARY
 
-    /** One row of the legend / Member Summary table. Biggest share first. */
+    /** One row of the legend / Member GroupSummary table. Biggest share first. */
     public List<MemberShare> getMembers() {
         List<MemberShare> rows = new ArrayList<MemberShare>();
         if (group == null) {
@@ -197,7 +197,7 @@ public class Summary implements ChartData {
         List<MemberShare> rows = getMembers();
         for (MemberShare m : rows) {
             if (m.amount <= 0) {
-                return "Behind Schedule";
+                return "Member/s Behind Schedule";
             }
         }
         return "On Schedule";

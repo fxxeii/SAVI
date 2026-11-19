@@ -1,5 +1,5 @@
 package com.savi.app.backend;
-//user infos, log in, sign up, sign out, update profile
+//user infos, log in, sign up, sign out
 
 import com.codename1.io.Storage;
 import com.codename1.io.Util;
@@ -27,11 +27,11 @@ public class User {
     String fileRec = "Users_Records.csv";
 
     public String signup(String n, String e, String p, String cp) {
-        if (!fieldsComplete(n, e, p, cp)) {
+        if (!fieldsComplete(n, e, p, cp)) { //is it empty
             return "Please fill in all fields.";
         }
 
-        n = n.trim();
+        n = n.trim(); //remove spaces
         e = e.trim();
 
         if (!validName(n)) {
@@ -53,36 +53,36 @@ public class User {
             return "Email already registered.";
         }
 
-        Node newNode = new Node(n.trim(), e.trim(), p);
-
-        if (head == null) {
+        Node newNode = new Node(n.trim(), e.trim(), p); //stores the new user's info
+        //add node
+        if (head == null) { //if empty new node becomes the first
             head = newNode;
         } else {
-            Node temp = head;
+            Node temp = head; //temp starts at the first node
 
-            while (temp.pntnext != null) {
+            while (temp.pntnext != null) { //loop until it reaches last
                 temp = temp.pntnext;
             }
-            temp.pntnext = newNode;
+            temp.pntnext = newNode; //connects last node to new user
         }
 
-        save(n, e, p);
+        save(n, e, p); //save
         return "success";
     }
 
     public String login(String n, String p) {
-        if (!validUsername(n)) {
+        if (!validUsername(n)) { //is it empty
             return "Please enter your username.";
         }
-        if (!validLoginPassword(p)) {
+        if (!validLoginPassword(p)) { //is it empty
             return "Please enter your password.";
         }
 
-        Node temp = head;
+        Node temp = head; //search for the head
 
         while (temp != null) {
-            if (temp.name.equalsIgnoreCase(n) && temp.pass.equals(p)) {
-                currentUser = temp;
+            if (temp.name.equalsIgnoreCase(n) && temp.pass.equals(p)) { //compare pass and usn
+                currentUser = temp; // if success it becomes the current user, remember which ac is logged in
                 return "success";
             }
             temp = temp.pntnext;
@@ -92,14 +92,14 @@ public class User {
 
     public void logout() {
         currentUser = null;
-    }
+    } //clear current user
 
     public String resetPass(String n, String p, String cp) {
         if (n == null || n.trim().isEmpty()
                 || p == null || p.isEmpty()
                 || cp == null || cp.isEmpty()) {
             return "Please fill in all fields.";
-        }
+        } // is it empty
 
         if (!validPassword(p)) {
             return "Password must be at least 5 characters.";
@@ -112,9 +112,9 @@ public class User {
         Node temp = head;
 
         while (temp != null) {
-            if (temp.name.equalsIgnoreCase(n.trim())) {
-                temp.pass = p;
-                saveAll();
+            if (temp.name.equalsIgnoreCase(n.trim())) { //search name in the ll
+                temp.pass = p; //replace old pass to the new one
+                saveAll(); //update recs
                 return "success";
             }
 
@@ -128,7 +128,7 @@ public class User {
         Node temp = head;
 
         while (temp != null) {
-            if (temp.name.equalsIgnoreCase(n)) {
+            if (temp.name.equalsIgnoreCase(n)) { //search through the ll if usn already existed
                 return true;
             }
             temp = temp.pntnext;
@@ -140,54 +140,30 @@ public class User {
         Node temp = head;
 
         while (temp != null) {
-            if (temp.email.equalsIgnoreCase(e)) {
+            if (temp.email.equalsIgnoreCase(e)) { //search through the ll if email already existed
                 return true;
             }
-            temp = temp.pntnext;
-        }
-        return false;
-    }
-
-    public boolean deluser(String n) {
-        Node temp = head;
-        Node q = null;
-
-        while (temp != null) {
-            if (temp.name.equalsIgnoreCase(n)) {
-                if (q == null) {
-                    head = temp.pntnext;
-                } else {
-                    q.pntnext = temp.pntnext;
-                }
-                if (currentUser == temp) {
-                    currentUser = null;
-                }
-                saveAll();      // a line in the middle of the file is gone, so rewrite the file
-                return true;
-            }
-            q = temp;
             temp = temp.pntnext;
         }
         return false;
     }
 
     public String getCurrentName() {
-        if (currentUser == null) {
+        if (currentUser == null) { //for the frontend to access the current logged-in user
             return null;
         }
         return currentUser.name;
     }
-
-    public String getCurrentEmail() {
-        if (currentUser == null) {
-            return null;
-        }
-        return currentUser.email;
-    }
-
+//
+//    public String getCurrentEmail() {
+//        if (currentUser == null) {
+//            return null;
+//        }
+//        return currentUser.email;
+//    }
 
     private boolean validName(String n) {
-        return n != null && n.trim().length() >= 3;
+        return n != null && n.trim().length() >= 3; //cant be empty, must be 3 letter above
     }
 
     private boolean validEmail(String e) {
@@ -195,17 +171,14 @@ public class User {
             return false;
         }
 
-        int at = e.indexOf('@');
-        int dot = e.lastIndexOf('.');
-
-        return at > 0
-                && dot > at + 1
-                && dot < e.length() - 1
-                && e.indexOf(' ') == -1;
+        int at = e.indexOf('@'); //finds the index of @
+        int dot = e.lastIndexOf('.'); //finds the index of .
+        //@ must not be in beginning, the . must be at least 2 position after @, . cannot be last, no spaces
+        return at > 0 && dot > at + 1 && dot < e.length() - 1 && e.indexOf(' ') == -1;
     }
 
     private boolean validPassword(String p) {
-        return p != null && p.length() >= 5;
+        return p != null && p.length() >= 5; //cant be empty, must be 5 characs above
     }
 
     private boolean matchingPassword(String p, String cp) {
@@ -213,7 +186,7 @@ public class User {
     }
 
     private boolean fieldsComplete(String n, String e, String p, String cp) {
-        return n != null && !n.trim().isEmpty()
+        return n != null && !n.trim().isEmpty() //no space, not empty
                 && e != null && !e.trim().isEmpty()
                 && p != null && !p.isEmpty()
                 && cp != null && !cp.isEmpty();

@@ -3,6 +3,7 @@ package com.savi.app.backend;
 public class PersonalSavings extends Savings {
 
     private String ownerName;
+    private double weeklyTarget;   // goal for each week (0 = not set)
 
     public PersonalSavings(String savingsName, double targetAmount, String owner) {
         super(savingsName, targetAmount);
@@ -11,6 +12,17 @@ public class PersonalSavings extends Savings {
 
     public String getOwner() {
         return ownerName;
+    }
+
+    public double getWeeklyTarget() {
+        return weeklyTarget;
+    }
+
+    public void setWeeklyTarget(double weeklyTarget) {
+        if (weeklyTarget < 0 || Double.isNaN(weeklyTarget) || Double.isInfinite(weeklyTarget)) {
+            throw new IllegalArgumentException("Invalid weekly target.");
+        }
+        this.weeklyTarget = weeklyTarget;
     }
 
     @Override
