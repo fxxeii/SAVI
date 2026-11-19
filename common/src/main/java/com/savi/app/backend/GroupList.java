@@ -128,7 +128,7 @@ public class GroupList {
     // ---------------------------------------------------------------- FILE HANDLING (CSV)
     // G,savingsName,targetAmount,groupName,expectedPerMember,createdDate
     // M,groupName,memberName
-    // C,groupName,member,amount,date,note
+    // C,groupName,member,amount,date,note,timestamp
     private boolean saveAll() {
         StringBuilder sb = new StringBuilder();
 
@@ -149,7 +149,8 @@ public class GroupList {
                         .append(encode(c.getMember())).append(",")
                         .append(c.getAmount()).append(",")
                         .append(c.getDate().toString()).append(",")
-                        .append(encode(c.getNote())).append("\n");
+                        .append(encode(c.getNote())).append(",")
+                        .append(c.getTimestamp()).append("\n");
             }
         }
         return writeFile(sb.toString());
@@ -229,6 +230,23 @@ public class GroupList {
                         && !Double.isNaN(amount)) {
 
                     g.addContribution(member, amount, date, note);
+
+                    // keep the exact time it was recorded (older records have no time: 0)
+                    long recordedAt = 0;
+                    if (p.size() >= 7) {
+                        try {
+                            recordedAt = Long.parseLong(p.get(6));
+                        } catch (NumberFormatException e) {
+                            recordedAt = 0;
+                        }
+                    }
+                    Contribution added = null;
+                    for (Contribution c : g.getContributions()) {
+                        added = c;
+                    }
+                    if (added != null) {
+                        added.setTimestamp(recordedAt);
+                    }
                 }
             }
         } catch (Exception ex) {

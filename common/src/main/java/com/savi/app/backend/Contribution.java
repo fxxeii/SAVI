@@ -8,6 +8,7 @@ public class Contribution {
     private final double amount;
     private final LocalDate date;
     private final String note;
+    private long timestamp = System.currentTimeMillis();   // exact time it was recorded
 
     public Contribution(String member, double amount, LocalDate date, String note) {
 
@@ -43,5 +44,15 @@ public class Contribution {
 
     public String getNote() {
         return note;
+    }
+
+    /** When the contribution was recorded (milliseconds). 0 for old records saved without a time. */
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    // used by the CSV loaders (GroupList / PersonalList) to restore the saved time
+    void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
     }
 }

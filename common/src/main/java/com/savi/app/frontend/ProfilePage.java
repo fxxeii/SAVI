@@ -137,21 +137,6 @@ public class ProfilePage implements Profile.DataChangeListener {
         }
     }
 
-    static Container circleButton(char icon, float sizeMM, float iconMM, int bg, int bgAlpha, int fg,
-                                  ActionListener<ActionEvent> onClick) {
-        Button b = new Button();
-        b.setUIID("Label");
-        b.getAllStyles().setFgColor(fg);
-        b.getAllStyles().setAlignment(Component.CENTER);
-        FontImage.setMaterialIcon(b, icon, iconMM);
-        b.addActionListener(onClick);
-
-        Rounded c = new Rounded(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER), bg, bgAlpha, 0).fixed(sizeMM);
-        c.add(BorderLayout.CENTER, b);
-        c.setLeadComponent(b);
-        return c;
-    }
-
     static Container pill(Label text, int bgColor) {
         setPadding(text, 0, 0, 0, 0);
         setMargins(text, 0, 0, 0, 0);
@@ -242,23 +227,12 @@ public class ProfilePage implements Profile.DataChangeListener {
         Container header = new GradientHeader(BoxLayout.y(), 6f);
         setPadding(header, 1f, extraBottomMM, 2f, 2f);
 
-        Container back = circleButton(FontImage.MATERIAL_ARROW_BACK_IOS, 5.3f, 2.2f,
-                SAVI.WHITE, 45, SAVI.WHITE, e -> {
-                    backend.removeChangeListener(this);
-                    new HomePage().show();
-                });
-        Container share = circleButton(FontImage.MATERIAL_FILE_UPLOAD, 5.3f, 2.2f,
-                SAVI.WHITE, 45, SAVI.WHITE, e -> {
-                    String summary = backend.buildShareSummary();
-                    Display.getInstance().copyToClipboard(summary);
-                    Dialog.show("Profile Summary Copied", summary, "OK", null);
-                });
         Label title = SAVI.text("PROFILE", SAVI.bold(2.3f), SAVI.WHITE);
+        title.getAllStyles().setAlignment(Component.CENTER);
 
         Container topRow = new Container(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER));
-        topRow.add(BorderLayout.WEST, back);
         topRow.add(BorderLayout.CENTER, title);
-        topRow.add(BorderLayout.EAST, share);
+        setPadding(topRow, 1.2f, 1.2f, 0, 0);
         setMargins(topRow, 0, 2f, 0, 0);
 
         Button nameBtn = new Button(profile.getUsername());

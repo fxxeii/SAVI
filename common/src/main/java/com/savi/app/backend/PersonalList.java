@@ -69,7 +69,7 @@ public class PersonalList {
 
     // ---------------------------------------------------------------- FILE HANDLING (CSV)
     // P,savingsName,targetAmount,ownerName
-    // C,savingsName,ownerName,amount,date,note
+    // C,savingsName,ownerName,amount,date,note,timestamp
     private void saveAll() {
         StringBuilder sb = new StringBuilder();
         for (PersonalSavings p : list) {
@@ -82,7 +82,8 @@ public class PersonalList {
                         .append(encode(p.getOwner())).append(",")
                         .append(c.getAmount()).append(",")
                         .append(c.getDate().toString()).append(",")
-                        .append(encode(c.getNote())).append("\n");
+                        .append(encode(c.getNote())).append(",")
+                        .append(c.getTimestamp()).append("\n");
             }
         }
         writeFile(sb.toString());
@@ -128,6 +129,23 @@ public class PersonalList {
                             Double.parseDouble(p.get(3)),
                             LocalDate.parse(p.get(4)),
                             decode(p.get(5)));
+
+                    // keep the exact time it was recorded (older records have no time: 0)
+                    long recordedAt = 0;
+                    if (p.size() >= 7) {
+                        try {
+                            recordedAt = Long.parseLong(p.get(6));
+                        } catch (NumberFormatException e) {
+                            recordedAt = 0;
+                        }
+                    }
+                    Contribution added = null;
+                    for (Contribution c : ps.getContributions()) {
+                        added = c;
+                    }
+                    if (added != null) {
+                        added.setTimestamp(recordedAt);
+                    }
                 }
             }
         } catch (Exception ex) {
