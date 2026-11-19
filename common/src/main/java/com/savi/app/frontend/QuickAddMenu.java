@@ -165,6 +165,7 @@ public class QuickAddMenu {
         Dialog dlg = new Dialog("Add Contribution", new BorderLayout());
         dlg.getContentPane().getAllStyles().setBgColor(SAVI.WHITE);
         dlg.getContentPane().getAllStyles().setBgTransparency(255);
+        dlg.getAllStyles().setFont(SAVI.bold(4f));
 
         Container fields = new Container(BoxLayout.y());
         fields.setScrollableY(true);
@@ -177,7 +178,12 @@ public class QuickAddMenu {
         goalPicker.setStrings(targetStrings);
         goalPicker.setSelectedStringIndex(0);
 
-        Label memberTitle = SAVI.text("Member", SAVI.semiBold(1.8f), SAVI.SLATE_GRAY);
+        Label savings = SAVI.text("SAVINGS GOAL", SAVI.bold(1.6f), SAVI.DEEP_SLATE);
+        Label memberTitle = SAVI.text("MEMBER", SAVI.bold(1.6f), SAVI.DEEP_SLATE);
+        Label amount = SAVI.text("AMOUNT (P)", SAVI.bold(1.6f), SAVI.DEEP_SLATE);
+        Label dt = SAVI.text("DATE", SAVI.bold(1.6f), SAVI.DEEP_SLATE);
+        Label nt = SAVI.text("NOTE", SAVI.bold(1.6f), SAVI.DEEP_SLATE);
+
         Picker memberPicker = styledPicker();
         memberPicker.setType(Display.PICKER_TYPE_STRINGS);
 
@@ -225,11 +231,26 @@ public class QuickAddMenu {
 
         TextField noteField = styledField("Optional note (e.g. Daily deposit)");
 
-        fields.add(SAVI.text("Savings Goal", SAVI.semiBold(1.8f), SAVI.SLATE_GRAY)).add(goalPicker);
+        Label[] lb = {savings, memberTitle, amount, dt, nt};
+
+        for (Label l : lb) {
+            l.getAllStyles().setPadding(1,1.5f,0,0);
+        }
+
+        TextField[] txt = {amountField, noteField};
+
+        for (TextField tf : txt) {
+            tf.getAllStyles().setFont(SAVI.regular(2.5f));
+            tf.getHintLabel().getAllStyles().setFont(SAVI.italic(2f));
+            tf.getHintLabel().getAllStyles().setFgColor(SAVI.SLATE_GRAY);
+            tf.getHintLabel().getAllStyles().setPadding(0,0,2,2);
+        }
+
+        fields.add(savings).add(goalPicker);
         fields.add(memberTitle).add(memberPicker);
-        fields.add(SAVI.text("Amount (P)", SAVI.semiBold(1.8f), SAVI.SLATE_GRAY)).add(amountField);
-        fields.add(SAVI.text("Date", SAVI.semiBold(1.8f), SAVI.SLATE_GRAY)).add(datePicker);
-        fields.add(SAVI.text("Note", SAVI.semiBold(1.8f), SAVI.SLATE_GRAY)).add(noteField);
+        fields.add(amount).add(amountField);
+        fields.add(dt).add(datePicker);
+        fields.add(nt).add(noteField);
 
         dlg.add(BorderLayout.CENTER, fields);
         dlg.add(BorderLayout.SOUTH, dialogButtons(dlg, () -> {
@@ -268,27 +289,49 @@ public class QuickAddMenu {
         Dialog dlg = new Dialog("Create Group Savings", new BorderLayout());
         dlg.getContentPane().getAllStyles().setBgColor(SAVI.WHITE);
         dlg.getContentPane().getAllStyles().setBgTransparency(255);
+        dlg.getAllStyles().setFont(SAVI.bold(4f));
 
         Container fields = new Container(BoxLayout.y());
         fields.setScrollableY(true);
         fields.getAllStyles().setPaddingUnit(Style.UNIT_TYPE_DIPS);
         fields.getAllStyles().setPadding(1f, 1f, 1.5f, 1.5f);
 
-        TextField groupNameField = styledField("e.g. December Vacation");
+        Label gp = SAVI.text("GROUP NAME", SAVI.bold(1.6f), SAVI.DEEP_SLATE);
+        Label sgt = SAVI.text("SAVING GOAL TITLE", SAVI.bold(1.6f), SAVI.DEEP_SLATE);
+        Label tta = SAVI.text("TOTAL TARGET AMOUNT (P)", SAVI.bold(1.6f), SAVI.DEEP_SLATE);
+        Label exp = SAVI.text("EXPECTED PER MEMBER (P)", SAVI.bold(1.6f), SAVI.DEEP_SLATE);
+        Label mm = SAVI.text("OTHER MEMBERS (comma-separated)", SAVI.bold(1.6f), SAVI.DEEP_SLATE);
+
+        TextField groupNameField = styledField("e.g. Vacation");
         TextField goalNameField = styledField("e.g. Travel & Hotel Fund");
-        TextField targetField = styledField("e.g. 12000");
+        TextField targetField = styledField("P 0.00");
         targetField.setConstraint(TextArea.DECIMAL);
 
-        TextField expectedField = styledField("e.g. 50");
+        TextField expectedField = styledField("P 0.00");
         expectedField.setConstraint(TextArea.DECIMAL);
 
-        TextField membersField = styledField("e.g. Faye, Sam, Air");
+        TextField membersField = styledField("person1, person2, person3, ...");
 
-        fields.add(SAVI.text("Group Name", SAVI.semiBold(1.8f), SAVI.SLATE_GRAY)).add(groupNameField);
-        fields.add(SAVI.text("Savings Goal Title", SAVI.semiBold(1.8f), SAVI.SLATE_GRAY)).add(goalNameField);
-        fields.add(SAVI.text("Total Target Amount (P)", SAVI.semiBold(1.8f), SAVI.SLATE_GRAY)).add(targetField);
-        fields.add(SAVI.text("Expected Per Member (P)", SAVI.semiBold(1.8f), SAVI.SLATE_GRAY)).add(expectedField);
-        fields.add(SAVI.text("Other Members (comma-separated)", SAVI.semiBold(1.8f), SAVI.SLATE_GRAY)).add(membersField);
+        Label[] lb = {gp, sgt, tta, exp, mm};
+
+        for (Label l : lb) {
+            l.getAllStyles().setPadding(1,1.5f,0,0);
+        }
+
+        TextField[] txt = {groupNameField, goalNameField, targetField, expectedField, membersField};
+
+        for (TextField tf : txt) {
+            tf.getAllStyles().setFont(SAVI.regular(2.5f));
+            tf.getHintLabel().getAllStyles().setFont(SAVI.italic(2f));
+            tf.getHintLabel().getAllStyles().setFgColor(SAVI.SLATE_GRAY);
+            tf.getHintLabel().getAllStyles().setPadding(0,0,2,2);
+        }
+
+        fields.add(gp).add(groupNameField);
+        fields.add(sgt).add(goalNameField);
+        fields.add(tta).add(targetField);
+        fields.add(exp).add(expectedField);
+        fields.add(mm).add(membersField);
 
         dlg.add(BorderLayout.CENTER, fields);
         dlg.add(BorderLayout.SOUTH, dialogButtons(dlg, () -> {
@@ -344,17 +387,36 @@ public class QuickAddMenu {
         Dialog dlg = new Dialog("Create Personal Savings", new BorderLayout());
         dlg.getContentPane().getAllStyles().setBgColor(SAVI.WHITE);
         dlg.getContentPane().getAllStyles().setBgTransparency(255);
+        dlg.getAllStyles().setFont(SAVI.bold(4f));
 
         Container fields = new Container(BoxLayout.y());
         fields.getAllStyles().setPaddingUnit(Style.UNIT_TYPE_DIPS);
         fields.getAllStyles().setPadding(1f, 1f, 1.5f, 1.5f);
 
+        Label gn = SAVI.text("GOAL NAME", SAVI.bold(1.6f), SAVI.DEEP_SLATE);
+        Label tta = SAVI.text("TOTAL TARGET AMOUNT (P)", SAVI.bold(1.6f), SAVI.DEEP_SLATE);
+
         TextField nameField = styledField("e.g. Emergency Fund");
-        TextField targetField = styledField("e.g. 5000");
+        TextField targetField = styledField("P 0.00");
         targetField.setConstraint(TextArea.DECIMAL);
 
-        fields.add(SAVI.text("Goal Name", SAVI.semiBold(1.8f), SAVI.SLATE_GRAY)).add(nameField);
-        fields.add(SAVI.text("Target Amount (P)", SAVI.semiBold(1.8f), SAVI.SLATE_GRAY)).add(targetField);
+        Label[] lb = {gn, tta};
+
+        for (Label l : lb) {
+            l.getAllStyles().setPadding(1,1.5f,0,0);
+        }
+
+        TextField[] txt = {nameField, targetField};
+
+        for (TextField tf : txt) {
+            tf.getAllStyles().setFont(SAVI.regular(2.5f));
+            tf.getHintLabel().getAllStyles().setFont(SAVI.italic(2f));
+            tf.getHintLabel().getAllStyles().setFgColor(SAVI.SLATE_GRAY);
+            tf.getHintLabel().getAllStyles().setPadding(0,0,2,2);
+        }
+
+        fields.add(gn).add(nameField);
+        fields.add(tta).add(targetField);
 
         dlg.add(BorderLayout.CENTER, fields);
         dlg.add(BorderLayout.SOUTH, dialogButtons(dlg, () -> {
@@ -395,17 +457,20 @@ public class QuickAddMenu {
 
     private static Container dialogButtons(Dialog dlg, Runnable onSave) {
         Button cancel = new Button("Cancel");
-        cancel.getAllStyles().setFgColor(SAVI.SLATE_GRAY);
+        cancel.getAllStyles().setFgColor(SAVI.DEEP_SLATE);
+        cancel.getAllStyles().setFont(SAVI.regular(2.5f));
         cancel.getAllStyles().setBgTransparency(0);
         cancel.getAllStyles().setBorder(Border.createEmpty());
+        cancel.getAllStyles().setPadding(3f, 1f, 2f, 1f);
         cancel.addActionListener(e -> dlg.dispose());
 
         Button save = new Button("Save");
         save.getAllStyles().setFgColor(SAVI.WHITE);
         save.getAllStyles().setBgColor(SAVI.DARK_PURPLE);
         save.getAllStyles().setBgTransparency(255);
+        save.getAllStyles().setFont(SAVI.regular(2.7f));
         save.getAllStyles().setPaddingUnit(Style.UNIT_TYPE_DIPS);
-        save.getAllStyles().setPadding(1f, 1f, 2f, 2f);
+        save.getAllStyles().setPadding(0f, 0f, 2f, 2f);
         save.getAllStyles().setBorder(RoundRectBorder.create().cornerRadius(2.5f));
         save.addActionListener(e -> onSave.run());
 

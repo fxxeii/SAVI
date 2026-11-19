@@ -437,18 +437,25 @@ public class ProfilePage implements Profile.DataChangeListener {
         UserProfile profile = backend.getActiveProfile();
         Dialog dlg = new Dialog("Edit Profile", new BorderLayout());
         Container body = new Container(BoxLayout.y());
-        setPadding(body, 1.5f, 1.5f, 2f, 2f);
+        setPadding(body, 2f, 1.5f, 2f, 2f);
 
         TextField greetingField = new TextField(profile.getGreetingName(), "Greeting Name (e.g. User)", 20, TextField.ANY);
         TextField usernameField = new TextField(profile.getUsername(), "Display Username", 20, TextField.ANY);
         TextField handleField = new TextField(profile.getHandle(), "@handle", 20, TextField.ANY);
 
-        body.add(SAVI.text("GREETING NAME (SHOWN IN HEADER)", SAVI.bold(1.6f), SAVI.SLATE_GRAY));
+        body.add(SAVI.text("GREETING NAME (SHOWN IN HEADER)", SAVI.bold(1.6f), SAVI.DEEP_SLATE));
         body.add(greetingField);
-        body.add(SAVI.text("USERNAME", SAVI.bold(1.6f), SAVI.SLATE_GRAY));
+        body.add(SAVI.text("USERNAME", SAVI.bold(1.6f), SAVI.DEEP_SLATE));
         body.add(usernameField);
-        body.add(SAVI.text("HANDLE", SAVI.bold(1.6f), SAVI.SLATE_GRAY));
+        body.add(SAVI.text("HANDLE", SAVI.bold(1.6f), SAVI.DEEP_SLATE));
         body.add(handleField);
+
+        TextField[] txt = {greetingField, usernameField, handleField};
+
+        for (TextField tf : txt) {
+            tf.getHintLabel().getAllStyles().setFont(SAVI.regular(2f));
+            tf.getHintLabel().getAllStyles().setFgColor(SAVI.SLATE_GRAY);
+        }
 
         Button cancel = new Button("Cancel");
         cancel.addActionListener(e -> dlg.dispose());
@@ -470,33 +477,45 @@ public class ProfilePage implements Profile.DataChangeListener {
     private void showGroupFormDialog(final SavingsGroup existing) {
         boolean isEdit = existing != null;
         Dialog dlg = new Dialog(isEdit ? "Edit Group" : "Add Savings Group", new BorderLayout());
+        dlg.getAllStyles().setFont(SAVI.bold(4f));
         Container body = new Container(BoxLayout.y());
         body.setScrollableY(true);
         setPadding(body, 1.5f, 1.5f, 2f, 2f);
 
         TextField nameField = new TextField(isEdit ? existing.getName() : "", "Group Name", 24, TextField.ANY);
-        TextField dateField = new TextField(isEdit ? existing.getTargetDate() : "Dec 10, 2026", "Target Date", 20, TextField.ANY);
-        TextField dailyField = new TextField(isEdit ? String.valueOf(existing.getDailyTarget()) : "50", "Daily Target (P)", 12, TextField.DECIMAL);
-        TextField totalField = new TextField(isEdit ? String.valueOf(existing.getTotalTarget()) : "500", "Total Target (P)", 12, TextField.DECIMAL);
-        TextField savedField = new TextField(isEdit ? String.valueOf(existing.getCurrentSaved()) : "0", "Current Saved (P)", 12, TextField.DECIMAL);
-        TextField membersField = new TextField(isEdit ? String.valueOf(existing.getMemberCount()) : "1", "People Count", 6, TextField.NUMERIC);
+        TextField dateField = new TextField(isEdit ? existing.getTargetDate() : "", "mm/dd/yy", 20, TextField.ANY);
+        TextField dailyField = new TextField(isEdit ? String.valueOf(existing.getDailyTarget()) : "", "P 0.00", 12, TextField.DECIMAL);
+        TextField totalField = new TextField(isEdit ? String.valueOf(existing.getTotalTarget()) : "", "P 0.00", 12, TextField.DECIMAL);
+        TextField savedField = new TextField(isEdit ? String.valueOf(existing.getCurrentSaved()) : "", "P 0.00", 12, TextField.DECIMAL);
+        TextField membersField = new TextField(isEdit ? String.valueOf(existing.getMemberCount()) : "", "People Count", 6, TextField.NUMERIC);
 
-        body.add(SAVI.text("GROUP NAME", SAVI.bold(1.6f), SAVI.SLATE_GRAY)).add(nameField);
-        body.add(SAVI.text("TARGET DATE", SAVI.bold(1.6f), SAVI.SLATE_GRAY)).add(dateField);
-        body.add(SAVI.text("DAILY TARGET (P)", SAVI.bold(1.6f), SAVI.SLATE_GRAY)).add(dailyField);
-        body.add(SAVI.text("TOTAL TARGET (P)", SAVI.bold(1.6f), SAVI.SLATE_GRAY)).add(totalField);
-        body.add(SAVI.text("AMOUNT SAVED SO FAR (P)", SAVI.bold(1.6f), SAVI.SLATE_GRAY)).add(savedField);
-        body.add(SAVI.text("NUMBER OF PEOPLE", SAVI.bold(1.6f), SAVI.SLATE_GRAY)).add(membersField);
+        body.add(SAVI.text("GROUP NAME", SAVI.bold(1.6f), SAVI.DEEP_SLATE)).add(nameField);
+        body.add(SAVI.text("TARGET DATE", SAVI.bold(1.6f), SAVI.DEEP_SLATE)).add(dateField);
+        body.add(SAVI.text("DAILY TARGET (P)", SAVI.bold(1.6f), SAVI.DEEP_SLATE)).add(dailyField);
+        body.add(SAVI.text("TOTAL TARGET (P)", SAVI.bold(1.6f), SAVI.DEEP_SLATE)).add(totalField);
+        body.add(SAVI.text("AMOUNT SAVED SO FAR (P)", SAVI.bold(1.6f), SAVI.DEEP_SLATE)).add(savedField);
+        body.add(SAVI.text("NUMBER OF PEOPLE", SAVI.bold(1.6f), SAVI.DEEP_SLATE)).add(membersField);
+
+        TextField[] txt = {nameField, dateField, dailyField, totalField, savedField, membersField};
+
+        for (TextField tf : txt) {
+            tf.getAllStyles().setFont(SAVI.regular(2.5f));
+            tf.getHintLabel().getAllStyles().setPadding(1,1,2,2);
+            tf.getHintLabel().getAllStyles().setFont(SAVI.italic(2f));
+            tf.getHintLabel().getAllStyles().setFgColor(SAVI.SLATE_GRAY);
+        }
 
         Container actions = new Container(new GridLayout(1, isEdit ? 3 : 2));
 
         Button cancel = new Button("Cancel");
+        cancel.getAllStyles().setFont(SAVI.regular(2.5f));
         cancel.addActionListener(e -> dlg.dispose());
         actions.add(cancel);
 
         if (isEdit) {
             Button delete = new Button("Delete");
             delete.getAllStyles().setFgColor(0xD32F2F);
+            delete.getAllStyles().setFont(SAVI.regular(2.5f));
             delete.addActionListener(e -> {
                 backend.deleteGroup(existing.getId());
                 dlg.dispose();
@@ -505,6 +524,7 @@ public class ProfilePage implements Profile.DataChangeListener {
         }
 
         Button save = new Button("Save");
+        save.getAllStyles().setFont(SAVI.regular(2.5f));
         save.addActionListener(e -> {
             String name = nameField.getText().trim();
             if (name.isEmpty()) {
