@@ -302,7 +302,7 @@ public class HomePage {
         Container weekTotalContainer = new Container(new BorderLayout());
         boxStyles(weekTotalContainer, SAVI.WHITE, 2, 3);
 
-        // WEEKLY CARD CHOICE: one savings (a group or a personal savings) with its own weekly target.
+        // WEEKLY CARD CHOICE: one saving (a group or a personal savings) with its own weekly target.
         // The name is a Picker (same wheel as the Transfer page): tapping the name or the arrow opens it.
         Container choiceRow = null;
         java.util.List<String> choices = home.getWeeklyChoices();
@@ -391,17 +391,8 @@ public class HomePage {
         manage.getAllStyles().setFont(SAVI.semiBold(2f));
         manage.addActionListener(e->{new PeoplePage().show();});
 
-        Label activeCount = SAVI.text(home.getSavingsCount() + " Active", SAVI.semiBold(1.4f), SAVI.BRIGHT_VIOLET);
-        Style acs = activeCount.getAllStyles();
-        acs.setBgColor(0xE9E0FB);
-        acs.setBgTransparency(255);
-        acs.setBorder(RoundRectBorder.create().cornerRadius(2f));
-        acs.setPaddingUnit(Style.UNIT_TYPE_DIPS);
-        acs.setPadding(0, 0, 1.2f, 1.2f);
-        acs.setMarginUnit(Style.UNIT_TYPE_DIPS);
-        acs.setMargin(0, 0, 1.5f, 0);
         Container overviewTitle = new Container(new FlowLayout(Component.LEFT, Component.CENTER));
-        overviewTitle.add(groupOverviewText).add(activeCount);
+        overviewTitle.add(groupOverviewText);
 
         GroupOverviewContainer.add(BorderLayout.WEST, overviewTitle);
         GroupOverviewContainer.add(BorderLayout.EAST, manage);
