@@ -33,7 +33,7 @@ public class ForgotPassPage {
         );
 
         ForgotpForm.getToolbar().addMaterialCommandToLeftBar(
-                "", FontImage.MATERIAL_ARROW_BACK, e -> {
+                "", FontImage.MATERIAL_CHEVRON_LEFT,e -> {
                     LogInPage lipage = new LogInPage(); lipage.show();
                 }
         );
