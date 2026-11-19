@@ -235,6 +235,7 @@ public class SAVI extends Lifecycle {
         groupList.load();
         personalList.load();
 
-        new LogInPage().show();
+        //new MainPage().show();
+        new ProfilePage().show();
     }
 }

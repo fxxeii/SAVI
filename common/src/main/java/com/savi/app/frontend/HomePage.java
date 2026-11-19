@@ -155,7 +155,6 @@ public class HomePage {
         // BACKEND: one Home object feeds the cards below (SAVI.user / SAVI.groupList.getGroups: see note)
         Home home = new Home(SAVI.user, SAVI.groupList.getGroups());
         GroupSavings g = home.getFeaturedGroup();                    // null if the user has no groups
-        Home.RecentContribution r = home.getLatestContribution();    // null if no contributions yet
 
         Form base = new Form("", new BorderLayout());
         base.getContentPane().getAllStyles().setBgColor(SAVI.PALE_PURPLE);
@@ -282,30 +281,22 @@ public class HomePage {
         recentsTitle.add(BorderLayout.WEST, recentContText);
         recentsTitle.add(BorderLayout.EAST, seeAll);
 
-        //put in a method
-        Container recentInfoCont = new Container(new BorderLayout());
-        boxStyles(recentInfoCont, SAVI.WHITE,1.5f, 1.5f);
+        // RECENT CONTRIBUTION CARDS: the 3 latest, built with the same card the Recent
+        // Contributions page uses (RecentContributions.contributionCard)
+        java.util.List<Home.RecentContribution> latest = home.getRecentContributions(3);
+        LocalDate newest = latest.isEmpty() ? null : latest.get(0).getDate();
+        RecentContributions cardMaker = new RecentContributions();
 
-        Container recentDate = new Container(new BorderLayout());
-        recentDate.setPreferredW(Display.getInstance().convertToPixels(15f));
-        boxStyles(recentDate, SAVI.DARK_PURPLE,1.5f, 0.6f);
-
-        Label dateNum = SAVI.text(r == null ? "--" : r.getDayNumber(), SAVI.semiBold(3f), SAVI.WHITE);
-        Label dateDay = SAVI.text(r == null ? "" : r.getWeekday(), SAVI.semiBold(1.5f), SAVI.WHITE);
-        recentDate.add(BorderLayout.NORTH, dateNum);
-        recentDate.add(BorderLayout.SOUTH, dateDay);
-        recentInfoCont.add(BorderLayout.WEST, recentDate);
-
-        Container groupAndMemInfo = new Container(BoxLayout.y());
-        Label recentTitle = SAVI.text(r == null ? "No contributions yet" : r.getGroupName(), SAVI.semiBold(2.2f), SAVI.DARK_BLUE);
-        Label recentContributor = SAVI.text(r == null ? "" : r.getSummary(), SAVI.regular(2f), SAVI.DARK_BLUE);
-        Label contributionNote = SAVI.text(r == null ? "" : r.getNoteText(), SAVI.regular(2f), SAVI.DARK_BLUE);
-        groupAndMemInfo.add(recentTitle);
-        groupAndMemInfo.add(recentContributor);
-        groupAndMemInfo.add(contributionNote);
-        recentInfoCont.add(BorderLayout.CENTER, groupAndMemInfo);
+        Container recentCards = new Container(BoxLayout.y());
+        for (Home.RecentContribution c : latest) {
+            boolean isNewestDay = c.getDate().equals(newest);                 // purple badge = newest day
+            String dow = c.getWeekday().substring(0, 3).toUpperCase();        // "Thursday" -> "THU"
+            recentCards.add(cardMaker.contributionCard(c.getDayNumber(), dow, c.getGroupName(),
+                    c.getMember(), Home.pesoShort(c.getAmount()), c.getNote(), isNewestDay));
+        }
 
         Container mainContents = new Container(BoxLayout.y());
+        mainContents.setScrollableY(true);
         mainContents.add(weekContainer);
         mainContents.add(weekTotalContainer);
         mainContents.add(shortcutsContainer);
@@ -314,8 +305,8 @@ public class HomePage {
             mainContents.add(singleOverview);
         }
         mainContents.add(recentsTitle);
-        if (r != null) {                       // contribution card only when there is a contribution
-            mainContents.add(recentInfoCont);
+        if (!latest.isEmpty()) {               // cards only when there are contributions
+            mainContents.add(recentCards);
         }
         base.add(BorderLayout.SOUTH, SAVI.bottomNav(SAVI.NAV_HOME));
         base.add(BorderLayout.CENTER, mainContents);

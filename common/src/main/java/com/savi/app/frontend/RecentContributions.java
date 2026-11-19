@@ -90,8 +90,9 @@ public class RecentContributions{
         return badge;
     }
 
-    private Container contributionCard(String day, String dow, String group, String member,
-                                       String amount, String note, boolean recent) {
+    // not private: HomePage reuses this card for its "Recent Contributions" section
+    Container contributionCard(String day, String dow, String group, String member,
+                               String amount, String note, boolean recent) {
         Container card = new Container(new BorderLayout());
         styles(card, SAVI.WHITE, 2f, 1.5f, 2f, 0.5f, 1.5f);
 
