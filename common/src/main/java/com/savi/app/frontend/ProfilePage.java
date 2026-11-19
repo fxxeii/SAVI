@@ -4,8 +4,10 @@ import com.codename1.ui.*;
 import com.codename1.ui.Button;
 import com.codename1.ui.Component;
 import com.codename1.ui.Container;
+import com.codename1.ui.Dialog;
 import com.codename1.ui.Graphics;
 import com.codename1.ui.Label;
+import com.codename1.ui.TextField;
 import com.codename1.ui.events.ActionEvent;
 import com.codename1.ui.events.ActionListener;
 import com.codename1.ui.geom.Dimension;
@@ -19,32 +21,24 @@ import com.codename1.ui.plaf.Border;
 import com.codename1.ui.plaf.RoundRectBorder;
 import com.codename1.ui.plaf.Style;
 import com.savi.app.SAVI;
-import com.savi.app.backend.Home;
+import com.savi.app.backend.Profile;
+import com.savi.app.backend.SavingsGroup;
+import com.savi.app.backend.UserProfile;
 
-public class ProfilePage {
+import java.util.List;
 
-    // Colors specific to this page (move to SAVI if you want to reuse them)
-    static final int PAGE_BG = 0xF8F9FC;
-    static final int HEADER_START = 0x7C3AED;
-    static final int HEADER_END = 0x6A27D4;
-    static final int HEADER_SOFT = 0x8E6BE8;
-    static final int HEADER_LABEL = 0xC9B8F5;
-    static final int AVATAR_FILL = 0x9B6BF2;
-    static final int LIGHT_VIOLET = 0xEFEAFE;
-    static final int ICON_BOX = 0xF1F2F6;
-    static final int LINE_GRAY = 0xE8EAF0;
-    static final int TARGET_BG = 0xF7F4FF;
-    static final int TARGET_BORDER = 0xE9E1FC;
-    static final int TITLE_DARK = 0x2D3748;
+public class ProfilePage implements Profile.DataChangeListener {
 
-    // ---------- general helpers ----------
+    private final Profile backend = Profile.getInstance();
+    private Container mainContents;
 
     static int mm(float v) {
         return Display.getInstance().convertToPixels(v);
     }
 
     static float pxToMM(int px) {
-        return px / (float) mm(1f);
+        int oneMM = mm(1f);
+        return oneMM > 0 ? px / (float) oneMM : px / 6f;
     }
 
     static void setMargins(Component c, float t, float b, float l, float r) {
@@ -59,7 +53,6 @@ public class ProfilePage {
         s.setPadding(t, b, l, r);
     }
 
-    // colors the status bar / title area so it doesn't show up as a white strip
     static void paintStatusBar(Form f, int color) {
         Container t = f.getTitleArea();
         t.getAllStyles().setBgColor(color);
@@ -89,7 +82,7 @@ public class ProfilePage {
 
     static Container divider(int color) {
         Container line = new Container();
-        line.setPreferredH(mm(0.2f));
+        line.setPreferredH(Math.max(1, mm(0.2f)));
         Style s = line.getAllStyles();
         s.setBgColor(color);
         s.setBgTransparency(255);
@@ -97,11 +90,9 @@ public class ProfilePage {
         return line;
     }
 
-    // ---------- shapes drawn with fillRoundRect (true circles / pills, no border min size) ----------
-
     static class Rounded extends Container {
         private final int fill, fillAlpha;
-        private final float radiusMM; // 0 = fully round (circle or pill)
+        private final float radiusMM;
         private int strokeColor, strokeAlpha, strokePx;
 
         Rounded(Layout layout, int fill, int fillAlpha, float radiusMM) {
@@ -146,20 +137,7 @@ public class ProfilePage {
         }
     }
 
-    // non clickable circle holding one icon
-    static Container circleIcon(char icon, float sizeMM, float iconMM, int bg, int fg) {
-        Label l = new Label();
-        l.getAllStyles().setFgColor(fg);
-        l.getAllStyles().setAlignment(Component.CENTER);
-        FontImage.setMaterialIcon(l, icon, iconMM);
-
-        Rounded c = new Rounded(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER), bg, 255, 0).fixed(sizeMM);
-        c.add(BorderLayout.CENTER, l);
-        return c;
-    }
-
-    // clickable circle: an icon Button inside the circle leads it
-    static Container circleButton(char icon, float sizeMM, float iconMM, int bg, int fg,
+    static Container circleButton(char icon, float sizeMM, float iconMM, int bg, int bgAlpha, int fg,
                                   ActionListener<ActionEvent> onClick) {
         Button b = new Button();
         b.setUIID("Label");
@@ -168,7 +146,7 @@ public class ProfilePage {
         FontImage.setMaterialIcon(b, icon, iconMM);
         b.addActionListener(onClick);
 
-        Rounded c = new Rounded(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER), bg, 255, 0).fixed(sizeMM);
+        Rounded c = new Rounded(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER), bg, bgAlpha, 0).fixed(sizeMM);
         c.add(BorderLayout.CENTER, b);
         c.setLeadComponent(b);
         return c;
@@ -184,6 +162,22 @@ public class ProfilePage {
         return p;
     }
 
+    static Container interactivePill(String labelText, int bgColor, int fgColor, ActionListener<ActionEvent> onClick) {
+        Button btn = new Button(labelText);
+        btn.setUIID("Label");
+        btn.getAllStyles().setFgColor(fgColor);
+        btn.getAllStyles().setFont(SAVI.semiBold(1.8f));
+        setPadding(btn, 0, 0, 0, 0);
+        setMargins(btn, 0, 0, 0, 0);
+        btn.addActionListener(onClick);
+
+        Rounded p = new Rounded(new FlowLayout(Component.CENTER, Component.CENTER), bgColor, 255, 0);
+        setPadding(p, 0.6f, 0.6f, 1.8f, 1.8f);
+        p.add(btn);
+        p.setLeadComponent(btn);
+        return FlowLayout.encloseRightMiddle(p);
+    }
+
     static Container squareIcon(char icon, int bg, int fg) {
         Label l = new Label();
         l.getAllStyles().setFgColor(fg);
@@ -193,8 +187,6 @@ public class ProfilePage {
         c.add(BorderLayout.CENTER, l);
         return c;
     }
-
-    // ---------- gradient header background (masked image, no clipping) ----------
 
     static Image gradientImage(int w, int h, int c1, int c2, int radiusPx) {
         Image img = Image.createImage(w, h, 0);
@@ -206,7 +198,7 @@ public class ProfilePage {
         mg.setAntiAliased(true);
         mg.setColor(0xffffff);
         mg.fillRoundRect(0, 0, w, h, radiusPx * 2, radiusPx * 2);
-        mg.fillRect(0, 0, w, h / 2); // keep the top edge square, only the bottom is rounded
+        mg.fillRect(0, 0, w, h / 2);
         return img.applyMask(mask.createMask());
     }
 
@@ -227,44 +219,39 @@ public class ProfilePage {
                 return;
             }
             if (cache == null || cache.getWidth() != w || cache.getHeight() != h) {
-                cache = gradientImage(w, h, HEADER_START, HEADER_END, mm(radiusMM));
+                cache = gradientImage(w, h, SAVI.DARK_PURPLE, SAVI.BRIGHT_VIOLET, mm(radiusMM));
             }
             g.drawImage(cache, getX(), getY());
         }
     }
 
-    // ---------- header ----------
+    static Container greetingBanner(UserProfile profile) {
+        Rounded badge = new Rounded(new FlowLayout(Component.CENTER, Component.CENTER), SAVI.WHITE, 35, 3f)
+                .stroke(SAVI.WHITE, 90, 1);
+        setPadding(badge, 1.2f, 1.2f, 3.2f, 3.2f);
+        setMargins(badge, 0.5f, 0.5f, 0, 0);
 
-    static Container avatar() {
-        Rounded innerC = new Rounded(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER), AVATAR_FILL, 255, 0)
-                .stroke(SAVI.WHITE, 255, 2).fixed(13.5f);
-        Label person = new Label();
-        person.getAllStyles().setFgColor(SAVI.WHITE);
-        FontImage.setMaterialIcon(person, FontImage.MATERIAL_PERSON, 6.5f);
-        innerC.add(BorderLayout.CENTER, person);
+        Label helloLabel = SAVI.text("Hello, " + profile.getGreetingName() + "!", SAVI.bold(3.2f), SAVI.WHITE);
+        helloLabel.getAllStyles().setAlignment(Component.CENTER);
+        badge.add(helloLabel);
 
-        Rounded ringC = new Rounded(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER), 0, 0, 0)
-                .stroke(SAVI.WHITE, 110, 2).fixed(16f);
-        ringC.add(BorderLayout.CENTER, innerC);
-
-        // camera badge, bottom right
-        Container badge = circleIcon(FontImage.MATERIAL_PHOTO_CAMERA, 4.6f, 2.4f, SAVI.WHITE, SAVI.BRIGHT_VIOLET);
-
-        Container av = new Container(new LayeredLayout());
-        av.add(ringC);
-        av.add(BorderLayout.south(FlowLayout.encloseRight(badge)));
-        return FlowLayout.encloseCenter(av);
+        return FlowLayout.encloseCenter(badge);
     }
 
-    static Container profileHeader(float extraBottomMM) {
+    Container profileHeader(float extraBottomMM, UserProfile profile) {
         Container header = new GradientHeader(BoxLayout.y(), 6f);
         setPadding(header, 1f, extraBottomMM, 2f, 2f);
 
-        // top row: back / title / share
         Container back = circleButton(FontImage.MATERIAL_ARROW_BACK_IOS, 5.3f, 2.2f,
-                HEADER_SOFT, SAVI.WHITE, e -> new HomePage().show());
+                SAVI.WHITE, 45, SAVI.WHITE, e -> {
+                    backend.removeChangeListener(this);
+                    new HomePage().show();
+                });
         Container share = circleButton(FontImage.MATERIAL_FILE_UPLOAD, 5.3f, 2.2f,
-                HEADER_SOFT, SAVI.WHITE, e -> {
+                SAVI.WHITE, 45, SAVI.WHITE, e -> {
+                    String summary = backend.buildShareSummary();
+                    Display.getInstance().copyToClipboard(summary);
+                    Dialog.show("Profile Summary Copied", summary, "OK", null);
                 });
         Label title = SAVI.text("PROFILE", SAVI.bold(2.3f), SAVI.WHITE);
 
@@ -272,37 +259,38 @@ public class ProfilePage {
         topRow.add(BorderLayout.WEST, back);
         topRow.add(BorderLayout.CENTER, title);
         topRow.add(BorderLayout.EAST, share);
-        setMargins(topRow, 0, 2.5f, 0, 0);
+        setMargins(topRow, 0, 2f, 0, 0);
 
-        // name with the pencil icon right next to it
-        Label name = SAVI.text("User2026-Trial", SAVI.bold(3f), SAVI.WHITE);
-        name.setTextPosition(Component.LEFT);
-        name.getAllStyles().setAlignment(Component.CENTER);
-        FontImage.setMaterialIcon(name, FontImage.MATERIAL_EDIT, 2.2f);
-        setMargins(name, 1.5f, 0, 0, 0);
+        Button nameBtn = new Button(profile.getUsername());
+        nameBtn.setUIID("Label");
+        nameBtn.getAllStyles().setFont(SAVI.bold(2.6f));
+        nameBtn.getAllStyles().setFgColor(SAVI.WHITE);
+        nameBtn.setTextPosition(Component.LEFT);
+        nameBtn.getAllStyles().setAlignment(Component.CENTER);
+        FontImage.setMaterialIcon(nameBtn, FontImage.MATERIAL_EDIT, 2.1f);
+        nameBtn.addActionListener(e -> showEditProfileDialog());
+        setMargins(nameBtn, 1.2f, 0, 0, 0);
 
-        Label handle = SAVI.text("@user.2026", SAVI.regular(2.1f), HEADER_LABEL);
+        Label handle = SAVI.text(profile.getHandle(), SAVI.regular(2.0f), SAVI.PASTEL_LAVENDER);
         handle.getAllStyles().setAlignment(Component.CENTER);
 
         header.add(topRow);
-        header.add(avatar());
-        header.add(name);
+        header.add(greetingBanner(profile));
+        header.add(FlowLayout.encloseCenter(nameBtn));
         header.add(handle);
         return header;
     }
 
-    // ---------- stats card ----------
-
     static Container statCell(String value, String caption, int valueColor, boolean divided) {
         Container cell = new Container(BoxLayout.y());
-        Label v = SAVI.text(value, SAVI.bold(2.6f), valueColor);
-        Label c = SAVI.text(caption, SAVI.regular(1.75f), SAVI.SLATE_GRAY);
+        Label v = SAVI.text(value, SAVI.bold(2.5f), valueColor);
+        Label c = SAVI.text(caption, SAVI.regular(1.7f), SAVI.SLATE_GRAY);
         v.getAllStyles().setAlignment(Component.CENTER);
         c.getAllStyles().setAlignment(Component.CENTER);
         cell.add(v).add(c);
-        setPadding(cell, 1.2f, 1.2f, 0.5f, 0.5f);
-        if (divided) { // line on both sides of the middle cell
-            Border line = Border.createLineBorder(1, LINE_GRAY);
+        setPadding(cell, 1.2f, 1.2f, 0.4f, 0.4f);
+        if (divided) {
+            Border line = Border.createLineBorder(1, SAVI.BORDER_COLOR);
             cell.getAllStyles().setBorder(Border.createCompoundBorder(null, null, line, line));
         }
         return cell;
@@ -310,29 +298,36 @@ public class ProfilePage {
 
     static Container statsCard(int groups, double saved, int people) {
         Container card = new Container(new GridLayout(1, 3));
-        cardStyles(card, SAVI.WHITE, 4, 1.5f, 1.5f);
+        cardStyles(card, SAVI.WHITE, 4, 1.5f, 1.2f);
         setMargins(card, 0, 1, 2, 2);
 
         card.add(statCell(String.valueOf(groups), "GROUPS", SAVI.DARK_KNIGHT, false));
-        card.add(statCell(Home.pesoShort(saved), "TOTAL SAVED", SAVI.BRIGHT_VIOLET, true));
+        card.add(statCell("P" + Profile.formatAmount(saved), "TOTAL SAVED", SAVI.BRIGHT_VIOLET, true));
         card.add(statCell(String.valueOf(people), "PEOPLE", SAVI.DARK_KNIGHT, false));
         return card;
     }
 
-    // header with the stats card hanging over its bottom edge
-    static Container topSection() {
-        final Container stats = statsCard(2, 4256.5, 15);
-        final int statsH = stats.getOuterPreferredH();
-        final float gapMM = 3.5f;
+    Container topSection(UserProfile profile) {
+        final Container stats = statsCard(
+                backend.getGroupCount(),
+                backend.getTotalSaved(),
+                backend.getTotalPeople()
+        );
+        int measuredStatsH = stats.getOuterPreferredH();
+        if (measuredStatsH <= 0) {
+            measuredStatsH = mm(12f);
+        }
+        final int statsH = measuredStatsH;
+        final float gapMM = 3.2f;
 
-        final Container header = profileHeader(gapMM + pxToMM(statsH) / 2f);
+        final Container header = profileHeader(gapMM + pxToMM(statsH) / 2f, profile);
 
         Container top = new Container(new LayeredLayout()) {
             @Override
             protected Dimension calcPreferredSize() {
                 Dimension d = super.calcPreferredSize();
-                // header already includes half of the card, add the other half
-                return new Dimension(d.getWidth(), header.getPreferredH() + statsH / 2);
+                int headerH = header.getPreferredH();
+                return new Dimension(d.getWidth(), headerH + (statsH / 2));
             }
         };
         top.add(BorderLayout.north(header));
@@ -340,19 +335,15 @@ public class ProfilePage {
         return top;
     }
 
-    // ---------- section header ----------
-
     static Container sectionHeader(String title, Component right) {
         Container row = new Container(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER));
         setMargins(row, 1.5f, 0.5f, 2, 2);
-        row.add(BorderLayout.WEST, SAVI.text(title, SAVI.bold(2.4f), TITLE_DARK));
+        row.add(BorderLayout.WEST, SAVI.text(title, SAVI.bold(2.3f), SAVI.NAVY));
         if (right != null) {
             row.add(BorderLayout.EAST, right);
         }
         return row;
     }
-
-    // ---------- group settings ----------
 
     static Container editPill(ActionListener<ActionEvent> onClick) {
         Button b = new Button("Edit");
@@ -364,7 +355,7 @@ public class ProfilePage {
         FontImage.setMaterialIcon(b, FontImage.MATERIAL_EDIT, 1.9f);
         b.addActionListener(onClick);
 
-        Rounded p = new Rounded(new FlowLayout(Component.CENTER, Component.CENTER), ICON_BOX, 255, 0);
+        Rounded p = new Rounded(new FlowLayout(Component.CENTER, Component.CENTER), SAVI.POWDER_WHITE, 255, 0);
         setPadding(p, 0.6f, 0.6f, 1.8f, 1.8f);
         p.add(b);
         p.setLeadComponent(b);
@@ -372,126 +363,266 @@ public class ProfilePage {
     }
 
     static Container targetBox(String label, String amount) {
-        Rounded box = new Rounded(BoxLayout.y(), TARGET_BG, 255, 2.5f).stroke(TARGET_BORDER, 255, 1);
-        setPadding(box, 1.1f, 1.1f, 2f, 2f);
+        Rounded box = new Rounded(BoxLayout.y(), SAVI.PALE_PURPLE, 255, 2.5f).stroke(SAVI.PASTEL_LAVENDER, 90, 1);
+        setPadding(box, 1.1f, 1.1f, 1.8f, 1.8f);
         setMargins(box, 0, 0, 0.5f, 0.5f);
 
-        box.add(SAVI.text(label, SAVI.bold(1.75f), SAVI.BRIGHT_VIOLET));
-        box.add(SAVI.text(amount, SAVI.bold(2.2f), SAVI.DARK_KNIGHT));
+        box.add(SAVI.text(label, SAVI.bold(1.7f), SAVI.BRIGHT_VIOLET));
+        box.add(SAVI.text(amount, SAVI.bold(2.1f), SAVI.DARK_KNIGHT));
         return box;
     }
 
-    static Container groupCard(String name, String target, String daily, String total,
-                               ActionListener<ActionEvent> onEdit) {
+    static Container groupCard(SavingsGroup group, ActionListener<ActionEvent> onEdit) {
         Container card = new Container(BoxLayout.y());
-        cardStyles(card, SAVI.WHITE, 4, 2f, 2.5f);
+        cardStyles(card, SAVI.WHITE, 4, 2f, 2.2f);
         setMargins(card, 0.5f, 1f, 2, 2);
 
         Container nameCont = new Container(BoxLayout.y());
-        nameCont.add(SAVI.text(name, SAVI.bold(2.1f), SAVI.DARK_KNIGHT));
-        nameCont.add(SAVI.text(target, SAVI.regular(1.8f), SAVI.SLATE_GRAY));
-        setMargins(nameCont, 0, 0, 1.5f, 0);
+        nameCont.add(SAVI.text(group.getName(), SAVI.bold(2.1f), SAVI.DARK_KNIGHT));
+        nameCont.add(SAVI.text("Target: " + group.getTargetDate(), SAVI.regular(1.75f), SAVI.SLATE_GRAY));
+        setMargins(nameCont, 0, 0, 1.5f, 1f);
 
         Container left = new Container(new BorderLayout());
-        left.add(BorderLayout.WEST, squareIcon(FontImage.MATERIAL_BEACH_ACCESS, LIGHT_VIOLET, SAVI.BRIGHT_VIOLET));
+        left.add(BorderLayout.WEST, squareIcon(group.getIcon(), SAVI.PALE_PURPLE, SAVI.BRIGHT_VIOLET));
         left.add(BorderLayout.CENTER, BoxLayout.encloseYCenter(nameCont));
 
-        Container header = new Container(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_SCALE));
-        header.add(BorderLayout.WEST, left);
+        Container header = new Container(new BorderLayout());
+        header.add(BorderLayout.CENTER, left);
         header.add(BorderLayout.EAST, editPill(onEdit));
 
         Container targets = new Container(new GridLayout(1, 2));
-        targets.add(targetBox("DAILY TARGET", "P " + daily));
-        targets.add(targetBox("TOTAL TARGET", "P " + total));
+        targets.add(targetBox("DAILY TARGET", "P " + Profile.formatAmount(group.getDailyTarget())));
+        targets.add(targetBox("TOTAL TARGET", "P " + Profile.formatAmount(group.getTotalTarget())));
 
         card.add(header);
-        card.add(divider(LINE_GRAY));
+        card.add(divider(SAVI.BORDER_COLOR));
         card.add(targets);
         return card;
     }
 
-    // ---------- general settings ----------
+    static Container emptyGroupCard(ActionListener<ActionEvent> onAdd) {
+        Container card = new Container(BoxLayout.y());
+        cardStyles(card, SAVI.WHITE, 4, 2.5f, 2.5f);
+        setMargins(card, 0.5f, 1f, 2, 2);
 
-    static Container settingRow(char icon, String title, String badgeText, ActionListener<ActionEvent> onClick) {
-        Label text = SAVI.text(title, SAVI.regular(2.3f), SAVI.DARK_KNIGHT);
-        setMargins(text, 0, 0, 1.8f, 0);
+        Label msg = SAVI.text("No savings groups yet.", SAVI.regular(2.0f), SAVI.SLATE_GRAY);
+        msg.getAllStyles().setAlignment(Component.CENTER);
+        card.add(msg);
+        card.add(FlowLayout.encloseCenter(
+                interactivePill("+ Create First Group", SAVI.PALE_PURPLE, SAVI.BRIGHT_VIOLET, onAdd)
+        ));
+        return card;
+    }
+
+    static Container settingRow(char icon, String title, String badgeText, int iconColor, int titleColor,
+                                ActionListener<ActionEvent> onClick) {
+        Label text = SAVI.text(title, SAVI.regular(2.2f), titleColor);
+        setMargins(text, 0, 0, 1.8f, 1f);
 
         Container left = new Container(new BorderLayout());
-        left.add(BorderLayout.WEST, squareIcon(icon, ICON_BOX, SAVI.DEEP_SLATE));
+        left.add(BorderLayout.WEST, squareIcon(icon, SAVI.POWDER_WHITE, iconColor));
         left.add(BorderLayout.CENTER, BoxLayout.encloseYCenter(text));
 
-        // the chevron is a real child Button, so it can lead the whole row
         Button chevron = new Button();
         chevron.setUIID("Label");
-        chevron.getAllStyles().setFgColor(0xB4B9C5);
+        chevron.getAllStyles().setFgColor(SAVI.BLUE_GRAY);
         FontImage.setMaterialIcon(chevron, FontImage.MATERIAL_CHEVRON_RIGHT, 3f);
         chevron.addActionListener(onClick);
 
         Container right = new Container(new FlowLayout(Component.RIGHT, Component.CENTER));
         if (badgeText != null) {
-            right.add(pill(SAVI.text(badgeText, SAVI.semiBold(1.6f), SAVI.BRIGHT_VIOLET), LIGHT_VIOLET));
+            right.add(pill(SAVI.text(badgeText, SAVI.semiBold(1.6f), SAVI.BRIGHT_VIOLET), SAVI.PALE_PURPLE));
         }
         right.add(chevron);
 
         Container row = new Container(new BorderLayout());
-        setPadding(row, 2f, 2f, 2.5f, 1.5f);
-        row.add(BorderLayout.WEST, left);
+        setPadding(row, 2f, 2f, 2.2f, 1.5f);
+        row.add(BorderLayout.CENTER, left);
         row.add(BorderLayout.EAST, right);
         row.setLeadComponent(chevron);
         return row;
     }
 
-    static Container settingsCard(char[] icons, String[] titles, String[] badges) {
+    Container settingsCard() {
         Container card = new Container(BoxLayout.y());
         cardStyles(card, SAVI.WHITE, 4, 0f, 0f);
-        setMargins(card, 0.5f, 1f, 2, 2);
+        setMargins(card, 0.5f, 1.5f, 2, 2);
 
-        for (int i = 0; i < titles.length; i++) {
-            if (i > 0) {
-                Container line = divider(LINE_GRAY);
-                setMargins(line, 0, 0, 0, 0);
-                card.add(line);
-            }
-            card.add(settingRow(icons[i], titles[i], badges[i], e -> {
-                // TODO: open setting
-            }));
-        }
+        card.add(settingRow(FontImage.MATERIAL_EXIT_TO_APP, "Logout", null, 0xD32F2F, 0xD32F2F, e -> {
+            backend.removeChangeListener(this);
+            backend.logout();
+            new MainPage().show();
+        }));
+
         return card;
     }
 
-    // ---------- page ----------
+    // --- Interactive Dialogs Connected to Backend ---
+
+    private void showEditProfileDialog() {
+        UserProfile profile = backend.getActiveProfile();
+        Dialog dlg = new Dialog("Edit Profile", new BorderLayout());
+        Container body = new Container(BoxLayout.y());
+        setPadding(body, 1.5f, 1.5f, 2f, 2f);
+
+        TextField greetingField = new TextField(profile.getGreetingName(), "Greeting Name (e.g. User)", 20, TextField.ANY);
+        TextField usernameField = new TextField(profile.getUsername(), "Display Username", 20, TextField.ANY);
+        TextField handleField = new TextField(profile.getHandle(), "@handle", 20, TextField.ANY);
+
+        body.add(SAVI.text("GREETING NAME (SHOWN IN HEADER)", SAVI.bold(1.6f), SAVI.SLATE_GRAY));
+        body.add(greetingField);
+        body.add(SAVI.text("USERNAME", SAVI.bold(1.6f), SAVI.SLATE_GRAY));
+        body.add(usernameField);
+        body.add(SAVI.text("HANDLE", SAVI.bold(1.6f), SAVI.SLATE_GRAY));
+        body.add(handleField);
+
+        Button cancel = new Button("Cancel");
+        cancel.addActionListener(e -> dlg.dispose());
+
+        Button save = new Button("Save");
+        save.addActionListener(e -> {
+            backend.updateProfileInfo(greetingField.getText(), usernameField.getText(), handleField.getText());
+            dlg.dispose();
+        });
+
+        Container actions = new Container(new GridLayout(1, 2));
+        actions.add(cancel).add(save);
+
+        dlg.add(BorderLayout.CENTER, body);
+        dlg.add(BorderLayout.SOUTH, actions);
+        dlg.show();
+    }
+
+    private void showGroupFormDialog(final SavingsGroup existing) {
+        boolean isEdit = existing != null;
+        Dialog dlg = new Dialog(isEdit ? "Edit Group" : "Add Savings Group", new BorderLayout());
+        Container body = new Container(BoxLayout.y());
+        body.setScrollableY(true);
+        setPadding(body, 1.5f, 1.5f, 2f, 2f);
+
+        TextField nameField = new TextField(isEdit ? existing.getName() : "", "Group Name", 24, TextField.ANY);
+        TextField dateField = new TextField(isEdit ? existing.getTargetDate() : "Dec 10, 2026", "Target Date", 20, TextField.ANY);
+        TextField dailyField = new TextField(isEdit ? String.valueOf(existing.getDailyTarget()) : "50", "Daily Target (P)", 12, TextField.DECIMAL);
+        TextField totalField = new TextField(isEdit ? String.valueOf(existing.getTotalTarget()) : "500", "Total Target (P)", 12, TextField.DECIMAL);
+        TextField savedField = new TextField(isEdit ? String.valueOf(existing.getCurrentSaved()) : "0", "Current Saved (P)", 12, TextField.DECIMAL);
+        TextField membersField = new TextField(isEdit ? String.valueOf(existing.getMemberCount()) : "1", "People Count", 6, TextField.NUMERIC);
+
+        body.add(SAVI.text("GROUP NAME", SAVI.bold(1.6f), SAVI.SLATE_GRAY)).add(nameField);
+        body.add(SAVI.text("TARGET DATE", SAVI.bold(1.6f), SAVI.SLATE_GRAY)).add(dateField);
+        body.add(SAVI.text("DAILY TARGET (P)", SAVI.bold(1.6f), SAVI.SLATE_GRAY)).add(dailyField);
+        body.add(SAVI.text("TOTAL TARGET (P)", SAVI.bold(1.6f), SAVI.SLATE_GRAY)).add(totalField);
+        body.add(SAVI.text("AMOUNT SAVED SO FAR (P)", SAVI.bold(1.6f), SAVI.SLATE_GRAY)).add(savedField);
+        body.add(SAVI.text("NUMBER OF PEOPLE", SAVI.bold(1.6f), SAVI.SLATE_GRAY)).add(membersField);
+
+        Container actions = new Container(new GridLayout(1, isEdit ? 3 : 2));
+
+        Button cancel = new Button("Cancel");
+        cancel.addActionListener(e -> dlg.dispose());
+        actions.add(cancel);
+
+        if (isEdit) {
+            Button delete = new Button("Delete");
+            delete.getAllStyles().setFgColor(0xD32F2F);
+            delete.addActionListener(e -> {
+                backend.deleteGroup(existing.getId());
+                dlg.dispose();
+            });
+            actions.add(delete);
+        }
+
+        Button save = new Button("Save");
+        save.addActionListener(e -> {
+            String name = nameField.getText().trim();
+            if (name.isEmpty()) {
+                return;
+            }
+            String date = dateField.getText().trim().isEmpty() ? "TBD" : dateField.getText().trim();
+            double daily = parseDoubleSafe(dailyField.getText(), 50.0);
+            double total = parseDoubleSafe(totalField.getText(), 500.0);
+            double saved = parseDoubleSafe(savedField.getText(), 0.0);
+            int members = Math.max(1, parseIntSafe(membersField.getText(), 1));
+
+            if (isEdit) {
+                backend.updateGroup(existing.getId(), name, date, daily, total, saved, members);
+            } else {
+                backend.addGroup(name, date, daily, total, saved, members, FontImage.MATERIAL_BEACH_ACCESS);
+            }
+            dlg.dispose();
+        });
+        actions.add(save);
+
+        dlg.add(BorderLayout.CENTER, body);
+        dlg.add(BorderLayout.SOUTH, actions);
+        dlg.show();
+    }
+
+    private static double parseDoubleSafe(String val, double fallback) {
+        try {
+            return Double.parseDouble(val.trim());
+        } catch (Exception e) {
+            return fallback;
+        }
+    }
+
+    private static int parseIntSafe(String val, int fallback) {
+        try {
+            return Integer.parseInt(val.trim());
+        } catch (Exception e) {
+            return fallback;
+        }
+    }
+
+    // --- Reactive UI Rendering ---
+
+    private void renderSections() {
+        if (mainContents == null) {
+            return;
+        }
+        mainContents.removeAll();
+
+        UserProfile profile = backend.getActiveProfile();
+        List<SavingsGroup> groups = backend.getGroups();
+
+        mainContents.add(topSection(profile));
+
+        Container addGroup = interactivePill("+ Add Group", SAVI.PALE_PURPLE, SAVI.BRIGHT_VIOLET,
+                e -> showGroupFormDialog(null));
+        mainContents.add(sectionHeader("GROUP SETTINGS", addGroup));
+
+        if (groups.isEmpty()) {
+            mainContents.add(emptyGroupCard(e -> showGroupFormDialog(null)));
+        } else {
+            for (int i = 0; i < groups.size(); i++) {
+                final SavingsGroup group = groups.get(i);
+                mainContents.add(groupCard(group, e -> showGroupFormDialog(group)));
+            }
+        }
+
+        mainContents.add(sectionHeader("GENERAL SETTINGS", null));
+        mainContents.add(settingsCard());
+
+        mainContents.revalidate();
+    }
+
+    @Override
+    public void onProfileDataChanged() {
+        renderSections();
+    }
 
     public void show() {
+        backend.addChangeListener(this);
+
         Form base = new Form("", new BorderLayout());
-        base.getContentPane().getAllStyles().setBgColor(PAGE_BG);
+        base.getContentPane().getAllStyles().setBgColor(SAVI.PALE_PURPLE);
         base.getContentPane().getAllStyles().setBgTransparency(255);
-        paintStatusBar(base, HEADER_START);
+        paintStatusBar(base, SAVI.DARK_PURPLE);
 
-        Container mainContents = new Container(BoxLayout.y());
+        mainContents = new Container(BoxLayout.y());
         mainContents.setScrollableY(true);
-
-        mainContents.add(topSection());
-
-        // group settings
-        Container addGroup = FlowLayout.encloseRightMiddle(
-                pill(SAVI.text("+ Add Group", SAVI.semiBold(1.8f), SAVI.BRIGHT_VIOLET), LIGHT_VIOLET));
-        mainContents.add(sectionHeader("GROUP SETTINGS", addGroup));
-        mainContents.add(groupCard("December Vacation", "Target: Dec 10, 2026", "50", "500", e -> {
-            // TODO: open edit group page
-        }));
-
-        // general settings
-        mainContents.add(sectionHeader("GENERAL SETTINGS", null));
-        char[] icons = {FontImage.MATERIAL_SECURITY, FontImage.MATERIAL_NOTIFICATIONS};
-        String[] titles = {"Security & Privacy", "Notifications"};
-        String[] badges = {null, "Active"};
-        mainContents.add(settingsCard(icons, titles, badges));
+        renderSections();
 
         base.add(BorderLayout.CENTER, mainContents);
-
-        base.add(BorderLayout.SOUTH,SAVI.bottomNav(SAVI.NAV_USER));
+        base.add(BorderLayout.SOUTH, SAVI.bottomNav(SAVI.NAV_USER));
         base.show();
-
-
     }
 }
