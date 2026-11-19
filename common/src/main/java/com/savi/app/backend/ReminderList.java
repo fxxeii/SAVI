@@ -9,16 +9,23 @@ import java.io.OutputStream;
 import java.time.LocalDate;
 import java.util.ArrayList;
 
+// REMINDER LIST - the backend of the Reminder page.
+// DATA STRUCTURE: a singly linked list of Reminder nodes (head -> next -> next -> null).
+// FILE HANDLING: every change is saved to Reminders_Records.csv, and load() reads it back at startup.
+// ENCAPSULATION: head is private, so the pages can only use the methods below.
 public class ReminderList {
-    private Reminder head;
+    private Reminder head;                                   // first node of the list
     private final String fileRec = "Reminders_Records.csv";
 
+    // create a node, link it at the end of the list, then save
     public void addReminder(String title, String groupName, LocalDate date, String time, double amount) {
         Reminder node = new Reminder(title, groupName, date, time, amount);
         insertNode(node);
         saveAll();
     }
 
+    // INSERT AT TAIL: if the list is empty the node becomes the head,
+    // otherwise walk to the last node and link the new one after it
     private void insertNode(Reminder node) {
         if (head == null) {
             head = node;
@@ -31,6 +38,7 @@ public class ReminderList {
         }
     }
 
+    // TRAVERSE the list until we find the same node, mark it done, and save
     public void markCompleted(Reminder target) {
         Reminder temp = head;
         while (temp != null) {
@@ -43,6 +51,7 @@ public class ReminderList {
         }
     }
 
+    // TRAVERSAL: collect the reminders that are not completed (the Upcoming tab)
     public ArrayList<Reminder> getUpcoming() {
         ArrayList<Reminder> list = new ArrayList<>();
         Reminder temp = head;
@@ -55,6 +64,7 @@ public class ReminderList {
         return list;
     }
 
+    // TRAVERSAL: collect the reminders that are completed (the Completed tab)
     public ArrayList<Reminder> getCompleted() {
         ArrayList<Reminder> list = new ArrayList<>();
         Reminder temp = head;
@@ -67,6 +77,7 @@ public class ReminderList {
         return list;
     }
 
+    // numbers shown in the tab badges, e.g. "Upcomings (3)"
     public int countUpcoming() {
         return getUpcoming().size();
     }
@@ -75,11 +86,15 @@ public class ReminderList {
         return getCompleted().size();
     }
 
-   // Format per line: title,groupName,yyyy-MM-dd,time,amount,completed
+    // ---------------------------------------------------------------- FILE HANDLING (CSV)
+    // Format per line: title,groupName,yyyy-MM-dd,time,amount,completed
+
+    // Rewrites the whole file from the linked list (Storage cannot append).
     private void saveAll() {
         StringBuilder sb = new StringBuilder();
         Reminder temp = head;
         while (temp != null) {
+            // encode() protects commas inside text so they do not break the CSV
             sb.append(encode(temp.getTitle())).append(",")
                     .append(encode(temp.getGroupName())).append(",")
                     .append(temp.getDate().toString()).append(",")
@@ -89,6 +104,7 @@ public class ReminderList {
             temp = temp.getNext();
         }
         try {
+            // Codename One has no FileWriter, so the text is saved with Storage
             OutputStream out = Storage.getInstance().createOutputStream(fileRec);
             out.write(sb.toString().getBytes("UTF-8"));
             out.close();
@@ -99,6 +115,7 @@ public class ReminderList {
         }
     }
 
+    // Called once at startup: rebuilds the linked list from the saved text.
     public void load() {
         head = null;
 
@@ -106,6 +123,7 @@ public class ReminderList {
         loadText(readFile());      // this device's saved file
     }
 
+    // split the text into lines, turn each line into a Reminder, and link it into the list
     private void loadText(String text) {
         int start = 0;
         while (start < text.length()) {
@@ -116,7 +134,7 @@ public class ReminderList {
             if (line.endsWith("\r")) line = line.substring(0, line.length() - 1);
 
             Reminder r = parseLine(line);
-            if (r == null) continue;
+            if (r == null) continue;          // damaged or blank line: skip it
 
             Reminder same = findSame(r);
             if (same == null) {
@@ -128,6 +146,7 @@ public class ReminderList {
     }
 
     // reminders have no unique name, so compare their details to avoid duplicates
+    // (the same reminder can be in both the shared file and the device file)
     private Reminder findSame(Reminder r) {
         Reminder temp = head;
         while (temp != null) {
@@ -142,6 +161,7 @@ public class ReminderList {
         return null;
     }
 
+    // reads this device's saved file (empty text if nothing was saved yet)
     private String readFile() {
         try {
             if (!Storage.getInstance().exists(fileRec)) {
@@ -156,6 +176,7 @@ public class ReminderList {
         }
     }
 
+    // reads the shared starter file packaged inside the app (src/main/resources)
     private String readRecords() {
         try {
             InputStream in = Display.getInstance().getResourceAsStream(ReminderList.class, "/" + fileRec);
@@ -170,6 +191,8 @@ public class ReminderList {
         }
     }
 
+    // one CSV line -> one Reminder. The commas are found by position (c1..c5)
+    // and the text between them is cut out with substring().
     private Reminder parseLine(String line) {
         int c1 = line.indexOf(',');
         int c2 = line.indexOf(',', c1 + 1);
@@ -194,6 +217,8 @@ public class ReminderList {
         }
     }
 
+    // A comma or new line typed into a field would break the CSV, so those characters
+    // are stored as %2C / %0A / %0D (and "%" itself as %25), then turned back by decode().
     private String encode(String s) {
         if (s == null) return "";
         StringBuilder out = new StringBuilder();

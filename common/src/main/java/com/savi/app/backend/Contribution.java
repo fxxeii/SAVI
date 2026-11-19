@@ -2,6 +2,10 @@ package com.savi.app.backend;
 
 import java.time.LocalDate;
 
+// CONTRIBUTION - one deposit (or one transfer out) of one member on one date.
+// This is the basic record that the Calendar and Pending pages are built from.
+// ENCAPSULATION: all fields are private and final, so a contribution cannot be changed
+// after it is created, and the constructor refuses invalid data.
 public class Contribution {
 
     private final String member;
@@ -12,10 +16,12 @@ public class Contribution {
 
     public Contribution(String member, double amount, LocalDate date, String note) {
 
+        // VALIDATION: bad data is rejected here, so no other class has to re-check it
         if (member == null || member.trim().isEmpty()) {
             throw new IllegalArgumentException("Member name is required.");
         }
 
+        // amount cannot be 0, but it can be negative: a transfer out is stored as a negative contribution
         if (amount == 0 || Double.isNaN(amount) || Double.isInfinite(amount)) {   // negative = money moved out (transfer)
             throw new IllegalArgumentException("Amount must be positive.");
         }
@@ -27,9 +33,10 @@ public class Contribution {
         this.member = member.trim();
         this.amount = amount;
         this.date = date;
-        this.note = note == null ? "" : note;
+        this.note = note == null ? "" : note;   // no note is stored as an empty text, never null
     }
 
+    // getters (read-only access)
     public String getMember() {
         return member;
     }
@@ -51,7 +58,8 @@ public class Contribution {
         return timestamp;
     }
 
-    // used by the CSV loaders (GroupList / PersonalList) to restore the saved time
+    // package-private (no "public"): only classes in this package, like GroupList / PersonalList,
+    // can restore the saved time when loading the CSV
     void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
     }

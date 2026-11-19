@@ -12,6 +12,10 @@ import com.savi.app.backend.Home;
 
 import java.util.ArrayList;
 
+// PENDING PAGE (frontend)
+// FLOW: open the page -> get the group -> ask GroupSavings how much each member missed ->
+// show a card for every member who still owes money -> "Remind People" creates one reminder
+// per pending member (saved by ReminderList) and opens the Reminder page.
 public class PendingPage {
 
     public void show() {
@@ -28,13 +32,16 @@ public class PendingPage {
         content.getAllStyles().setPadding(0.5f, 2f, 0, 0);
 
         // Pull active group from SAVI.groupList.getGroups() (or fallback preview if groups haven't been loaded yet)
+        // NOTE: right now it uses the FIRST group in the list
         GroupSavings activeGroup = SAVI.groupList.getGroups().isEmpty() ? null : SAVI.groupList.getGroups().get(0);
 
         String titleStr = activeGroup != null ? activeGroup.getGroupName() : "December Vacation";
-        ArrayList<String> pendingNames = new ArrayList<>();
-        ArrayList<Double> pendingAmounts = new ArrayList<>();
+        ArrayList<String> pendingNames = new ArrayList<>();      // members who still owe money
+        ArrayList<Double> pendingAmounts = new ArrayList<>();    // how much each of them owes (same order)
         double totalPending = 0;
 
+        // BACKEND CALCULATION: for every member, ask GroupSavings how much they missed.
+        // Only members with a missed amount above 0 are kept, and the amounts are added up.
         if (activeGroup != null) {
             for (String m : activeGroup.getMembers()) {
                 double missed = activeGroup.getTotalMissed(m);
@@ -59,6 +66,7 @@ public class PendingPage {
         Label pendingAmount = SAVI.text(Home.pesoFormat(totalPending), SAVI.bold(3.2f), SAVI.AMBER);
         Container amountBox = BoxLayout.encloseY(amountTitle, pendingAmount);
 
+        // the tag and colors change depending on whether anyone still owes money
         Label status = SAVI.text(totalPending > 0 ? "Due Soon" : "All Settled", SAVI.bold(1.7f), totalPending > 0 ? SAVI.AMBER : SAVI.GREEN);
         Style ss = status.getAllStyles();
         ss.setBgColor(totalPending > 0 ? SAVI.YELLOW_TAG : SAVI.PALE_GREEN);
@@ -90,13 +98,14 @@ public class PendingPage {
 
         // MEMBER CARDS (2 PER ROW)
         if (pendingNames.isEmpty()) {
+            // nobody owes anything
             Label allPaid = SAVI.text("Everyone is up to date on contributions!", SAVI.semiBold(2.1f), SAVI.SLATE_GRAY);
             allPaid.getAllStyles().setAlignment(Component.CENTER);
             allPaid.getAllStyles().setPaddingUnit(Style.UNIT_TYPE_DIPS);
             allPaid.getAllStyles().setPadding(4f, 4f, 2f, 2f);
             content.add(allPaid);
         } else {
-            int rows = (pendingNames.size() + 1) / 2;
+            int rows = (pendingNames.size() + 1) / 2;   // 2 cards per row, so round the row count up
             Container memberGrid = new Container(new GridLayout(rows, 2));
             memberGrid.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
             memberGrid.getAllStyles().setMargin(0, 1f, 1.2f, 1.2f);
@@ -124,6 +133,7 @@ public class PendingPage {
         rs.setMargin(0, 0.8f, 2f, 2f);
         rs.setBorder(RoundRectBorder.create().cornerRadius(4f).shadowOpacity(50).shadowBlur(10).shadowSpread(1f).shadowX(0.5f).shadowY(0.3f).shadowColor(SAVI.BRIGHT_VIOLET));
 
+        // REMIND PEOPLE: this is where the Pending page connects to the Reminder page
         remindButton.addActionListener(e -> {
             if (pendingNames.isEmpty()) {
                 Dialog.show("All Clear", "No pending members to remind.", "OK", null);
@@ -134,6 +144,7 @@ public class PendingPage {
             String nowTime = new SimpleDateFormat("hh:mm a").format(new Date());
 
             // Gumawa ng automatic reminder entry sa SAVI.reminders (at automatic na mase-save sa Reminders_Records.csv)
+            // (one reminder per pending member; addReminder links a new node in the list and saves the CSV)
             for (int i = 0; i < pendingNames.size(); i++) {
                 String member = pendingNames.get(i);
                 double missedAmt = pendingAmounts.get(i);
@@ -157,6 +168,7 @@ public class PendingPage {
         srs.setPaddingUnit(Style.UNIT_TYPE_DIPS);
         srs.setPadding(0.5f, 0.5f, 1f, 1f);
 
+        // "Set reminder" just opens the Reminder page so the user can add one manually
         setReminder.addActionListener(e -> new ReminderPage().show());
 
         Container bottomBar = new Container(BoxLayout.y());
@@ -167,14 +179,14 @@ public class PendingPage {
         bottomBar.add(remindButton);
         bottomBar.add(setReminder);
 
-        // FORM LAYOUT
+        // FORM LAYOUT: shared header on top, content in the middle, buttons at the bottom
         pendingForm.add(BorderLayout.NORTH, SAVI.buildHeader("Pending", () -> new HomePage().show()));
         pendingForm.add(BorderLayout.CENTER, content);
         pendingForm.add(BorderLayout.SOUTH, bottomBar);
         pendingForm.show();
     }
 
-    // MEMBER CARD METHOD
+    // MEMBER CARD METHOD: builds one card (avatar, name, @handle, missed amount) for one member
     private Container createMemberCard(String name, String username, String missed) {
         Label avatar = new Label();
         Style avs = avatar.getAllStyles();
