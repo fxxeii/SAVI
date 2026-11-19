@@ -3,6 +3,7 @@ package com.savi.app.backend;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import com.savi.app.SAVI;
 
 public class Transfer {
     public static final String SUCCESS = "success";
@@ -187,8 +188,8 @@ public class Transfer {
         double amount = parseAmount(amountText);
         LocalDate today = LocalDate.now();
 
-        from.addContribution(fm, -amount, today, "Transferred to " + tm + " (" + to.getGroupName() + ")");
-        to.addContribution(tm, amount, today, "Transferred from " + fm + " (" + from.getGroupName() + ")");
+        SAVI.groupList.addContribution(from.getGroupName(), fm, -amount, today, "Transferred to " + tm + " (" + to.getGroupName() + ")");
+        SAVI.groupList.addContribution(to.getGroupName(), tm, amount, today, "Transferred from " + fm + " (" + from.getGroupName() + ")");
 
         home.refresh();   // weekly numbers change when the logged-in user is part of the transfer
         return SUCCESS;
