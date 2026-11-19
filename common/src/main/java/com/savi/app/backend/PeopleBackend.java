@@ -9,14 +9,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-/**
- * Reads Groups_Records.csv and gives the People page and the View All Transactions page their data.
- *
- * CSV format (no header row):
- *   G,owner,goal,groupName,dailyAmount,dateCreated
- *   M,groupName,memberName
- *   C,groupName,memberName,amount,date,note
- */
 public class PeopleBackend {
 
     static final String FILE_NAME = "Groups_Records.csv";
