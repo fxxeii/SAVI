@@ -72,6 +72,7 @@ public class CalendarPage {
 
         calendarForm.add(BorderLayout.NORTH, SAVI.buildHeader("Savings Calendar", () -> new HomePage().show()));
         calendarForm.add(BorderLayout.CENTER, content);
+        calendarForm.add(BorderLayout.SOUTH, SAVI.bottomNav(SAVI.NAV_CALENDAR));
         calendarForm.show();
     }
 
