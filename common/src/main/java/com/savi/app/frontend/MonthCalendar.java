@@ -91,28 +91,35 @@ public class MonthCalendar extends Container {
         boolean isSelected = keyFormat.format(d).equals(keyFormat.format(selected));
 
         Button b = new Button(dayFormat.format(d));
-        b.setUIID("Label"); // removes the default button look
+        b.setUIID("Label");
+
+        int cellSize = Display.getInstance().convertToPixels(6.2f);
+        b.setPreferredW(cellSize);
+        b.setPreferredH(cellSize);
 
         Style s = b.getAllStyles();
         s.setAlignment(Component.CENTER);
         s.setFont(isSelected ? SAVI.bold(1.8f) : SAVI.regular(1.8f));
         s.setPaddingUnit(Style.UNIT_TYPE_DIPS);
-        s.setPadding(1, 1, 0.5f, 0.5f);
+        s.setPadding(0.6f, 0.6f, 0.4f, 0.4f);
         s.setMarginUnit(Style.UNIT_TYPE_DIPS);
         s.setMargin(0.3f, 0.3f, 0.3f, 0.3f);
+
+        // Apply RoundRectBorder to ALL cells so selected & unselected cells have identical height
+        s.setBorder(RoundRectBorder.create().cornerRadius(2.5f));
 
         if (isSelected) {
             s.setFgColor(SAVI.DARK_DARK_PURPLE);
             s.setBgColor(SAVI.WHITE);
             s.setBgTransparency(255);
-            s.setBorder(RoundRectBorder.create().cornerRadius(3f));
         } else {
             s.setFgColor(inMonth ? SAVI.WHITE : palePurple);
+            s.setBgTransparency(0);
         }
 
         b.addActionListener(e -> {
             selected = d;
-            shown.setTime(d);   // tapping a palePurple day jumps to its month
+            shown.setTime(d);
             build();
             if (listener != null) {
                 listener.actionPerformed(e);

@@ -68,6 +68,7 @@ public class CalendarPage {
             dayTextLabel.setText(logic.getDayText(selected));
             formattedDateLabel.setText(formatter.format(cld.getDate()));
             showRecords(recordsContainer, emptyMessage, selected, logic);
+            content.revalidate();
         });
 
         calendarForm.add(BorderLayout.NORTH, SAVI.buildHeader("Savings Calendar", () -> new HomePage().show()));
