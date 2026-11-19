@@ -306,6 +306,8 @@ public class PeoplePage {
 
         base.add(BorderLayout.NORTH, SAVI.buildHeader("Group Members", () -> new HomePage().show()));
         base.add(BorderLayout.CENTER, mainContents);
+
+        base.add(BorderLayout.SOUTH,SAVI.bottomNav(SAVI.NAV_PEOPLE));
         base.show();
     }
 }
