@@ -19,7 +19,6 @@ import com.savi.app.SAVI;
 
 public class PeoplePage {
 
-    // Colors specific to this page (move to SAVI if you want to reuse them)
     static final int PAGE_BG = 0xF8F9FC;
     static final int LIGHT_VIOLET = 0xEFEAFE;
     static final int LIGHT_VIOLET_BORDER = 0xDDD3FB;
@@ -38,9 +37,6 @@ public class PeoplePage {
     static final int PAID_BG = 0xEFFCF6;
     static final int PAID_BORDER = 0xBDF0D6;
     static final int PAID_TEXT = 0x0E9F6E;
-
-    // NOTE: RoundRectBorder grows a component's minimum size to fit its corner radius,
-    // so keep the radius at or below half of the component's height.
 
     static void setMargins(Component c, float t, float b, float l, float r) {
         Style s = c.getAllStyles();
