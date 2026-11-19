@@ -20,21 +20,29 @@ public class QuickAddMenu {
         Dialog sheet = new Dialog(new BorderLayout());
 
         // Custom Header
-        Container header = new Container(new FlowLayout(Component.CENTER));
+        Container header = new Container(new BorderLayout());
 
         header.getAllStyles().setBgColor(SAVI.DARK_PURPLE);
         header.getAllStyles().setBgTransparency(255);
+        header.getAllStyles().setBorder(RoundRectBorder.create().
+                cornerRadius(4).
+                shadowOpacity(50).
+                shadowBlur(10).
+                shadowSpread(1f).
+                shadowX(0.5f).
+                shadowY(0.3f).
+                shadowColor(SAVI.BRIGHT_VIOLET));
         header.getAllStyles().setPaddingUnit(Style.UNIT_TYPE_DIPS);
         header.getAllStyles().setPadding(2f, 2f, 2.5f, 2.5f);
 
         Label headerTitle = new Label("What would you like to do?");
         headerTitle.getAllStyles().setFgColor(SAVI.WHITE);
-        headerTitle.getAllStyles().setFont(SAVI.bold(2f));
+        headerTitle.getAllStyles().setFont(SAVI.bold(2.5f));
         headerTitle.setAlignment(Component.CENTER);
         headerTitle.getAllStyles().setMargin(0, 0, 0, 0);
         headerTitle.getAllStyles().setPadding(0, 0, 0, 0);
 
-        header.add(headerTitle);
+        header.add(BorderLayout.CENTER, headerTitle);
 
         Container options = new Container(BoxLayout.y());
         options.getAllStyles().setPaddingUnit(Style.UNIT_TYPE_DIPS);
