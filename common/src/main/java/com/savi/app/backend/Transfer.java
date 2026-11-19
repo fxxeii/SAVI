@@ -168,12 +168,6 @@ public class Transfer {
         return a != null && a.isPersonal();
     }
 
-    /** What a member has put into a savings so far (transfers in/out included, never below 0). */
-    public double getBalance(String savings, String memberName) {
-        Account a = find(clean(savings));
-        return a == null ? 0 : a.balance(clean(memberName));
-    }
-
     // ---------------------------------------------------------------- SETTERS
     // Choosing another savings clears the member, because the member list belongs to that savings.
     // For a personal savings the owner is picked automatically.
@@ -199,15 +193,6 @@ public class Transfer {
     /** The raw text of the Amount box ("250", "1,250.50" and "P250" are all accepted). */
     public void setAmount(String text) {
         this.amountText = text == null ? "" : text.trim();
-    }
-
-    /** Empties every choice (call it when the page is opened again). */
-    public void clear() {
-        fromSavings = "";
-        fromMember = "";
-        toSavings = "";
-        toMember = "";
-        amountText = "";
     }
 
     // ---------------------------------------------------------------- GETTERS (confirmation page)
@@ -244,11 +229,6 @@ public class Transfer {
     public double getAmount() {
         double value = parseAmount(amountText);
         return value < 0 ? 0 : value;
-    }
-
-    /** "P250" or "P1,250.50" for the confirmation page. */
-    public String getAmountText() {
-        return Home.pesoShort(getAmount());
     }
 
     // ---------------------------------------------------------------- VALIDATE / CONFIRM

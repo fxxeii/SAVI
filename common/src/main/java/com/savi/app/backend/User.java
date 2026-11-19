@@ -154,13 +154,13 @@ public class User {
         }
         return currentUser.name;
     }
-
-    public String getCurrentEmail() {
-        if (currentUser == null) {
-            return null;
-        }
-        return currentUser.email;
-    }
+//
+//    public String getCurrentEmail() {
+//        if (currentUser == null) {
+//            return null;
+//        }
+//        return currentUser.email;
+//    }
 
     private boolean validName(String n) {
         return n != null && n.trim().length() >= 3; //cant be empty, must be 3 letter above

@@ -162,14 +162,6 @@ public class Profile {
         activeProfile = null;
     }
 
-    public String buildShareSummary() {
-        UserProfile current = getActiveProfile();
-        return current.getUsername() + " (" + current.getHandle() + ") on SAVI\n"
-                + "Groups: " + getGroupCount()
-                + " | Total Saved: P" + formatAmount(getTotalSaved())
-                + " | People: " + getTotalPeople();
-    }
-
     public static String formatAmount(double amount) {
         if (amount == (long) amount) {
             return formatWithCommas((long) amount);
