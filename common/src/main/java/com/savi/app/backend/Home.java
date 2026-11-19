@@ -56,14 +56,6 @@ public class Home {
         refresh();
     }
 
-    public void setWeeklyTarget(double target) {
-        if (target < 0) {
-            throw new IllegalArgumentException("Target cannot be negative");
-        }
-        this.weeklyTarget = target;
-        refresh();
-    }
-
     /** Recomputes the weekly numbers. Call it again after a new contribution is added. */
     public void refresh() {
         String me = currentName();             // null if nobody is logged in
@@ -195,11 +187,6 @@ public class Home {
         return days;
     }
 
-    /** The 7 days of the week this Home object is showing. */
-    public List<LocalDate> getWeekDays() {
-        return getWeekDays(weekStart);
-    }
-
     public static boolean isToday(LocalDate date) {
         return date.equals(LocalDate.now());
     }
@@ -222,18 +209,10 @@ public class Home {
         return months[monthOf(LocalDate.now()) - 1];
     }
 
-    public LocalDate getWeekStart() {
-        return weekStart;
-    }
-
     // ---------------------------------------------------------------- AMOUNT SAVED CARD
 
     public double getWeeklySaved() {
         return weeklySaved;
-    }
-
-    public double getWeeklyTarget() {
-        return weeklyTarget;
     }
 
     /** 0.0 to 1.0, used by the progress bar. */
@@ -461,12 +440,6 @@ public class Home {
         return getRecentContributions(0);
     }
 
-    /** The single row shown on the home card, or null if there are no contributions yet. */
-    public RecentContribution getLatestContribution() {
-        List<RecentContribution> latest = getRecentContributions(1);
-        return latest.isEmpty() ? null : latest.get(0);
-    }
-
     // ---------------------------------------------------------------- helpers
 
     // ---------------------------------------------------------------- date helpers
@@ -583,11 +556,6 @@ public class Home {
         /** When it was recorded: used to order contributions made on the same day. */
         public long getTimestamp() {
             return contribution.getTimestamp();
-        }
-
-        /** "Maria contributed P24" for the middle line of the card */
-        public String getSummary() {
-            return getMember() + " contributed " + pesoShort(getAmount());
         }
 
         /** "Note: Birthday fund" for the last line of the card */
