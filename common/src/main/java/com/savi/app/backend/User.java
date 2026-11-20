@@ -11,12 +11,10 @@ import java.io.OutputStream;
 class Node {
     String name;
     String pass;
-    String email;
     Node pntnext;
 
-    Node(String n, String e, String p) {
+    Node(String n, String p) {
         name = n;
-        email = e;
         pass = p;
         pntnext = null;
     }
@@ -26,19 +24,15 @@ public class User {
     Node currentUser;
     String fileRec = "Users_Records.csv";
 
-    public String signup(String n, String e, String p, String cp) {
-        if (!fieldsComplete(n, e, p, cp)) { //is it empty
+    public String signup(String n, String p, String cp) {
+        if (!fieldsComplete(n, p, cp)) { //is it empty
             return "Please fill in all fields.";
         }
 
         n = n.trim(); //remove spaces
-        e = e.trim();
 
         if (!validName(n)) {
             return "Username must be at least 3 characters.";
-        }
-        if (!validEmail(e)) {
-            return "Please enter a valid email address.";
         }
         if (!validPassword(p)) {
             return "Password must be at least 5 characters.";
@@ -49,11 +43,8 @@ public class User {
         if (exist(n)) {
             return "Username already exists.";
         }
-        if (emailExists(e)) {
-            return "Email already registered.";
-        }
 
-        Node newNode = new Node(n.trim(), e.trim(), p); //stores the new user's info
+        Node newNode = new Node(n.trim(), p); //stores the new user's info
         //add node
         if (head == null) { //if empty new node becomes the first
             head = newNode;
@@ -66,7 +57,7 @@ public class User {
             temp.pntnext = newNode; //connects last node to new user
         }
 
-        save(n, e, p); //save
+        save(n, p); //save
         return "success";
     }
 
@@ -117,10 +108,8 @@ public class User {
                 saveAll(); //update recs
                 return "success";
             }
-
             temp = temp.pntnext;
         }
-
         return "Username not found.";
     }
 
@@ -136,45 +125,15 @@ public class User {
         return false;
     }
 
-    private boolean emailExists(String e) {
-        Node temp = head;
-
-        while (temp != null) {
-            if (temp.email.equalsIgnoreCase(e)) { //search through the ll if email already existed
-                return true;
-            }
-            temp = temp.pntnext;
-        }
-        return false;
-    }
-
     public String getCurrentName() {
         if (currentUser == null) { //for the frontend to access the current logged-in user
             return null;
         }
         return currentUser.name;
     }
-//
-//    public String getCurrentEmail() {
-//        if (currentUser == null) {
-//            return null;
-//        }
-//        return currentUser.email;
-//    }
 
     private boolean validName(String n) {
         return n != null && n.trim().length() >= 3; //cant be empty, must be 3 letter above
-    }
-
-    private boolean validEmail(String e) {
-        if (e == null) {
-            return false;
-        }
-
-        int at = e.indexOf('@'); //finds the index of @
-        int dot = e.lastIndexOf('.'); //finds the index of .
-        //@ must not be in beginning, the . must be at least 2 position after @, . cannot be last, no spaces
-        return at > 0 && dot > at + 1 && dot < e.length() - 1 && e.indexOf(' ') == -1;
     }
 
     private boolean validPassword(String p) {
@@ -185,9 +144,8 @@ public class User {
         return p != null && p.equals(cp);
     }
 
-    private boolean fieldsComplete(String n, String e, String p, String cp) {
+    private boolean fieldsComplete(String n, String p, String cp) {
         return n != null && !n.trim().isEmpty() //no space, not empty
-                && e != null && !e.trim().isEmpty()
                 && p != null && !p.isEmpty()
                 && cp != null && !cp.isEmpty();
     }
@@ -202,12 +160,12 @@ public class User {
 
     // ---------------------------------------------------------------- FILE HANDLING (CSV)
     // Codename One does not allow FileWriter/FileReader, so the CSV text is kept with Storage.
-    // File format, one account per line:  name,email,password
+    // File format, one account per line:  name,password
 
     /** Adds ONE new account to the end of the file (used by signup). */
-    private void save(String name, String email, String pass) {
+    private void save(String name, String pass) {
         // Storage cannot append, so read the old text and write it back with the new line added
-        writeFile(readFile() + toLine(name, email, pass));
+        writeFile(readFile() + toLine(name, pass));
         System.out.println("SAVED: " + name);
     }
 
@@ -217,7 +175,7 @@ public class User {
         Node temp = head;
 
         while (temp != null) {
-            text.append(toLine(temp.name, temp.email, temp.pass));
+            text.append(toLine(temp.name, temp.pass));
             temp = temp.pntnext;
         }
         writeFile(text.toString());
@@ -253,7 +211,7 @@ public class User {
             if (node == null) {
                 continue;   // blank or damaged line: skip it
             }
-            if (exist(node.name) || emailExists(node.email)) {
+            if (exist(node.name)) {
                 continue;   // already loaded (the same account is in both files)
             }
 
@@ -270,19 +228,21 @@ public class User {
         }
     }
 
-    private String toLine(String name, String email, String pass) {
-        return encode(name) + "," + encode(email) + "," + encode(pass) + "\n";
+    private String toLine(String name, String pass) {
+        return encode(name) + "," + encode(pass) + "\n";
     }
 
     private Node toNode(String line) {
         int c1 = line.indexOf(',');
-        int c2 = line.indexOf(',', c1 + 1);
-        if (c1 < 0 || c2 < 0) {
+
+        if (c1 < 0) {
             return null;
         }
-        return new Node(decode(line.substring(0, c1)),
-                decode(line.substring(c1 + 1, c2)),
-                decode(line.substring(c2 + 1)));
+
+        return new Node(
+                decode(line.substring(0, c1)),
+                decode(line.substring(c1 + 1))
+        );
     }
 
     // a comma or new line typed into a field would break the CSV, so those characters are
