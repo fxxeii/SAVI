@@ -19,7 +19,7 @@ import java.util.Map;
  * Reads the group data from Groups_Records.csv:
  *   G,<creator>,<totalTarget>,<groupName>,<expectedPerMember>,<createdDate>[,more...]
  *   M,<groupName>,<memberName>
- *   C,<groupName>,<memberName>,<amount>,<date>,<note>[,timestamp]
+ *   C,<groupName>,<memberName>,<amount>,<date>,<note>[,timestamp] test test
  */
 public class PeopleBackend {
 
