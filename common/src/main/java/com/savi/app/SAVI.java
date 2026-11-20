@@ -50,7 +50,7 @@ public class SAVI extends Lifecycle {
     public static final int NAV_HOME = 0;
     public static final int NAV_CALENDAR = 1;
     public static final int NAV_PEOPLE = 2;
-    public static final int NAV_USER = 3;
+    public static final int NAV_PROFILE = 3;
 
     private static final float NAV_ADD_BTN = 12f;  // width of addButton.png in mm
     private static final float NAV_NOTCH = 2f;   // space above the bar where the + button sticks out
@@ -135,7 +135,7 @@ public class SAVI extends Lifecycle {
         items.add(addButton(onAdd));
         items.add(navItem(FontImage.MATERIAL_PEOPLE_OUTLINE, "People", active == NAV_PEOPLE,
                 () -> new PeoplePage().show()));
-        items.add(navItem(FontImage.MATERIAL_PERSON_OUTLINE, "User", active == NAV_USER,
+        items.add(navItem(FontImage.MATERIAL_PERSON_OUTLINE, "Profile", active == NAV_PROFILE,
                 () -> new ProfilePage().show()));
 
         nav.add(BorderLayout.CENTER, items);

@@ -149,22 +149,6 @@ public class ProfilePage implements Profile.DataChangeListener {
         return p;
     }
 
-    static Container interactivePill(String labelText, int bgColor, int fgColor, ActionListener<ActionEvent> onClick) {
-        Button btn = new Button(labelText);
-        btn.setUIID("Label");
-        btn.getAllStyles().setFgColor(fgColor);
-        btn.getAllStyles().setFont(SAVI.semiBold(1.8f));
-        setPadding(btn, 0, 0, 0, 0);
-        setMargins(btn, 0, 0, 0, 0);
-        btn.addActionListener(onClick);
-
-        Rounded p = new Rounded(new FlowLayout(Component.CENTER, Component.CENTER), bgColor, 255, 0);
-        setPadding(p, 0.6f, 0.6f, 1.8f, 1.8f);
-        p.add(btn);
-        p.setLeadComponent(btn);
-        return FlowLayout.encloseRightMiddle(p);
-    }
-
     static Container squareIcon(char icon, int bg, int fg) {
         Label l = new Label();
         l.getAllStyles().setFgColor(fg);
@@ -372,7 +356,7 @@ public class ProfilePage implements Profile.DataChangeListener {
         return card;
     }
 
-    static Container emptyGroupCard(ActionListener<ActionEvent> onAdd) {
+    static Container emptyGroupCard() {
         Container card = new Container(BoxLayout.y());
         cardStyles(card, SAVI.WHITE, 4, 2.5f, 2.5f);
         setMargins(card, 0.5f, 1f, 2, 2);
@@ -380,9 +364,6 @@ public class ProfilePage implements Profile.DataChangeListener {
         Label msg = SAVI.text("No savings groups yet.", SAVI.regular(2.0f), SAVI.SLATE_GRAY);
         msg.getAllStyles().setAlignment(Component.CENTER);
         card.add(msg);
-        card.add(FlowLayout.encloseCenter(
-                interactivePill("+ Create First Group", SAVI.PALE_PURPLE, SAVI.BRIGHT_VIOLET, onAdd)
-        ));
         return card;
     }
 
@@ -421,14 +402,13 @@ public class ProfilePage implements Profile.DataChangeListener {
         setMargins(card, 0.5f, 1.5f, 2, 2);
 
         card.add(settingRow(FontImage.MATERIAL_EXIT_TO_APP, "Logout", null, 0xD32F2F, 0xD32F2F, e -> {
-            // confirmation before logging out
             boolean confirmed = Dialog.show("Logout", "Are you sure you want to log out?", "Logout", "Cancel");
             if (!confirmed) {
                 return;
             }
             backend.removeChangeListener(this);
             backend.logout();
-            SAVI.user.logout();   // clears the logged-in user
+            SAVI.user.logout();
             new MainPage().show();
         }));
 
@@ -452,7 +432,7 @@ public class ProfilePage implements Profile.DataChangeListener {
 
         Button save = new Button("Save");
         save.addActionListener(e -> {
-            backend.updateProfileInfo(null, usernameField.getText(), null);   // null = leave unchanged
+            backend.updateProfileInfo(null, usernameField.getText(), null);
             dlg.dispose();
         });
 
@@ -465,48 +445,46 @@ public class ProfilePage implements Profile.DataChangeListener {
     }
 
     /**
-     * Add / edit a group in Groups_Records.csv.
-     * Amount saved and number of people are not typed here: they are computed from the
-     * C (contribution) and M (member) rows of the CSV.
+     * Edit or delete an existing group in Groups_Records.csv.
      */
-    private void showGroupFormDialog(final SavingsGroup existing) {
-        final boolean isEdit = existing != null;
-        Dialog dlg = new Dialog(isEdit ? "Edit Group" : "Add Savings Group", new BorderLayout());
+    private void showEditGroupDialog(final SavingsGroup existing) {
+        if (existing == null) {
+            return;
+        }
+        Dialog dlg = new Dialog("Edit Group", new BorderLayout());
         Container body = new Container(BoxLayout.y());
         body.setScrollableY(true);
         setPadding(body, 1.5f, 1.5f, 2f, 2f);
 
-        TextField nameField = new TextField(isEdit ? existing.getName() : "", "Group Name", 24, TextField.ANY);
-        TextField dateField = new TextField(isEdit ? existing.getTargetDate() : "", "Target Date (e.g. 2026-12-10)", 20, TextField.ANY);
-        TextField dailyField = new TextField(isEdit ? String.valueOf(existing.getDailyTarget()) : "50", "Daily Target (P)", 12, TextField.DECIMAL);
-        TextField totalField = new TextField(isEdit ? String.valueOf(existing.getTotalTarget()) : "500", "Total Target (P)", 12, TextField.DECIMAL);
+        TextField nameField = new TextField(existing.getName(), "Group Name", 24, TextField.ANY);
+        TextField dateField = new TextField(existing.getTargetDate(), "Target Date (e.g. 2026-12-10)", 20, TextField.ANY);
+        TextField dailyField = new TextField(String.valueOf(existing.getDailyTarget()), "Daily Target (P)", 12, TextField.DECIMAL);
+        TextField totalField = new TextField(String.valueOf(existing.getTotalTarget()), "Total Target (P)", 12, TextField.DECIMAL);
 
         body.add(SAVI.text("GROUP NAME", SAVI.bold(1.6f), SAVI.SLATE_GRAY)).add(nameField);
         body.add(SAVI.text("TARGET DATE", SAVI.bold(1.6f), SAVI.SLATE_GRAY)).add(dateField);
         body.add(SAVI.text("DAILY TARGET (P)", SAVI.bold(1.6f), SAVI.SLATE_GRAY)).add(dailyField);
         body.add(SAVI.text("TOTAL TARGET (P)", SAVI.bold(1.6f), SAVI.SLATE_GRAY)).add(totalField);
 
-        Container actions = new Container(new GridLayout(1, isEdit ? 3 : 2));
+        Container actions = new Container(new GridLayout(1, 3));
 
         Button cancel = new Button("Cancel");
         cancel.addActionListener(e -> dlg.dispose());
         actions.add(cancel);
 
-        if (isEdit) {
-            Button delete = new Button("Delete");
-            delete.getAllStyles().setFgColor(0xD32F2F);
-            delete.addActionListener(e -> {
-                boolean sure = Dialog.show("Delete Group",
-                        "Delete \"" + existing.getName() + "\" and all its members and contributions?",
-                        "Delete", "Cancel");
-                if (!sure) {
-                    return;
-                }
-                backend.deleteGroup(existing.getId());
-                dlg.dispose();
-            });
-            actions.add(delete);
-        }
+        Button delete = new Button("Delete");
+        delete.getAllStyles().setFgColor(0xD32F2F);
+        delete.addActionListener(e -> {
+            boolean sure = Dialog.show("Delete Group",
+                    "Delete \"" + existing.getName() + "\" and all its members and contributions?",
+                    "Delete", "Cancel");
+            if (!sure) {
+                return;
+            }
+            backend.deleteGroup(existing.getId());
+            dlg.dispose();
+        });
+        actions.add(delete);
 
         Button save = new Button("Save");
         save.addActionListener(e -> {
@@ -519,12 +497,7 @@ public class ProfilePage implements Profile.DataChangeListener {
             double daily = parseDoubleSafe(dailyField.getText(), 50.0);
             double total = parseDoubleSafe(totalField.getText(), 500.0);
 
-            boolean ok;
-            if (isEdit) {
-                ok = backend.updateGroup(existing.getId(), name, date, daily, total);
-            } else {
-                ok = backend.addGroup(name, date, daily, total);
-            }
+            boolean ok = backend.updateGroup(existing.getId(), name, date, daily, total);
             if (!ok) {
                 Dialog.show("Group Name", "A group with that name already exists.", "OK", null);
                 return;
@@ -558,17 +531,14 @@ public class ProfilePage implements Profile.DataChangeListener {
         List<SavingsGroup> groups = backend.getGroups();
 
         mainContents.add(topSection(profile));
-
-        Container addGroup = interactivePill("+ Add Group", SAVI.PALE_PURPLE, SAVI.BRIGHT_VIOLET,
-                e -> showGroupFormDialog(null));
-        mainContents.add(sectionHeader("GROUP SETTINGS", addGroup));
+        mainContents.add(sectionHeader("GROUP SETTINGS", null));
 
         if (groups.isEmpty()) {
-            mainContents.add(emptyGroupCard(e -> showGroupFormDialog(null)));
+            mainContents.add(emptyGroupCard());
         } else {
             for (int i = 0; i < groups.size(); i++) {
                 final SavingsGroup group = groups.get(i);
-                mainContents.add(groupCard(group, e -> showGroupFormDialog(group)));
+                mainContents.add(groupCard(group, e -> showEditGroupDialog(group)));
             }
         }
 
@@ -584,7 +554,6 @@ public class ProfilePage implements Profile.DataChangeListener {
     }
 
     public void show() {
-        // use the real logged-in user (same name as in Groups_Records.csv), then re-read the CSV
         backend.loginAs(SAVI.user.getCurrentName());
         backend.refreshGroups();
         backend.addChangeListener(this);
@@ -599,7 +568,7 @@ public class ProfilePage implements Profile.DataChangeListener {
         renderSections();
 
         base.add(BorderLayout.CENTER, mainContents);
-        base.add(BorderLayout.SOUTH, SAVI.bottomNav(SAVI.NAV_USER));
+        base.add(BorderLayout.SOUTH, SAVI.bottomNav(SAVI.NAV_PROFILE));
         base.show();
     }
 }

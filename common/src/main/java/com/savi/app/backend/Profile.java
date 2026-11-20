@@ -271,29 +271,6 @@ public class Profile {
         }
     }
 
-    public boolean addGroup(String name, String targetDate, double dailyTarget, double totalTarget) {
-        getActiveProfile();
-        String me = getMemberName();
-        String n = clean(name);
-        if (n.isEmpty() || me.isEmpty()) {
-            return false;
-        }
-        List<String[]> rows = readCsv();
-        if (findGroupRow(rows, n) >= 0) {
-            return false;
-        }
-        String date = clean(targetDate).isEmpty() ? "TBD" : clean(targetDate);
-        rows.add(new String[]{"G", clean(me), String.valueOf(totalTarget), n, String.valueOf(dailyTarget), date});
-        rows.add(new String[]{"M", n, clean(me)});
-        writeCsv(rows);
-        if (SAVI.groupList != null) {
-            SAVI.groupList.load();
-        }
-        loadGroups();
-        notifyListeners();
-        return true;
-    }
-
     public boolean updateGroup(String groupId, String name, String targetDate, double dailyTarget, double totalTarget) {
         getActiveProfile();
         String n = clean(name);
