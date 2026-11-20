@@ -170,17 +170,47 @@ public class PeoplePage {
         return banner;
     }
 
-    static Container sectionHeader() {
+    // the "Updated Today" pill is only shown when there is something to update
+    static Container sectionHeader(boolean showUpdated) {
         Container header = new Container(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER));
         setMargins(header, 1, 0.5f, 2, 2);
 
         Label title = SAVI.text("MEMBER CONTRIBUTIONS", SAVI.bold(2f), SAVI.SLATE_GRAY);
-        Container updated = pill(SAVI.text("Updated Today", SAVI.regular(1.8f), SAVI.BRIGHT_VIOLET),
-                SAVI.PALE_PURPLE, SAVI.PALE_PURPLE);
-
         header.add(BorderLayout.WEST, title);
-        header.add(BorderLayout.EAST, updated);
+
+        if (showUpdated) {
+            Container updated = pill(SAVI.text("Updated Today", SAVI.regular(1.8f), SAVI.BRIGHT_VIOLET),
+                    SAVI.PALE_PURPLE, SAVI.PALE_PURPLE);
+            header.add(BorderLayout.EAST, updated);
+        }
         return header;
+    }
+
+    // shown when the group has no member contributions yet
+    static Container emptyState() {
+        Container card = new Container(BoxLayout.y());
+        cardStyles(card, SAVI.WHITE, 4, 3.5f, 2.5f);
+        setMargins(card, 1f, 1f, 2, 2);
+
+        Container icon = circleIcon(FontImage.MATERIAL_GROUP, 16f, 8f, SAVI.PALE_PURPLE, SAVI.BRIGHT_VIOLET, false);
+
+        Label title = SAVI.text("No group contributions yet", SAVI.bold(2.6f), SAVI.DARK_KNIGHT);
+        title.getAllStyles().setAlignment(Component.CENTER);
+        setMargins(title, 2f, 0.5f, 0, 0);
+
+        Label line1 = SAVI.text("Tap the + button below to add", SAVI.regular(2f), SAVI.SLATE_GRAY);
+        line1.getAllStyles().setAlignment(Component.CENTER);
+        Label line2 = SAVI.text("a contribution. Your members will", SAVI.regular(2f), SAVI.SLATE_GRAY);
+        line2.getAllStyles().setAlignment(Component.CENTER);
+        Label line3 = SAVI.text("show up right here.", SAVI.regular(2f), SAVI.SLATE_GRAY);
+        line3.getAllStyles().setAlignment(Component.CENTER);
+
+        card.add(FlowLayout.encloseCenter(icon));
+        card.add(title);
+        card.add(line1);
+        card.add(line2);
+        card.add(line3);
+        return card;
     }
 
     static Container avatar() {
@@ -278,17 +308,25 @@ public class PeoplePage {
 
         // member data comes from the backend (hardcoded there for now)
         PeopleBackend.Member[] members = PeopleBackend.getMembers();
+        if (members == null) {
+            members = new PeopleBackend.Member[0];
+        }
+        boolean hasMembers = members.length > 0;
 
         Container mainContents = new Container(BoxLayout.y());
         mainContents.setScrollableY(true);
 
         mainContents.add(groupBanner(PeopleBackend.getGroupName(), Home.pesoFormat(PeopleBackend.getGroupPool()), members.length));
-        mainContents.add(sectionHeader());
+        mainContents.add(sectionHeader(hasMembers));
 
-        for (int i = 0; i < members.length; i++) {
-            final PeopleBackend.Member member = members[i];
-            // connects to the View All Transactions page for this member
-            mainContents.add(memberCard(member, e -> new ViewAllTransacPage(member).show()));
+        if (!hasMembers) {
+            mainContents.add(emptyState());
+        } else {
+            for (int i = 0; i < members.length; i++) {
+                final PeopleBackend.Member member = members[i];
+                // connects to the View All Transactions page for this member
+                mainContents.add(memberCard(member, e -> new ViewAllTransacPage(member).show()));
+            }
         }
 
         base.add(BorderLayout.NORTH, header("Group Members"));
