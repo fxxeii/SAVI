@@ -4,7 +4,9 @@ import com.codename1.io.FileSystemStorage;
 import com.codename1.io.Preferences;
 import com.codename1.io.Storage;
 import com.codename1.io.Util;
+import com.codename1.ui.Display;
 import com.codename1.ui.FontImage;
+import com.savi.app.SAVI;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -92,6 +94,25 @@ public class Profile {
      * A new account is created with 0 savings; it has no groups until it creates or joins one.
      */
     public UserProfile activateAccount(String id, String memberName) {
+        UserProfile p = doActivate(id, memberName);
+        notifyListeners();
+        return p;
+    }
+
+    /**
+     * Follows the real logged-in user (SAVI.user.getCurrentName()). The login name is used both as the
+     * account id and as the member name in Groups_Records.csv, so Sam's groups = rows where member is "Sam".
+     * Does not notify listeners, so it is safe to call right before showing the page.
+     */
+    public UserProfile loginAs(String loginName) {
+        if (loginName == null || loginName.trim().isEmpty()) {
+            return getActiveProfile();
+        }
+        String name = loginName.trim();
+        return doActivate("acc_" + name.toLowerCase(), name);
+    }
+
+    private UserProfile doActivate(String id, String memberName) {
         String name = (memberName == null || memberName.trim().isEmpty()) ? "User" : memberName.trim();
 
         UserProfile found = null;
@@ -109,7 +130,6 @@ public class Profile {
         }
         Preferences.set(PREF_MEMBER_PREFIX + id, name);
         setActive(found);
-        notifyListeners();
         return found;
     }
 
@@ -156,7 +176,20 @@ public class Profile {
 
     public double getTotalSaved() {
         UserProfile current = getActiveProfile();
-        double total = current != null ? current.getPersonalSaved() : 0.0;
+        String me = getMemberName();
+        double personalTotal = current != null ? current.getPersonalSaved() : 0.0;
+
+        if (SAVI.personalList != null && me != null && !me.isEmpty()) {
+            List<PersonalSavings> mine = SAVI.personalList.getForOwner(me);
+            if (!mine.isEmpty()) {
+                personalTotal = 0.0;
+                for (int i = 0; i < mine.size(); i++) {
+                    personalTotal += mine.get(i).getCurrentAmount();
+                }
+            }
+        }
+
+        double total = personalTotal;
         for (int i = 0; i < groups.size(); i++) {
             total += groups.get(i).getCurrentSaved();
         }
@@ -175,6 +208,9 @@ public class Profile {
     /** Re-reads the CSV (other pages may have changed it). Does not notify listeners. */
     public void refreshGroups() {
         getActiveProfile();
+        if (SAVI.groupList != null) {
+            SAVI.groupList.load();
+        }
         loadGroups();
     }
 
@@ -218,6 +254,9 @@ public class Profile {
         rows.add(new String[]{"G", clean(me), String.valueOf(totalTarget), n, String.valueOf(dailyTarget), date});
         rows.add(new String[]{"M", n, clean(me)});
         writeCsv(rows);
+        if (SAVI.groupList != null) {
+            SAVI.groupList.load();
+        }
         loadGroups();
         notifyListeners();
         return true;
@@ -254,6 +293,9 @@ public class Profile {
             }
         }
         writeCsv(rows);
+        if (SAVI.groupList != null) {
+            SAVI.groupList.load();
+        }
         loadGroups();
         notifyListeners();
         return true;
@@ -276,6 +318,9 @@ public class Profile {
             }
         }
         writeCsv(rows);
+        if (SAVI.groupList != null) {
+            SAVI.groupList.load();
+        }
         loadGroups();
         notifyListeners();
     }
@@ -323,10 +368,29 @@ public class Profile {
 
     // ------------------------------------------------------------------ CSV: groups
 
+    private boolean matchesCurrentUser(String candidate) {
+        if (candidate == null || candidate.trim().isEmpty()) {
+            return false;
+        }
+        String c = candidate.trim();
+        if (same(c, getMemberName())) {
+            return true;
+        }
+        if (activeProfile != null && (same(c, activeProfile.getUsername()) || same(c, activeProfile.getGreetingName()))) {
+            return true;
+        }
+        if (SAVI.user != null && SAVI.user.getCurrentName() != null && same(c, SAVI.user.getCurrentName())) {
+            return true;
+        }
+        return false;
+    }
+
     private void loadGroups() {
         groups.clear();
         String me = getMemberName();
-        if (me.isEmpty()) {
+        String sessionName = (SAVI.user != null && SAVI.user.getCurrentName() != null)
+                ? SAVI.user.getCurrentName().trim() : "";
+        if (me.isEmpty() && sessionName.isEmpty()) {
             return;
         }
         List<String[]> rows = readCsv();
@@ -336,7 +400,7 @@ public class Profile {
                 continue;
             }
             String name = g[G_NAME];
-            boolean mine = same(g[G_CREATOR], me);
+            boolean mine = matchesCurrentUser(g[G_CREATOR]);
             int members = 0;
             double saved = 0;
 
@@ -344,11 +408,17 @@ public class Profile {
                 String[] r = rows.get(j);
                 if ("M".equals(r[0]) && r.length > M_MEMBER && same(r[M_GROUP], name)) {
                     members++;
-                    if (same(r[M_MEMBER], me)) {
+                    if (matchesCurrentUser(r[M_MEMBER])) {
                         mine = true;
                     }
                 } else if ("C".equals(r[0]) && r.length > C_AMOUNT && same(r[C_GROUP], name)) {
                     saved += parseDouble(r[C_AMOUNT]);
+                }
+            }
+            if (!mine && SAVI.groupList != null) {
+                GroupSavings live = SAVI.groupList.findGroup(name);
+                if (live != null && (live.hasMember(me) || live.hasMember(sessionName))) {
+                    mine = true;
                 }
             }
             if (!mine) {
@@ -408,28 +478,48 @@ public class Profile {
         return FileSystemStorage.getInstance().getAppHomePath() + GROUPS_CSV;
     }
 
+    /** Same lookup order as PeopleBackend: the app's file storage first, then the bundled copy. */
+    private static String readCsvText() {
+        try {
+            FileSystemStorage fs = FileSystemStorage.getInstance();
+            String path = csvPath();
+            if (fs.exists(path)) {
+                InputStream in = fs.openInputStream(path);
+                String text = Util.readToString(in, "UTF-8");
+                if (text != null) {
+                    return text;
+                }
+            }
+        } catch (Exception e) {
+            // fall through to the bundled file
+        }
+        try {
+            InputStream in = Display.getInstance().getResourceAsStream(Profile.class, "/" + GROUPS_CSV);
+            if (in != null) {
+                String text = Util.readToString(in, "UTF-8");
+                if (text != null) {
+                    return text;
+                }
+            }
+        } catch (Exception e) {
+            // no file found
+        }
+        return "";
+    }
+
     private static List<String[]> readCsv() {
         List<String[]> rows = new ArrayList<>();
-        FileSystemStorage fs = FileSystemStorage.getInstance();
-        String path = csvPath();
-        if (!fs.exists(path)) {
-            return rows;
+        String text = readCsvText();
+        if (text.length() > 0 && text.charAt(0) == '\uFEFF') {
+            text = text.substring(1);   // byte order mark
         }
-        try (InputStream is = fs.openInputStream(path)) {
-            String text = Util.readToString(is, "UTF-8");
-            if (text.length() > 0 && text.charAt(0) == '\uFEFF') {
-                text = text.substring(1);   // byte order mark
+        String[] lines = Util.split(text, "\n");
+        for (int i = 0; i < lines.length; i++) {
+            String line = lines[i].replace("\r", "");
+            if (line.trim().isEmpty()) {
+                continue;
             }
-            String[] lines = Util.split(text, "\n");
-            for (int i = 0; i < lines.length; i++) {
-                String line = lines[i].replace("\r", "");
-                if (line.trim().isEmpty()) {
-                    continue;
-                }
-                rows.add(splitLine(line));
-            }
-        } catch (IOException e) {
-            // unreadable file -> behave as if there were no groups
+            rows.add(splitLine(line));
         }
         return rows;
     }
@@ -446,8 +536,13 @@ public class Profile {
             }
             sb.append('\n');
         }
+        String content = sb.toString();
         try (OutputStream os = FileSystemStorage.getInstance().openOutputStream(csvPath())) {
-            os.write(sb.toString().getBytes("UTF-8"));
+            os.write(content.getBytes("UTF-8"));
+        } catch (IOException ignored) {
+        }
+        try (OutputStream os = Storage.getInstance().createOutputStream(GROUPS_CSV)) {
+            os.write(content.getBytes("UTF-8"));
         } catch (IOException ignored) {
         }
     }

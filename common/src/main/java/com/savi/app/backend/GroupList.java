@@ -1,9 +1,11 @@
 package com.savi.app.backend;
 // this class manages the collection of group savings and handles saving/loading
 
+import com.codename1.io.FileSystemStorage;
 import com.codename1.io.Storage;
 import com.codename1.io.Util;
 import com.codename1.ui.Display;
+import com.savi.app.SAVI;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -71,12 +73,19 @@ public class GroupList {
             return "Group already exists.";
         }
 
-        groups.add(new GroupSavings(
+        GroupSavings created = new GroupSavings(
                 savingsName.trim(),
                 target,
                 groupName.trim(),
                 expectedPerMember
-        ));
+        );
+
+        String currentUser = (SAVI.user != null) ? SAVI.user.getCurrentName() : null;
+        if (currentUser != null && !currentUser.trim().isEmpty()) {
+            created.addMember(currentUser.trim());
+        }
+
+        groups.add(created);
 
         saveAll();   // every change is saved to the CSV right away
 
@@ -96,8 +105,11 @@ public class GroupList {
         String result = addGroup(savingsName, target, groupName, expectedPerMember);
 
         if (result.equals("success")) {
-            findGroup(groupName).setWeeklyTarget(weeklyTarget);
-            saveAll();
+            GroupSavings g = findGroup(groupName);
+            if (g != null) {
+                g.setWeeklyTarget(weeklyTarget);
+                saveAll();
+            }
         }
 
         return result;
@@ -153,27 +165,41 @@ public class GroupList {
 
     // TEMPORARY: deletes this device's saved file and empties the list
     public void clearLocalFile() {
+        try {
+            String path = csvPath();
+            if (FileSystemStorage.getInstance().exists(path)) {
+                FileSystemStorage.getInstance().delete(path);
+            }
+        } catch (Exception ignored) {
+        }
         Storage.getInstance().deleteStorageFile(fileRec);
         groups.clear();
     }
 
+    private String csvPath() {
+        return FileSystemStorage.getInstance().getAppHomePath() + fileRec;
+    }
+
     // ---------------------------------------------------------------- FILE HANDLING (CSV)
     // One file holds three kinds of lines, told apart by the first letter:
-    // G,savingsName,targetAmount,groupName,expectedPerMember,createdDate,weeklyTarget
+    // G,creator/savingsName,targetAmount,groupName,expectedPerMember,createdDate,weeklyTarget,savingsName
     // M,groupName,memberName
     // C,groupName,member,amount,date,note,timestamp
     // Rewrites the whole file from the groups in memory (Storage cannot append).
     private boolean saveAll() {
         StringBuilder sb = new StringBuilder();
+        String owner = (SAVI.user != null && SAVI.user.getCurrentName() != null)
+                ? SAVI.user.getCurrentName() : "";
 
         for (GroupSavings g : groups) {
             // one G line for the group itself
-            sb.append("G,").append(encode(g.getSavingsName())).append(",")
+            sb.append("G,").append(encode(owner)).append(",")
                     .append(g.getTargetAmount()).append(",")
                     .append(encode(g.getGroupName())).append(",")
                     .append(g.getExpectedPerMember()).append(",")
                     .append(g.getCreatedDate()).append(",")
-                    .append(g.getWeeklyTarget()).append("\n");
+                    .append(g.getWeeklyTarget()).append(",")
+                    .append(encode(g.getSavingsName())).append("\n");
 
             // one M line for each member
             for (String m : g.getMembers()) {
@@ -198,8 +224,11 @@ public class GroupList {
     // Called once at startup from SAVI.runApp()
     public void load() {
         groups.clear();
-        String text = Storage.getInstance().exists(fileRec) ? readFile() : readRecords();
-        loadText(text);
+        String text = readFile();
+        if (text == null || text.trim().isEmpty()) {
+            text = readRecords();
+        }
+        loadText(text == null ? "" : text);
     }
 
     // split the text into lines and send each line to parseLine
@@ -225,15 +254,17 @@ public class GroupList {
             String type = p.get(0);
 
             if (type.equals("G") && p.size() >= 5) {
-                String savingsName = decode(p.get(1));
                 double target = Double.parseDouble(p.get(2));
                 String groupName = decode(p.get(3));
                 double expected = Double.parseDouble(p.get(4));
+                String savingsName = p.size() >= 8 && !decode(p.get(7)).trim().isEmpty()
+                        ? decode(p.get(7))
+                        : groupName;
 
                 LocalDate createdDate;
 
-                if (p.size() >= 6) {
-                    createdDate = LocalDate.parse(p.get(5));
+                if (p.size() >= 6 && !p.get(5).trim().isEmpty()) {
+                    createdDate = LocalDate.parse(p.get(5).trim());
                 } else {
                     // Compatibility with older CSV records
                     createdDate = LocalDate.now();
@@ -249,9 +280,9 @@ public class GroupList {
                     ));
 
                     // optional 7th column: the weekly target (older records don't have it: 0)
-                    if (p.size() >= 7) {
+                    if (p.size() >= 7 && !p.get(6).trim().isEmpty()) {
                         try {
-                            findGroup(groupName).setWeeklyTarget(Double.parseDouble(p.get(6)));
+                            findGroup(groupName).setWeeklyTarget(Double.parseDouble(p.get(6).trim()));
                         } catch (Exception ignored) {
                             // keep 0
                         }
@@ -288,7 +319,7 @@ public class GroupList {
                     long recordedAt = 0;
                     if (p.size() >= 7) {
                         try {
-                            recordedAt = Long.parseLong(p.get(6));
+                            recordedAt = Long.parseLong(p.get(6).trim());
                         } catch (NumberFormatException e) {
                             recordedAt = 0;
                         }
@@ -328,6 +359,19 @@ public class GroupList {
 
     // reads this device's saved file (empty text if nothing was saved yet)
     private String readFile() {
+        try {
+            String path = csvPath();
+            if (FileSystemStorage.getInstance().exists(path)) {
+                try (InputStream in = FileSystemStorage.getInstance().openInputStream(path)) {
+                    String text = Util.readToString(in, "UTF-8");
+                    if (text != null) {
+                        return text;
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
         try {
             if (!Storage.getInstance().exists(fileRec)) {
                 return "";
@@ -370,8 +414,15 @@ public class GroupList {
         }
     }
 
-    // writes the text with Storage; returns true if it worked
+    // writes the text with FileSystemStorage and Storage; returns true if it worked
     private boolean writeFile(String text) {
+        boolean fsOk = false;
+        try (OutputStream out = FileSystemStorage.getInstance().openOutputStream(csvPath())) {
+            out.write(text.getBytes("UTF-8"));
+            fsOk = true;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
         try (OutputStream out = Storage.getInstance().createOutputStream(fileRec)) {
 
             out.write(text.getBytes("UTF-8"));
@@ -383,7 +434,7 @@ public class GroupList {
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            return false;
+            return fsOk;
         }
     }
 

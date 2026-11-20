@@ -1,33 +1,50 @@
 package com.savi.app.backend;
 
 import com.codename1.io.FileSystemStorage;
+import com.codename1.io.Storage;
 import com.codename1.io.Util;
 import com.codename1.ui.Display;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import com.savi.app.SAVI;
 
+import java.io.InputStream;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Backend of PeoplePage and ViewAllTransacPage.
+ *
+ * Reads the group data from Groups_Records.csv:
+ *   G,<creator>,<totalTarget>,<groupName>,<expectedPerMember>,<createdDate>[,more...]
+ *   M,<groupName>,<memberName>
+ *   C,<groupName>,<memberName>,<amount>,<date>,<note>[,timestamp]
+ */
 public class PeopleBackend {
 
-    static final String FILE_NAME = "Groups_Records.csv";
+    private static final String GROUPS_CSV = "Groups_Records.csv";
 
-    private static final String[] MONTHS = {"January", "February", "March", "April", "May", "June", "July",
-            "August", "September", "October", "November", "December"};
-
-    // ---------- models used by the pages ----------
+    private static final String[] MONTHS = {
+            "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
+            "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"
+    };
 
     public static class Member {
-        public final String name, handle, role, group;
+        public final String name;
+        public final String role;
+        public final String handle;
+        public final String group;
         public final boolean active;
-        public final double totalPaid, missed, goal;
+        public final double totalPaid;
+        public final double missed;
+        public final double goal;
 
-        public Member(String name, String handle, String role, String group, boolean active,
+        public Member(String name, String role, String handle, String group, boolean active,
                       double totalPaid, double missed, double goal) {
             this.name = name;
-            this.handle = handle;
             this.role = role;
+            this.handle = handle;
             this.group = group;
             this.active = active;
             this.totalPaid = totalPaid;
@@ -37,253 +54,428 @@ public class PeopleBackend {
     }
 
     public static class Txn {
-        public final String title, date, month, type; // type: DEPOSIT, MISSED, ADJUSTMENT
+        public final String type;
+        public final String title;
+        public final String date;
+        public final String month;
         public final double amount;
         public final boolean settled;
 
-        public Txn(String title, String date, String month, String type, double amount, boolean settled) {
+        public Txn(String type, String title, String date, String month, double amount, boolean settled) {
+            this.type = type;
             this.title = title;
             this.date = date;
             this.month = month;
-            this.type = type;
             this.amount = amount;
             this.settled = settled;
         }
     }
 
-    // ---------- raw records from the csv ----------
-
-    private static class Group {
-        String owner, name, created;
-        double goal, daily;
+    private static class RawGroup {
+        String creator = "";
+        String name = "";
+        double totalTarget = 0;
+        double expectedPerMember = 0;
+        LocalDate createdDate = LocalDate.now();
+        List<String> members = new ArrayList<>();
+        List<RawContribution> contributions = new ArrayList<>();
     }
 
-    private static class Contribution {
-        String member, date, note;
+    private static class RawContribution {
+        String member;
         double amount;
-    }
+        LocalDate date;
+        String note;
 
-    private static class Records {
-        Group group;
-        List<String> members = new ArrayList<String>();
-        List<Contribution> contributions = new ArrayList<Contribution>();
-    }
-
-    // ---------- public api ----------
-
-    public static String getGroupName() {
-        Records r = load();
-        return r.group == null ? "No Group" : r.group.name;
-    }
-
-    // total money collected so far
-    public static double getGroupPool() {
-        Records r = load();
-        double sum = 0;
-        for (Contribution c : r.contributions) {
-            sum += c.amount;
+        RawContribution(String member, double amount, LocalDate date, String note) {
+            this.member = member;
+            this.amount = amount;
+            this.date = date;
+            this.note = note;
         }
-        return sum;
     }
 
-    public static Member[] getMembers() {
-        Records r = load();
-        if (r.group == null) {
-            return new Member[0];
-        }
-        int days = daysSince(r.group.created);
-        double expected = r.group.daily * days;
-        double goalPerMember = r.members.size() == 0 ? r.group.goal : r.group.goal / r.members.size();
-
-        Member[] out = new Member[r.members.size()];
-        for (int i = 0; i < out.length; i++) {
-            String name = r.members.get(i);
-            double paid = paidBy(r, name);
-            double missed = Math.max(0, expected - paid);
-            out[i] = new Member(capitalize(name), name.toLowerCase(), "Member", r.group.name, true,
-                    paid, missed, goalPerMember);
-        }
-        return out;
-    }
-
-    // newest first: contributions from the csv, plus a missed entry when the member is behind
-    public static Txn[] getTransactions(Member m) {
-        Records r = load();
-        List<Contribution> mine = new ArrayList<Contribution>();
-        for (Contribution c : r.contributions) {
-            if (c.member.equalsIgnoreCase(m.name)) {
-                mine.add(c);
+    private static String currentUserName() {
+        if (SAVI.user != null && SAVI.user.getCurrentName() != null) {
+            String n = SAVI.user.getCurrentName().trim();
+            if (!n.isEmpty()) {
+                return n;
             }
         }
-        // sort by date, newest first (iso dates sort correctly as text)
-        for (int i = 1; i < mine.size(); i++) {
-            Contribution key = mine.get(i);
-            int j = i - 1;
-            while (j >= 0 && mine.get(j).date.compareTo(key.date) < 0) {
-                mine.set(j + 1, mine.get(j));
-                j--;
-            }
-            mine.set(j + 1, key);
-        }
-
-        List<Txn> out = new ArrayList<Txn>();
-        if (m.missed > 0) {
-            String today = todayIso();
-            out.add(new Txn("Missed Contribution", displayDate(today), monthLabel(today), "MISSED", m.missed, false));
-        }
-        for (Contribution c : mine) {
-            String title = c.note != null && c.note.length() > 0 ? c.note : "Contribution";
-            out.add(new Txn(title, displayDate(c.date), monthLabel(c.date), "DEPOSIT", c.amount, true));
-        }
-        return out.toArray(new Txn[out.size()]);
+        String memberName = Profile.getInstance().getMemberName();
+        return memberName == null ? "" : memberName.trim();
     }
 
-    // ---------- csv loading ----------
-
-    private static double paidBy(Records r, String member) {
-        double sum = 0;
-        for (Contribution c : r.contributions) {
-            if (c.member.equalsIgnoreCase(member)) {
-                sum += c.amount;
+    private static boolean belongsToCurrentUser(RawGroup rg, GroupSavings gs) {
+        String me = currentUserName();
+        if (me.isEmpty()) {
+            return false;
+        }
+        if (rg != null) {
+            if (rg.creator != null && rg.creator.trim().equalsIgnoreCase(me)) {
+                return true;
+            }
+            for (int i = 0; i < rg.members.size(); i++) {
+                if (rg.members.get(i) != null && rg.members.get(i).trim().equalsIgnoreCase(me)) {
+                    return true;
+                }
             }
         }
-        return sum;
+        if (gs != null && gs.hasMember(me)) {
+            return true;
+        }
+        return false;
     }
 
-    // looks in the app's file storage first (in case the app writes new records), then the bundled copy
-    private static String readFile() {
-        try {
-            String path = FileSystemStorage.getInstance().getAppHomePath() + FILE_NAME;
-            if (FileSystemStorage.getInstance().exists(path)) {
-                InputStream in = FileSystemStorage.getInstance().openInputStream(path);
-                return Util.readToString(in, "UTF-8");
-            }
-        } catch (Exception e) {
-            // fall through to the bundled file
+    private static GroupSavings currentGroup() {
+        String me = currentUserName();
+        if (me.isEmpty()) {
+            return null;
         }
-        try {
-            InputStream in = Display.getInstance().getResourceAsStream(PeopleBackend.class, "/" + FILE_NAME);
-            if (in != null) {
-                return Util.readToString(in, "UTF-8");
+        List<RawGroup> allRaw = loadAllFromCsv();
+        if (SAVI.groupList != null) {
+            SAVI.groupList.load();
+            ArrayList<GroupSavings> groups = SAVI.groupList.getGroups();
+            if (groups != null && !groups.isEmpty()) {
+                for (int i = groups.size() - 1; i >= 0; i--) {
+                    GroupSavings g = groups.get(i);
+                    if (g == null) {
+                        continue;
+                    }
+                    RawGroup matchingRaw = findRawGroup(allRaw, g.getGroupName());
+                    if (belongsToCurrentUser(matchingRaw, g)) {
+                        return g;
+                    }
+                }
             }
-        } catch (Exception e) {
-            // no file found
         }
         return null;
     }
 
-    private static Records load() {
-        Records r = new Records();
-        String text = readFile();
-        if (text == null) {
-            return r;
+    private static RawGroup currentRawGroup() {
+        String me = currentUserName();
+        if (me.isEmpty()) {
+            return null;
         }
-        String[] lines = Util.split(text, "\n");
-
-        // pass 1: the group (first G row is the current group)
-        for (String line : lines) {
-            List<String> f = splitCsv(line);
-            if (f.size() >= 6 && f.get(0).equals("G")) {
-                Group g = new Group();
-                g.owner = f.get(1);
-                g.goal = num(f.get(2));
-                g.name = f.get(3);
-                g.daily = num(f.get(4));
-                g.created = f.get(5);
-                r.group = g;
-                break;
+        List<RawGroup> all = loadAllFromCsv();
+        for (int i = all.size() - 1; i >= 0; i--) {
+            RawGroup g = all.get(i);
+            if (belongsToCurrentUser(g, null)) {
+                return g;
             }
         }
-        if (r.group == null) {
-            return r;
-        }
-
-        // pass 2: members and contributions of that group
-        for (String line : lines) {
-            List<String> f = splitCsv(line);
-            if (f.size() < 3 || !f.get(1).equalsIgnoreCase(r.group.name)) {
-                continue;
-            }
-            String type = f.get(0);
-            if (type.equals("M")) {
-                r.members.add(f.get(2));
-            } else if (type.equals("C") && f.size() >= 5) {
-                Contribution c = new Contribution();
-                c.member = f.get(2);
-                c.amount = num(f.get(3));
-                c.date = f.get(4);
-                c.note = f.size() >= 6 ? f.get(5) : "";
-                r.contributions.add(c);
-            }
-        }
-        return r;
+        return null;
     }
 
-    // keeps empty fields (like the trailing one in C rows)
-    private static List<String> splitCsv(String line) {
-        List<String> out = new ArrayList<String>();
-        line = line.trim();
-        if (line.length() == 0) {
-            return out;
+    private static RawGroup findRawGroup(List<RawGroup> all, String groupName) {
+        if (groupName == null) {
+            return null;
         }
+        for (int i = 0; i < all.size(); i++) {
+            RawGroup rg = all.get(i);
+            if (rg.name != null && rg.name.trim().equalsIgnoreCase(groupName.trim())) {
+                return rg;
+            }
+        }
+        return null;
+    }
+
+    public static String getGroupName() {
+        GroupSavings g = currentGroup();
+        if (g != null && g.getGroupName() != null && !g.getGroupName().trim().isEmpty()) {
+            return g.getGroupName();
+        }
+        RawGroup rg = currentRawGroup();
+        if (rg != null && rg.name != null && !rg.name.trim().isEmpty()) {
+            return rg.name;
+        }
+        return "No Group Yet";
+    }
+
+    public static double getGroupPool() {
+        GroupSavings g = currentGroup();
+        if (g != null) {
+            return g.getCurrentAmount();
+        }
+        RawGroup rg = currentRawGroup();
+        if (rg != null) {
+            double sum = 0;
+            for (int i = 0; i < rg.contributions.size(); i++) {
+                sum += rg.contributions.get(i).amount;
+            }
+            return sum;
+        }
+        return 0.0;
+    }
+
+    public static Member[] getMembers() {
+        GroupSavings g = currentGroup();
+        RawGroup rg = currentRawGroup();
+
+        if (g != null) {
+            List<String> memberNames = g.getMembers();
+            List<Contribution> allContribs = g.getContributions();
+            double expected = g.getExpectedPerMember();
+            double goal = expected > 0 ? expected : g.getTargetAmount();
+            String creator = rg != null ? rg.creator : "";
+
+            Member[] result = new Member[memberNames.size()];
+            for (int i = 0; i < memberNames.size(); i++) {
+                String name = memberNames.get(i);
+                double paid = 0.0;
+                for (int j = 0; j < allContribs.size(); j++) {
+                    Contribution c = allContribs.get(j);
+                    if (c.getMember() != null && c.getMember().equalsIgnoreCase(name)) {
+                        paid += c.getAmount();
+                    }
+                }
+                double missed = Math.max(0.0, expected - paid);
+                boolean isCreator = !creator.isEmpty() && creator.equalsIgnoreCase(name);
+                String role = (isCreator || i == 0) ? "Admin" : "Member";
+                result[i] = new Member(
+                        name,
+                        role,
+                        toHandle(name),
+                        g.getGroupName(),
+                        paid > 0,
+                        paid,
+                        missed,
+                        goal > 0 ? goal : 1.0
+                );
+            }
+            return result;
+        }
+
+        if (rg == null) {
+            return new Member[0];
+        }
+        double goal = rg.expectedPerMember > 0 ? rg.expectedPerMember : rg.totalTarget;
+        Member[] result = new Member[rg.members.size()];
+        for (int i = 0; i < rg.members.size(); i++) {
+            String name = rg.members.get(i);
+            double paid = 0;
+            for (int j = 0; j < rg.contributions.size(); j++) {
+                RawContribution c = rg.contributions.get(j);
+                if (c.member != null && c.member.equalsIgnoreCase(name)) {
+                    paid += c.amount;
+                }
+            }
+            double missed = Math.max(0.0, rg.expectedPerMember - paid);
+            boolean isCreator = !rg.creator.isEmpty() && rg.creator.equalsIgnoreCase(name);
+            String role = (isCreator || i == 0) ? "Admin" : "Member";
+            result[i] = new Member(
+                    name,
+                    role,
+                    toHandle(name),
+                    rg.name,
+                    paid > 0,
+                    paid,
+                    missed,
+                    goal > 0 ? goal : 1.0
+            );
+        }
+        return result;
+    }
+
+    public static Txn[] getTransactions(Member m) {
+        if (m == null || m.name == null) {
+            return new Txn[0];
+        }
+        String memberName = m.name.trim();
+        List<Txn> list = new ArrayList<>();
+
+        GroupSavings g = currentGroup();
+        if (g != null) {
+            List<Contribution> allContribs = g.getContributions();
+            for (int i = allContribs.size() - 1; i >= 0; i--) {
+                Contribution c = allContribs.get(i);
+                if (c.getMember() != null && c.getMember().equalsIgnoreCase(memberName)) {
+                    String title = (c.getNote() == null || c.getNote().trim().isEmpty())
+                            ? "Group Deposit" : c.getNote().trim();
+                    LocalDate d = c.getDate() != null ? c.getDate() : LocalDate.now();
+                    list.add(new Txn(
+                            "DEPOSIT",
+                            title,
+                            formatDate(d),
+                            formatMonth(d),
+                            c.getAmount(),
+                            true
+                    ));
+                }
+            }
+        } else {
+            RawGroup rg = currentRawGroup();
+            if (rg != null) {
+                for (int i = rg.contributions.size() - 1; i >= 0; i--) {
+                    RawContribution c = rg.contributions.get(i);
+                    if (c.member != null && c.member.equalsIgnoreCase(memberName)) {
+                        String title = (c.note == null || c.note.trim().isEmpty())
+                                ? "Group Deposit" : c.note.trim();
+                        LocalDate d = c.date != null ? c.date : LocalDate.now();
+                        list.add(new Txn(
+                                "DEPOSIT",
+                                title,
+                                formatDate(d),
+                                formatMonth(d),
+                                c.amount,
+                                true
+                        ));
+                    }
+                }
+            }
+        }
+
+        if (m.missed > 0) {
+            LocalDate today = LocalDate.now();
+            list.add(new Txn(
+                    "MISSED",
+                    "Remaining Share",
+                    formatDate(today),
+                    formatMonth(today),
+                    m.missed,
+                    false
+            ));
+        }
+
+        return list.toArray(new Txn[list.size()]);
+    }
+
+    private static String toHandle(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            return "member";
+        }
+        return name.trim().toLowerCase().replace(' ', '.');
+    }
+
+    private static String formatDate(LocalDate d) {
+        if (d == null) {
+            return "";
+        }
+        String m = MONTHS[d.getMonthValue() - 1];
+        String shortMonth = m.charAt(0) + m.substring(1, 3).toLowerCase();
+        return shortMonth + " " + d.getDayOfMonth() + ", " + d.getYear();
+    }
+
+    private static String formatMonth(LocalDate d) {
+        if (d == null) {
+            return "";
+        }
+        return MONTHS[d.getMonthValue() - 1] + " " + d.getYear();
+    }
+
+    private static List<RawGroup> loadAllFromCsv() {
+        Map<String, RawGroup> map = new LinkedHashMap<>();
+        String text = readCsvText();
+        if (text == null || text.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+        if (text.charAt(0) == '\uFEFF') {
+            text = text.substring(1);
+        }
+        String[] lines = Util.split(text, "\n");
+        for (int i = 0; i < lines.length; i++) {
+            String line = lines[i].replace("\r", "").trim();
+            if (line.isEmpty()) {
+                continue;
+            }
+            String[] p = splitLine(line);
+            String type = p[0];
+            if ("G".equals(type) && p.length >= 5) {
+                String gName = p[3];
+                if (!map.containsKey(gName)) {
+                    RawGroup rg = new RawGroup();
+                    rg.creator = p[1];
+                    rg.totalTarget = parseDoubleSafe(p[2]);
+                    rg.name = gName;
+                    rg.expectedPerMember = parseDoubleSafe(p[4]);
+                    rg.createdDate = p.length >= 6 && !p[5].isEmpty() ? parseDateSafe(p[5]) : LocalDate.now();
+                    map.put(gName, rg);
+                }
+            } else if ("M".equals(type) && p.length >= 3) {
+                RawGroup rg = map.get(p[1]);
+                if (rg != null && !rg.members.contains(p[2])) {
+                    rg.members.add(p[2]);
+                }
+            } else if ("C".equals(type) && p.length >= 5) {
+                RawGroup rg = map.get(p[1]);
+                if (rg != null) {
+                    String member = p[2];
+                    double amt = parseDoubleSafe(p[3]);
+                    LocalDate date = parseDateSafe(p[4]);
+                    String note = p.length >= 6 && !p[5].isEmpty() ? p[5] : "Group Deposit";
+                    rg.contributions.add(new RawContribution(member, amt, date, note));
+                }
+            }
+        }
+        return new ArrayList<>(map.values());
+    }
+
+    private static String readCsvText() {
+        try {
+            FileSystemStorage fs = FileSystemStorage.getInstance();
+            String path = fs.getAppHomePath() + GROUPS_CSV;
+            if (fs.exists(path)) {
+                try (InputStream in = fs.openInputStream(path)) {
+                    String text = Util.readToString(in, "UTF-8");
+                    if (text != null && !text.trim().isEmpty()) {
+                        return text;
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        try {
+            if (Storage.getInstance().exists(GROUPS_CSV)) {
+                try (InputStream in = Storage.getInstance().createInputStream(GROUPS_CSV)) {
+                    String text = Util.readToString(in, "UTF-8");
+                    if (text != null && !text.trim().isEmpty()) {
+                        return text;
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        try {
+            InputStream in = Display.getInstance().getResourceAsStream(PeopleBackend.class, "/" + GROUPS_CSV);
+            if (in != null) {
+                try (InputStream stream = in) {
+                    String text = Util.readToString(stream, "UTF-8");
+                    if (text != null) {
+                        return text;
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return "";
+    }
+
+    private static String[] splitLine(String line) {
+        List<String> parts = new ArrayList<>();
         int start = 0;
-        for (int i = 0; i <= line.length(); i++) {
-            if (i == line.length() || line.charAt(i) == ',') {
-                out.add(line.substring(start, i).trim());
+        for (int i = 0; i < line.length(); i++) {
+            if (line.charAt(i) == ',') {
+                parts.add(line.substring(start, i).trim());
                 start = i + 1;
             }
         }
-        return out;
+        parts.add(line.substring(start).trim());
+        return parts.toArray(new String[parts.size()]);
     }
 
-    private static double num(String s) {
+    private static double parseDoubleSafe(String s) {
         try {
-            return Double.parseDouble(s);
+            return Double.parseDouble(s.trim());
         } catch (Exception e) {
-            return 0;
+            return 0.0;
         }
     }
 
-    private static String capitalize(String s) {
-        return s.length() == 0 ? s : s.substring(0, 1).toUpperCase() + s.substring(1);
-    }
-
-    // ---------- dates ----------
-
-    private static int[] ymd(String iso) {
-        String[] p = Util.split(iso, "-");
-        return new int[]{(int) num(p[0]), (int) num(p[1]), (int) num(p[2])};
-    }
-
-    private static String displayDate(String iso) {
-        int[] d = ymd(iso);
-        return MONTHS[d[1] - 1].substring(0, 3) + " " + d[2] + ", " + d[0];
-    }
-
-    private static String monthLabel(String iso) {
-        int[] d = ymd(iso);
-        return MONTHS[d[1] - 1].toUpperCase() + " " + d[0];
-    }
-
-    private static String todayIso() {
-        Calendar c = Calendar.getInstance();
-        int m = c.get(Calendar.MONTH) + 1;
-        int d = c.get(Calendar.DAY_OF_MONTH);
-        return c.get(Calendar.YEAR) + "-" + (m < 10 ? "0" : "") + m + "-" + (d < 10 ? "0" : "") + d;
-    }
-
-    // whole days passed since the given date (0 if today or in the future)
-    private static int daysSince(String iso) {
-        int[] d = ymd(iso);
-        Calendar c = Calendar.getInstance();
-        c.set(Calendar.YEAR, d[0]);
-        c.set(Calendar.MONTH, d[1] - 1);
-        c.set(Calendar.DAY_OF_MONTH, d[2]);
-        c.set(Calendar.HOUR_OF_DAY, 0);
-        c.set(Calendar.MINUTE, 0);
-        c.set(Calendar.SECOND, 0);
-        c.set(Calendar.MILLISECOND, 0);
-        long diff = new Date().getTime() - c.getTime().getTime();
-        return diff <= 0 ? 0 : (int) (diff / 86400000L);
+    private static LocalDate parseDateSafe(String s) {
+        try {
+            return LocalDate.parse(s.trim());
+        } catch (Exception e) {
+            return LocalDate.now();
+        }
     }
 }

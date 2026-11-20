@@ -428,6 +428,7 @@ public class ProfilePage implements Profile.DataChangeListener {
             }
             backend.removeChangeListener(this);
             backend.logout();
+            SAVI.user.logout();   // clears the logged-in user
             new MainPage().show();
         }));
 
@@ -583,7 +584,9 @@ public class ProfilePage implements Profile.DataChangeListener {
     }
 
     public void show() {
-        backend.refreshGroups();   // re-read Groups_Records.csv so the page is up to date
+        // use the real logged-in user (same name as in Groups_Records.csv), then re-read the CSV
+        backend.loginAs(SAVI.user.getCurrentName());
+        backend.refreshGroups();
         backend.addChangeListener(this);
 
         Form base = new Form("", new BorderLayout());
