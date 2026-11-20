@@ -13,7 +13,7 @@ import java.util.ArrayList;
 
 public class GroupList {
     private final ArrayList<GroupSavings> groups = new ArrayList<>();
-    private final String fileRec = "Groups_Records.csv";
+    private final String fileRec = "Groups_Records.txt";
 
     public ArrayList<GroupSavings> getGroups() {
         return new ArrayList<>(groups);
@@ -119,7 +119,7 @@ public class GroupList {
 
     public void clearLocalFile() {
         try {
-            String path = csvPath();
+            String path = txtPath();
             if (FileSystemStorage.getInstance().exists(path)) {
                 FileSystemStorage.getInstance().delete(path);
             }
@@ -129,7 +129,7 @@ public class GroupList {
         groups.clear();
     }
 
-    private String csvPath() {
+    private String txtPath() {
         return FileSystemStorage.getInstance().getAppHomePath() + fileRec;
     }
 
@@ -284,7 +284,7 @@ public class GroupList {
 
     private String readFile() {
         try {
-            String path = csvPath();
+            String path = txtPath();
             if (FileSystemStorage.getInstance().exists(path)) {
                 try (InputStream in = FileSystemStorage.getInstance().openInputStream(path)) {
                     String text = Util.readToString(in, "UTF-8");
@@ -330,7 +330,7 @@ public class GroupList {
 
     private boolean writeFile(String text) {
         boolean fsOk = false;
-        try (OutputStream out = FileSystemStorage.getInstance().openOutputStream(csvPath())) {
+        try (OutputStream out = FileSystemStorage.getInstance().openOutputStream(txtPath())) {
             out.write(text.getBytes("UTF-8"));
             fsOk = true;
         } catch (Exception ex) {
@@ -338,7 +338,6 @@ public class GroupList {
         }
         try (OutputStream out = Storage.getInstance().createOutputStream(fileRec)) {
             out.write(text.getBytes("UTF-8"));
-            System.out.println("GROUPS CSV NOW:\n" + text);
             return true;
         } catch (Exception ex) {
             ex.printStackTrace();

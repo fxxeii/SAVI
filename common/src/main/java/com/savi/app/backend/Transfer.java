@@ -13,7 +13,7 @@ import com.savi.app.SAVI;
  * The dropdowns list every savings as "Name (Group)" or "Name (Personal)".
  *
  * A transfer is saved as two contribution records (through GroupList / PersonalList, so they
- * are written to the CSV files too):
+ * are written to the TXT files too):
  *   sending side   : a NEGATIVE contribution  ("Transferred to ...")
  *   receiving side : a POSITIVE contribution  ("Transferred from ...")
  */
@@ -97,7 +97,7 @@ public class Transfer {
             return Math.max(0, total);
         }
 
-        /** Records the contribution AND saves it to the CSV. */
+        /** Records the contribution AND saves it to the TXT. */
         boolean add(String member, double amount, LocalDate date, String note) {
             if (group != null) {
                 return SAVI.groupList.addContribution(group.getGroupName(), member, amount, date, note);

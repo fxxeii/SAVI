@@ -11,11 +11,11 @@ import java.util.ArrayList;
 
 // REMINDER LIST - the backend of the Reminder page.
 // DATA STRUCTURE: a singly linked list of Reminder nodes (head -> next -> next -> null).
-// FILE HANDLING: every change is saved to Reminders_Records.csv, and load() reads it back at startup.
+// FILE HANDLING: every change is saved to Reminders_Records.txt, and load() reads it back at startup.
 // ENCAPSULATION: head is private, so the pages can only use the methods below.
 public class ReminderList {
     private Reminder head;                                   // first node of the list
-    private final String fileRec = "Reminders_Records.csv";
+    private final String fileRec = "Reminders_Records.txt";
 
     // create a node, link it at the end of the list, then save
     public void addReminder(String title, String groupName, LocalDate date, String time, double amount) {
@@ -86,7 +86,7 @@ public class ReminderList {
         return getCompleted().size();
     }
 
-    // ---------------------------------------------------------------- FILE HANDLING (CSV)
+    // ---------------------------------------------------------------- FILE HANDLING (TXT)
     // Format per line: title,groupName,yyyy-MM-dd,time,amount,completed
 
     // Rewrites the whole file from the linked list (Storage cannot append).
@@ -94,7 +94,7 @@ public class ReminderList {
         StringBuilder sb = new StringBuilder();
         Reminder temp = head;
         while (temp != null) {
-            // encode() protects commas inside text so they do not break the CSV
+            // encode() protects commas inside text so they do not break the TXT
             sb.append(encode(temp.getTitle())).append(",")
                     .append(encode(temp.getGroupName())).append(",")
                     .append(temp.getDate().toString()).append(",")
@@ -108,8 +108,6 @@ public class ReminderList {
             OutputStream out = Storage.getInstance().createOutputStream(fileRec);
             out.write(sb.toString().getBytes("UTF-8"));
             out.close();
-            // copy these lines into src/main/resources/Reminders_Records.csv to share them
-            System.out.println("REMINDERS CSV NOW:\n" + sb);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -191,7 +189,7 @@ public class ReminderList {
         }
     }
 
-    // one CSV line -> one Reminder. The commas are found by position (c1..c5)
+    // one TXT line -> one Reminder. The commas are found by position (c1..c5)
     // and the text between them is cut out with substring().
     private Reminder parseLine(String line) {
         int c1 = line.indexOf(',');
@@ -217,7 +215,7 @@ public class ReminderList {
         }
     }
 
-    // A comma or new line typed into a field would break the CSV, so those characters
+    // A comma or new line typed into a field would break the TXT, so those characters
     // are stored as %2C / %0A / %0D (and "%" itself as %25), then turned back by decode().
     private String encode(String s) {
         if (s == null) return "";

@@ -11,7 +11,7 @@ import java.util.ArrayList;
 
 public class PersonalList {
     private final ArrayList<PersonalSavings> list = new ArrayList<>();
-    private final String fileRec = "Personal_Records.csv";
+    private final String fileRec = "Personal_Records.txt";
 
     public ArrayList<PersonalSavings> getAll() {
         return new ArrayList<>(list);
@@ -86,7 +86,7 @@ public class PersonalList {
         return true;
     }
 
-    // ---------------------------------------------------------------- FILE HANDLING (CSV)
+    // ---------------------------------------------------------------- FILE HANDLING (TXT)
     // P,savingsName,targetAmount,ownerName,weeklyTarget
     // C,savingsName,ownerName,amount,date,note,timestamp
     private void saveAll() {
@@ -226,7 +226,6 @@ public class PersonalList {
             OutputStream out = Storage.getInstance().createOutputStream(fileRec);
             out.write(text.getBytes("UTF-8"));
             out.close();
-            System.out.println("PERSONAL CSV NOW:\n" + text);
         } catch (Exception ex) {
             ex.printStackTrace();
         }

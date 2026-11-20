@@ -26,7 +26,7 @@ public class GroupSavings extends Savings {
                 expectedPerMember, LocalDate.now());
     }
 
-    // This one takes the creation date (used when loading a saved group from the CSV)
+    // This one takes the creation date (used when loading a saved group from the TXT)
     public GroupSavings(String savingsName, double targetAmount,
                         String groupName, double expectedPerMember,
                         LocalDate createdDate) {

@@ -59,7 +59,7 @@ public class Contribution {
     }
 
     // package-private (no "public"): only classes in this package, like GroupList / PersonalList,
-    // can restore the saved time when loading the CSV
+    // can restore the saved time when loading the TXT
     void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
     }

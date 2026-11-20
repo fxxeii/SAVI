@@ -22,7 +22,7 @@ class Node {
 public class User {
     Node head;
     Node currentUser;
-    String fileRec = "Users_Records.csv";
+    String fileRec = "Users_Records.txt";
 
     public String signup(String n, String p, String cp) {
         if (!fieldsComplete(n, p, cp)) { //is it empty
@@ -158,8 +158,8 @@ public class User {
         return p != null && !p.isEmpty();
     }
 
-    // ---------------------------------------------------------------- FILE HANDLING (CSV)
-    // Codename One does not allow FileWriter/FileReader, so the CSV text is kept with Storage.
+    // ---------------------------------------------------------------- FILE HANDLING (TXT)
+    // Codename One does not allow FileWriter/FileReader, so the TXT text is kept with Storage.
     // File format, one account per line:  name,password
 
     /** Adds ONE new account to the end of the file (used by signup). */
@@ -245,7 +245,7 @@ public class User {
         );
     }
 
-    // a comma or new line typed into a field would break the CSV, so those characters are
+    // a comma or new line typed into a field would break the TXT, so those characters are
     // stored as %2C / %0A / %0D (and "%" itself as %25), then turned back when loading
     private String encode(String s) {
         StringBuilder out = new StringBuilder();
@@ -330,8 +330,6 @@ public class User {
             OutputStream out = Storage.getInstance().createOutputStream(fileRec);
             out.write(text.getBytes("UTF-8"));
             out.close();
-            // temporary: copy these lines into src/main/resources/Users_Records.csv to share them
-            System.out.println("USERS CSV NOW:\n" + text);
         } catch (Exception ex) {
             ex.printStackTrace();
         }

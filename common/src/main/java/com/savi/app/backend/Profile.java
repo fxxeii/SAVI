@@ -17,8 +17,8 @@ import java.util.List;
 /**
  * Backend of ProfilePage.
  *
- * Accounts come from Users_Records.csv (via SAVI.user).
- * Groups come from Groups_Records.csv:
+ * Accounts come from Users_Records.txt (via SAVI.user).
+ * Groups come from Groups_Records.txt:
  *
  *   G,<creator>,<totalTarget>,<groupName>,<dailyTarget>,<targetDate>[,more columns...]
  *   M,<groupName>,<memberName>
@@ -31,8 +31,8 @@ public class Profile {
     private static final String PREF_GREETING_PREFIX = "savi_greeting_";
     private static final String PREF_HANDLE_PREFIX = "savi_handle_";
     private static final String LEGACY_ACCOUNTS_FILE = "savi_accounts_v2.dat";
-    private static final String USERS_CSV = "Users_Records.csv";
-    private static final String GROUPS_CSV = "Groups_Records.csv";
+    private static final String USERS_TXT = "Users_Records.txt";
+    private static final String GROUPS_TXT = "Groups_Records.txt";
 
     private static final int G_CREATOR = 1;
     private static final int G_TOTAL = 2;
@@ -232,7 +232,7 @@ public class Profile {
             String newUsername = username.trim();
             current.setUsername(newUsername);
             Preferences.set(PREF_MEMBER_PREFIX + current.getId(), newUsername);
-            updateUsernameInUsersCsv(oldUsername, newUsername);
+            updateUsernameInUsersTxt(oldUsername, newUsername);
         }
         if (handle != null && !handle.trim().isEmpty()) {
             String formatted = handle.trim();
@@ -245,7 +245,7 @@ public class Profile {
         notifyListeners();
     }
 
-    private void updateUsernameInUsersCsv(String oldName, String newName) {
+    private void updateUsernameInUsersTxt(String oldName, String newName) {
         if (oldName == null || newName == null || oldName.equals(newName)) {
             return;
         }
@@ -261,10 +261,10 @@ public class Profile {
             StringBuilder sb = new StringBuilder();
             Node curr = SAVI.user.head;
             while (curr != null) {
-                sb.append(encodeCsv(curr.name)).append(",").append(encodeCsv(curr.pass)).append("\n");
+                sb.append(encodeTxt(curr.name)).append(",").append(encodeTxt(curr.pass)).append("\n");
                 curr = curr.pntnext;
             }
-            try (OutputStream out = Storage.getInstance().createOutputStream(USERS_CSV)) {
+            try (OutputStream out = Storage.getInstance().createOutputStream(USERS_TXT)) {
                 out.write(sb.toString().getBytes("UTF-8"));
             } catch (Exception ignored) {
             }
@@ -277,7 +277,7 @@ public class Profile {
         if (n.isEmpty()) {
             return false;
         }
-        List<String[]> rows = readCsv();
+        List<String[]> rows = readTxt();
         int idx = findGroupRow(rows, groupId);
         if (idx < 0) {
             return false;
@@ -300,7 +300,7 @@ public class Profile {
                 }
             }
         }
-        writeCsv(rows);
+        writeTxt(rows);
         if (SAVI.groupList != null) {
             SAVI.groupList.load();
         }
@@ -311,7 +311,7 @@ public class Profile {
 
     public void deleteGroup(String groupId) {
         getActiveProfile();
-        List<String[]> rows = readCsv();
+        List<String[]> rows = readTxt();
         for (int i = rows.size() - 1; i >= 0; i--) {
             String[] r = rows.get(i);
             boolean hit = false;
@@ -324,7 +324,7 @@ public class Profile {
                 rows.remove(i);
             }
         }
-        writeCsv(rows);
+        writeTxt(rows);
         if (SAVI.groupList != null) {
             SAVI.groupList.load();
         }
@@ -373,7 +373,7 @@ public class Profile {
         return sb.toString();
     }
 
-    // ------------------------------------------------------------------ CSV: groups
+    // ------------------------------------------------------------------ TXT: groups
 
     private boolean matchesCurrentUser(String candidate) {
         if (candidate == null || candidate.trim().isEmpty()) {
@@ -400,7 +400,7 @@ public class Profile {
         if (me.isEmpty() && sessionName.isEmpty()) {
             return;
         }
-        List<String[]> rows = readCsv();
+        List<String[]> rows = readTxt();
         for (int i = 0; i < rows.size(); i++) {
             String[] g = rows.get(i);
             if (!"G".equals(g[0]) || g.length <= G_NAME || g[G_NAME].isEmpty()) {
@@ -465,7 +465,7 @@ public class Profile {
         return s == null ? "" : s.replace(",", " ").replace("\n", " ").replace("\r", " ").trim();
     }
 
-    private static String encodeCsv(String s) {
+    private static String encodeTxt(String s) {
         if (s == null) return "";
         StringBuilder out = new StringBuilder();
         for (int i = 0; i < s.length(); i++) {
@@ -490,16 +490,16 @@ public class Profile {
         return bigger;
     }
 
-    // ------------------------------------------------------------------ CSV: file access
+    // ------------------------------------------------------------------ TXT: file access
 
-    private static String csvPath() {
-        return FileSystemStorage.getInstance().getAppHomePath() + GROUPS_CSV;
+    private static String txtPath() {
+        return FileSystemStorage.getInstance().getAppHomePath() + GROUPS_TXT;
     }
 
-    private static String readCsvText() {
+    private static String readTxtText() {
         try {
             FileSystemStorage fs = FileSystemStorage.getInstance();
-            String path = csvPath();
+            String path = txtPath();
             if (fs.exists(path)) {
                 InputStream in = fs.openInputStream(path);
                 String text = Util.readToString(in, "UTF-8");
@@ -510,8 +510,8 @@ public class Profile {
         } catch (Exception ignored) {
         }
         try {
-            if (Storage.getInstance().exists(GROUPS_CSV)) {
-                InputStream in = Storage.getInstance().createInputStream(GROUPS_CSV);
+            if (Storage.getInstance().exists(GROUPS_TXT)) {
+                InputStream in = Storage.getInstance().createInputStream(GROUPS_TXT);
                 String text = Util.readToString(in, "UTF-8");
                 if (text != null && !text.trim().isEmpty()) {
                     return text;
@@ -520,7 +520,7 @@ public class Profile {
         } catch (Exception ignored) {
         }
         try {
-            InputStream in = Display.getInstance().getResourceAsStream(Profile.class, "/" + GROUPS_CSV);
+            InputStream in = Display.getInstance().getResourceAsStream(Profile.class, "/" + GROUPS_TXT);
             if (in != null) {
                 String text = Util.readToString(in, "UTF-8");
                 if (text != null) {
@@ -532,9 +532,9 @@ public class Profile {
         return "";
     }
 
-    private static List<String[]> readCsv() {
+    private static List<String[]> readTxt() {
         List<String[]> rows = new ArrayList<>();
-        String text = readCsvText();
+        String text = readTxtText();
         if (text.length() > 0 && text.charAt(0) == '\uFEFF') {
             text = text.substring(1);
         }
@@ -549,7 +549,7 @@ public class Profile {
         return rows;
     }
 
-    private static void writeCsv(List<String[]> rows) {
+    private static void writeTxt(List<String[]> rows) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < rows.size(); i++) {
             String[] r = rows.get(i);
@@ -562,11 +562,11 @@ public class Profile {
             sb.append('\n');
         }
         String content = sb.toString();
-        try (OutputStream os = FileSystemStorage.getInstance().openOutputStream(csvPath())) {
+        try (OutputStream os = FileSystemStorage.getInstance().openOutputStream(txtPath())) {
             os.write(content.getBytes("UTF-8"));
         } catch (IOException ignored) {
         }
-        try (OutputStream os = Storage.getInstance().createOutputStream(GROUPS_CSV)) {
+        try (OutputStream os = Storage.getInstance().createOutputStream(GROUPS_TXT)) {
             os.write(content.getBytes("UTF-8"));
         } catch (IOException ignored) {
         }
@@ -585,7 +585,7 @@ public class Profile {
         return out.toArray(new String[out.size()]);
     }
 
-    // ------------------------------------------------------------------ accounts from Users_Records.csv
+    // ------------------------------------------------------------------ accounts from Users_Records.txt
 
     private void seedDefaultData() {
         accounts.clear();
