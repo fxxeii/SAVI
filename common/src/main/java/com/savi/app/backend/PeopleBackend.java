@@ -19,11 +19,13 @@ import java.util.Map;
  * Reads the group data from Groups_Records.csv:
  *   G,<creator>,<totalTarget>,<groupName>,<expectedPerMember>,<createdDate>[,more...]
  *   M,<groupName>,<memberName>
- *   C,<groupName>,<memberName>,<amount>,<date>,<note>[,timestamp] test test
+ *   C,<groupName>,<memberName>,<amount>,<date>,<note>[,timestamp]
  */
 public class PeopleBackend {
 
     private static final String GROUPS_CSV = "Groups_Records.csv";
+
+    private static String selectedGroupName = null;
 
     private static final String[] MONTHS = {
             "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
@@ -95,6 +97,58 @@ public class PeopleBackend {
         }
     }
 
+    public static void setSelectedGroup(String groupName) {
+        selectedGroupName = (groupName == null || groupName.trim().isEmpty()) ? null : groupName.trim();
+    }
+
+    public static String[] getUserGroupNames() {
+        String me = currentUserName();
+        if (me.isEmpty()) {
+            return new String[0];
+        }
+        List<String> names = new ArrayList<>();
+        List<RawGroup> allRaw = loadAllFromCsv();
+
+        if (SAVI.groupList != null) {
+            SAVI.groupList.load();
+            ArrayList<GroupSavings> groups = SAVI.groupList.getGroups();
+            if (groups != null) {
+                for (int i = 0; i < groups.size(); i++) {
+                    GroupSavings g = groups.get(i);
+                    if (g == null) continue;
+                    RawGroup matchingRaw = findRawGroup(allRaw, g.getGroupName());
+                    if (belongsToCurrentUser(matchingRaw, g)) {
+                        String n = g.getGroupName().trim();
+                        if (!containsIgnoreCase(names, n)) {
+                            names.add(n);
+                        }
+                    }
+                }
+            }
+        }
+
+        for (int i = 0; i < allRaw.size(); i++) {
+            RawGroup rg = allRaw.get(i);
+            if (belongsToCurrentUser(rg, null) && rg.name != null && !rg.name.trim().isEmpty()) {
+                String n = rg.name.trim();
+                if (!containsIgnoreCase(names, n)) {
+                    names.add(n);
+                }
+            }
+        }
+
+        return names.toArray(new String[names.size()]);
+    }
+
+    private static boolean containsIgnoreCase(List<String> list, String target) {
+        for (int i = 0; i < list.size(); i++) {
+            if (list.get(i).equalsIgnoreCase(target)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static String currentUserName() {
         if (SAVI.user != null && SAVI.user.getCurrentName() != null) {
             String n = SAVI.user.getCurrentName().trim();
@@ -137,6 +191,17 @@ public class PeopleBackend {
             SAVI.groupList.load();
             ArrayList<GroupSavings> groups = SAVI.groupList.getGroups();
             if (groups != null && !groups.isEmpty()) {
+                if (selectedGroupName != null) {
+                    for (int i = 0; i < groups.size(); i++) {
+                        GroupSavings g = groups.get(i);
+                        if (g != null && selectedGroupName.equalsIgnoreCase(g.getGroupName())) {
+                            RawGroup matchingRaw = findRawGroup(allRaw, g.getGroupName());
+                            if (belongsToCurrentUser(matchingRaw, g)) {
+                                return g;
+                            }
+                        }
+                    }
+                }
                 for (int i = groups.size() - 1; i >= 0; i--) {
                     GroupSavings g = groups.get(i);
                     if (g == null) {
@@ -144,6 +209,7 @@ public class PeopleBackend {
                     }
                     RawGroup matchingRaw = findRawGroup(allRaw, g.getGroupName());
                     if (belongsToCurrentUser(matchingRaw, g)) {
+                        selectedGroupName = g.getGroupName();
                         return g;
                     }
                 }
@@ -158,9 +224,18 @@ public class PeopleBackend {
             return null;
         }
         List<RawGroup> all = loadAllFromCsv();
+        if (selectedGroupName != null) {
+            for (int i = 0; i < all.size(); i++) {
+                RawGroup g = all.get(i);
+                if (g.name != null && selectedGroupName.equalsIgnoreCase(g.name) && belongsToCurrentUser(g, null)) {
+                    return g;
+                }
+            }
+        }
         for (int i = all.size() - 1; i >= 0; i--) {
             RawGroup g = all.get(i);
             if (belongsToCurrentUser(g, null)) {
+                selectedGroupName = g.name;
                 return g;
             }
         }

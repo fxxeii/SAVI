@@ -15,6 +15,7 @@ import com.codename1.ui.layouts.FlowLayout;
 import com.codename1.ui.layouts.GridLayout;
 import com.codename1.ui.plaf.RoundRectBorder;
 import com.codename1.ui.plaf.Style;
+import com.codename1.ui.spinner.Picker;
 import com.savi.app.SAVI;
 import com.savi.app.backend.Home;
 import com.savi.app.backend.PeopleBackend;
@@ -74,7 +75,6 @@ public class PeoplePage {
         return p;
     }
 
-    // circle holding a single icon (white card, soft shadow)
     static Container circleIcon(char icon, float sizeMM, float iconMM, int bg, int fg, boolean shadow) {
         Label l = new Label();
         l.getAllStyles().setFgColor(fg);
@@ -111,7 +111,6 @@ public class PeoplePage {
         return p;
     }
 
-    // page title (no back button, this page is reached from the bottom nav)
     static Container header(String title) {
         Label l = SAVI.text(title, SAVI.bold(2.6f), SAVI.DARK_KNIGHT);
         l.getAllStyles().setAlignment(Component.CENTER);
@@ -142,7 +141,46 @@ public class PeoplePage {
         setMargins(banner, 0.5f, 1, 2, 2);
 
         Label groupName = SAVI.text(name.toUpperCase(), SAVI.bold(3.5f), SAVI.WHITE);
-        Container chevron = circleIcon(FontImage.MATERIAL_KEYBOARD_ARROW_DOWN, 6f, 3f, SAVI.BRIGHT_VIOLET, SAVI.WHITE, false);
+
+        String[] rawGroups = PeopleBackend.getUserGroupNames();
+        final String[] options;
+        if (rawGroups == null || rawGroups.length == 0) {
+            options = new String[]{name.toUpperCase()};
+        } else {
+            options = new String[rawGroups.length];
+            for (int i = 0; i < rawGroups.length; i++) {
+                options[i] = rawGroups[i].toUpperCase();
+            }
+        }
+
+        final Picker groupPicker = new Picker();
+        groupPicker.setType(Display.PICKER_TYPE_STRINGS);
+        groupPicker.setStrings(options);
+        groupPicker.setSelectedString(name.toUpperCase());
+        groupPicker.setUIID("Label");
+        groupPicker.setText("");
+        groupPicker.getAllStyles().setFgColor(SAVI.WHITE);
+        groupPicker.getAllStyles().setAlignment(Component.CENTER);
+        FontImage.setMaterialIcon(groupPicker, FontImage.MATERIAL_KEYBOARD_ARROW_DOWN, 3f);
+
+        groupPicker.addActionListener(e -> {
+            String picked = groupPicker.getSelectedString();
+            groupPicker.setText("");
+            if (picked != null && !picked.trim().isEmpty() && !picked.equalsIgnoreCase(name)) {
+                PeopleBackend.setSelectedGroup(picked.trim());
+                new PeoplePage().show();
+            }
+        });
+
+        Container chevron = new Container(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER));
+        chevron.setPreferredW(Display.getInstance().convertToPixels(6f));
+        chevron.setPreferredH(Display.getInstance().convertToPixels(6f));
+        Style cs = chevron.getAllStyles();
+        cs.setBgColor(SAVI.BRIGHT_VIOLET);
+        cs.setBgTransparency(255);
+        cs.setBorder(RoundRectBorder.create().cornerRadius(3f));
+        chevron.add(BorderLayout.CENTER, groupPicker);
+        chevron.setLeadComponent(groupPicker);
 
         Container titleRow = new Container(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER));
         titleRow.add(BorderLayout.WEST, groupName);
@@ -170,7 +208,6 @@ public class PeoplePage {
         return banner;
     }
 
-    // the "Updated Today" pill is only shown when there is something to update
     static Container sectionHeader(boolean showUpdated) {
         Container header = new Container(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER));
         setMargins(header, 1, 0.5f, 2, 2);
@@ -186,7 +223,6 @@ public class PeoplePage {
         return header;
     }
 
-    // shown when the group has no member contributions yet
     static Container emptyState() {
         Container card = new Container(BoxLayout.y());
         cardStyles(card, SAVI.WHITE, 4, 3.5f, 2.5f);
@@ -258,7 +294,6 @@ public class PeoplePage {
         cardStyles(card, SAVI.WHITE, 4, 2f, 2f);
         setMargins(card, 0.5f, 1f, 2, 2);
 
-        // header: avatar + name on the left, view all on the right
         Container nameCont = new Container(BoxLayout.y());
         nameCont.add(SAVI.text(m.name, SAVI.bold(3f), SAVI.DARK_KNIGHT));
         nameCont.add(SAVI.text("@" + m.handle, SAVI.regular(2f), SAVI.SLATE_GRAY));
@@ -279,7 +314,6 @@ public class PeoplePage {
         header.add(BorderLayout.WEST, left);
         header.add(BorderLayout.EAST, BorderLayout.north(viewAll));
 
-        // stats
         boolean hasMissed = m.missed > 0;
         Container totalBox = statBox("Total Contribution", Home.pesoFormat(m.totalPaid),
                 SAVI.POWDER_WHITE, SAVI.BORDER_COLOR, SAVI.SLATE_GRAY, SAVI.DARK_KNIGHT);
@@ -302,11 +336,9 @@ public class PeoplePage {
         Form base = new Form("", new BorderLayout());
         base.getContentPane().getAllStyles().setBgColor(SAVI.POWDER_WHITE);
         base.getContentPane().getAllStyles().setBgTransparency(255);
-        // status bar area uses the same background instead of white
         base.getTitleArea().getAllStyles().setBgColor(SAVI.POWDER_WHITE);
         base.getTitleArea().getAllStyles().setBgTransparency(255);
 
-        // member data comes from the backend (hardcoded there for now)
         PeopleBackend.Member[] members = PeopleBackend.getMembers();
         if (members == null) {
             members = new PeopleBackend.Member[0];
@@ -324,7 +356,6 @@ public class PeoplePage {
         } else {
             for (int i = 0; i < members.length; i++) {
                 final PeopleBackend.Member member = members[i];
-                // connects to the View All Transactions page for this member
                 mainContents.add(memberCard(member, e -> new ViewAllTransacPage(member).show()));
             }
         }
