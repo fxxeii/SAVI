@@ -20,10 +20,8 @@ import com.savi.app.backend.GroupSummary;
 
 public class SummaryPage {
 
-    static final String PESO = "P";
-
     // slice colors of the donut (used again if a group has more than 4 members)
-    private static final int[] SHARE_COLORS = {0x6D0FD6, 0xA066FF, 0x047857, 0x5EE0B0};
+    private static final int[] SHARE_COLORS = {SAVI.BRIGHT_VIOLET, SAVI.DARK_PURPLE, SAVI.GREEN, SAVI.PALE_GREEN};
 
     // BACKEND: every number and text on this page comes from here
     private GroupSummary summary;
