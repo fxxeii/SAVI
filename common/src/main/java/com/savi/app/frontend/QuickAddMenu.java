@@ -301,9 +301,9 @@ public class QuickAddMenu {
 
         Label gp = SAVI.text("GROUP NAME", SAVI.bold(textSize), SAVI.DEEP_SLATE);
         Label sgd = SAVI.text("SAVING GOAL DESCRIPTION", SAVI.bold(textSize), SAVI.DEEP_SLATE);
-        Label wta = SAVI.text("WEEKLY TARGET AMOUNT", SAVI.bold(textSize), SAVI.DEEP_SLATE);
+        Label wta = SAVI.text("WEEKLY TARGET AMOUNT (P)", SAVI.bold(textSize), SAVI.DEEP_SLATE);
         Label tta = SAVI.text("TOTAL TARGET AMOUNT (P)", SAVI.bold(textSize), SAVI.DEEP_SLATE);
-        Label exp = SAVI.text("EXPECTED PER MEMBER (P)", SAVI.bold(textSize), SAVI.DEEP_SLATE);
+        Label exp = SAVI.text("DAILY TARGET AMOUNT (P)", SAVI.bold(textSize), SAVI.DEEP_SLATE);
         Label mm = SAVI.text("OTHER MEMBERS (comma-separated)", SAVI.bold(textSize), SAVI.DEEP_SLATE);
 
         TextField groupNameField = styledField("e.g. Vacation");
