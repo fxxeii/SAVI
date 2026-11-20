@@ -32,6 +32,8 @@ public class ProfilePage implements Profile.DataChangeListener {
     private final Profile backend = Profile.getInstance();
     private Container mainContents;
 
+    private static final float GREETING_SIZE = 4.2f;   // size of "Hello, Saver!" AND the username
+
     static int mm(float v) {
         return Display.getInstance().convertToPixels(v);
     }
@@ -211,12 +213,12 @@ public class ProfilePage implements Profile.DataChangeListener {
     }
 
     static Container greetingBanner(UserProfile profile) {
-        Rounded badge = new Rounded(new FlowLayout(Component.CENTER, Component.CENTER), SAVI.WHITE, 35, 3f)
+        Rounded badge = new Rounded(new FlowLayout(Component.CENTER, Component.CENTER), SAVI.WHITE, 35, 3.5f)
                 .stroke(SAVI.WHITE, 90, 1);
-        setPadding(badge, 1.2f, 1.2f, 3.2f, 3.2f);
+        setPadding(badge, 1.6f, 1.6f, 4.5f, 4.5f);
         setMargins(badge, 0.5f, 0.5f, 0, 0);
 
-        Label helloLabel = SAVI.text("Hello, " + profile.getGreetingName() + "!", SAVI.bold(3.2f), SAVI.WHITE);
+        Label helloLabel = SAVI.text("Hello, Saver!", SAVI.bold(GREETING_SIZE), SAVI.WHITE);
         helloLabel.getAllStyles().setAlignment(Component.CENTER);
         badge.add(helloLabel);
 
@@ -237,21 +239,17 @@ public class ProfilePage implements Profile.DataChangeListener {
 
         Button nameBtn = new Button(profile.getUsername());
         nameBtn.setUIID("Label");
-        nameBtn.getAllStyles().setFont(SAVI.bold(2.6f));
+        nameBtn.getAllStyles().setFont(SAVI.bold(GREETING_SIZE));   // same size as "Hello, Saver!"
         nameBtn.getAllStyles().setFgColor(SAVI.WHITE);
         nameBtn.setTextPosition(Component.LEFT);
         nameBtn.getAllStyles().setAlignment(Component.CENTER);
-        FontImage.setMaterialIcon(nameBtn, FontImage.MATERIAL_EDIT, 2.1f);
+        FontImage.setMaterialIcon(nameBtn, FontImage.MATERIAL_EDIT, GREETING_SIZE * 0.7f);
         nameBtn.addActionListener(e -> showEditProfileDialog());
-        setMargins(nameBtn, 1.2f, 0, 0, 0);
-
-        Label handle = SAVI.text(profile.getHandle(), SAVI.regular(2.0f), SAVI.PASTEL_LAVENDER);
-        handle.getAllStyles().setAlignment(Component.CENTER);
+        setMargins(nameBtn, 1.5f, 0, 0, 0);
 
         header.add(topRow);
         header.add(greetingBanner(profile));
         header.add(FlowLayout.encloseCenter(nameBtn));
-        header.add(handle);
         return header;
     }
 
@@ -440,27 +438,20 @@ public class ProfilePage implements Profile.DataChangeListener {
 
     private void showEditProfileDialog() {
         UserProfile profile = backend.getActiveProfile();
-        Dialog dlg = new Dialog("Edit Profile", new BorderLayout());
+        Dialog dlg = new Dialog("Edit Username", new BorderLayout());
         Container body = new Container(BoxLayout.y());
         setPadding(body, 1.5f, 1.5f, 2f, 2f);
 
-        TextField greetingField = new TextField(profile.getGreetingName(), "Greeting Name (e.g. User)", 20, TextField.ANY);
-        TextField usernameField = new TextField(profile.getUsername(), "Display Username", 20, TextField.ANY);
-        TextField handleField = new TextField(profile.getHandle(), "@handle", 20, TextField.ANY);
-
-        body.add(SAVI.text("GREETING NAME (SHOWN IN HEADER)", SAVI.bold(1.6f), SAVI.SLATE_GRAY));
-        body.add(greetingField);
+        TextField usernameField = new TextField(profile.getUsername(), "Username", 20, TextField.ANY);
         body.add(SAVI.text("USERNAME", SAVI.bold(1.6f), SAVI.SLATE_GRAY));
         body.add(usernameField);
-        body.add(SAVI.text("HANDLE", SAVI.bold(1.6f), SAVI.SLATE_GRAY));
-        body.add(handleField);
 
         Button cancel = new Button("Cancel");
         cancel.addActionListener(e -> dlg.dispose());
 
         Button save = new Button("Save");
         save.addActionListener(e -> {
-            backend.updateProfileInfo(greetingField.getText(), usernameField.getText(), handleField.getText());
+            backend.updateProfileInfo(null, usernameField.getText(), null);   // null = leave unchanged
             dlg.dispose();
         });
 
