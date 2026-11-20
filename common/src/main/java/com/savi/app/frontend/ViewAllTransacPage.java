@@ -23,12 +23,13 @@ import com.savi.app.backend.PeopleBackend;
 
 public class ViewAllTransacPage {
 
-    static final String[] CHIP_NAMES = {"All", "Deposits", "Missed", "Adjustments"};
-    static final String[] CHIP_TYPES = {null, "DEPOSIT", "MISSED", "ADJUSTMENT"};
+    // only three filter chips: All, Deposits, Missed
+    static final String[] CHIP_NAMES = {"All", "Deposits", "Missed"};
+    static final String[] CHIP_TYPES = {null, "DEPOSIT", "MISSED"};
 
     // screen state
     private Container listContainer;
-    private Chip[] chips = new Chip[4];
+    private Chip[] chips = new Chip[3];
     private int selectedChip = 0;
     private String query = "";
 
@@ -229,15 +230,13 @@ public class ViewAllTransacPage {
 
     // ---------- top bar ----------
 
+    // back button + title only (the 3-dot menu button was removed)
     static Container topBar() {
         Container bar = new Container(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER));
         setMargins(bar, 1, 1, 2, 2);
 
         Container back = circleButton(FontImage.MATERIAL_ARROW_BACK_IOS, 6.5f, 2.6f, SAVI.WHITE, SAVI.DEEP_SLATE,
                 e -> new PeoplePage().show());
-        Container menu = circleButton(FontImage.MATERIAL_MORE_VERT, 6.5f, 2.6f, SAVI.WHITE, SAVI.DEEP_SLATE,
-                e -> {
-                });
 
         Label title = SAVI.text("TRANSACTIONS FOR:", SAVI.bold(1.8f), SAVI.BRIGHT_VIOLET);
         Rounded titlePill = pill(title, SAVI.PALE_PURPLE, 255);
@@ -245,7 +244,6 @@ public class ViewAllTransacPage {
 
         bar.add(BorderLayout.WEST, back);
         bar.add(BorderLayout.CENTER, titlePill);
-        bar.add(BorderLayout.EAST, menu);
         return bar;
     }
 
@@ -588,7 +586,7 @@ public class ViewAllTransacPage {
         mainContents.setScrollVisible(false); // hides the dark bar on the right edge
 
         mainContents.add(memberCard(member.name, member.role, "@" + member.handle, member.group, member.active,
-                member.totalPaid, member.missed, member.goal));
+                member.totalPaid, member.missfed, member.goal));
         mainContents.add(searchBar());
         mainContents.add(chipsRow());
         mainContents.add(listContainer);
