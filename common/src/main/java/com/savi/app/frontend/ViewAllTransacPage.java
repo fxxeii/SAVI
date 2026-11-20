@@ -586,7 +586,7 @@ public class ViewAllTransacPage {
         mainContents.setScrollVisible(false); // hides the dark bar on the right edge
 
         mainContents.add(memberCard(member.name, member.role, "@" + member.handle, member.group, member.active,
-                member.totalPaid, member.missfed, member.goal));
+                member.totalPaid, member.missed, member.goal));
         mainContents.add(searchBar());
         mainContents.add(chipsRow());
         mainContents.add(listContainer);
