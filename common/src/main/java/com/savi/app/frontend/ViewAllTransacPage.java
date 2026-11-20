@@ -259,7 +259,7 @@ public class ViewAllTransacPage {
         return box;
     }
 
-    static Container memberCard(String name, String role, String handle, String group, boolean active,
+    static Container memberCard(String name, String role, String handle, String group,
                                 double totalPaid, double missed, double goal) {
         Rounded card = new Rounded(BoxLayout.y(), SAVI.BRIGHT_VIOLET, 255, 4.5f);
         setPadding(card, 2.5f, 2.5f, 2.5f, 2.5f);
@@ -293,11 +293,8 @@ public class ViewAllTransacPage {
         Rounded dot = new Rounded(new BorderLayout(), SAVI.WHITE, 255, 0).fixed(1.1f);
         setMargins(dot, 0, 0, 0, 0.8f);
         Container dotWrap = BoxLayout.encloseYCenter(dot);
-        Label statusText = SAVI.text(active ? "Active" : "Inactive", SAVI.bold(1.6f), SAVI.WHITE);
-        setPadding(statusText, 0, 0, 0, 0);
         Rounded status = new Rounded(new FlowLayout(Component.CENTER, Component.CENTER), SAVI.WHITE, 30, 0);
         setPadding(status, 0.7f, 0.7f, 1.6f, 1.6f);
-        status.add(dotWrap).add(statusText);
 
         Container topRow = new Container(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_SCALE));
         topRow.add(BorderLayout.WEST, left);
@@ -585,7 +582,7 @@ public class ViewAllTransacPage {
         mainContents.setScrollableY(true);
         mainContents.setScrollVisible(false); // hides the dark bar on the right edge
 
-        mainContents.add(memberCard(member.name, member.role, "@" + member.handle, member.group, member.active,
+        mainContents.add(memberCard(member.name, member.role, "@" + member.handle, member.group,
                 member.totalPaid, member.missed, member.goal));
         mainContents.add(searchBar());
         mainContents.add(chipsRow());
