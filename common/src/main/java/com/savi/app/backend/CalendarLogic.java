@@ -12,7 +12,7 @@ import java.util.Date;
 public class CalendarLogic {
 
     // The calendar component gives a java.util.Date, but our savings data uses LocalDate.
-    // Formatting the Date as "yyyy-MM-dd" text and parsing it back drops the time part.
+    // Formatting the Date as "yyyy-MM-dd" text and parsing it backdrops the time part.
     public LocalDate toLocalDate(Date date) {
         return LocalDate.parse(new SimpleDateFormat("yyyy-MM-dd").format(date));
     }
@@ -37,7 +37,7 @@ public class CalendarLogic {
         }
     }
 
-    // groups that have at least one contribution on this date
+    // groups that have at least one contribution in this date
     // getContributionsOn(...) is inherited from Savings (INHERITANCE)
     public ArrayList<GroupSavings> getGroupsWithRecords(ArrayList<GroupSavings> groups, LocalDate date) {
         ArrayList<GroupSavings> result = new ArrayList<>();

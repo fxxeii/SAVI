@@ -109,7 +109,7 @@ public class SAVI extends Lifecycle {
 
                 g.setAntiAliased(true);
 
-                // soft shadow above the bar: darkest right at the bar, fading out going up
+                // soft shadow above the bar: darkest right at the bar, fading outgoing up
                 int shadowH = Display.getInstance().convertToPixels(NAV_SHADOW_MM);
                 g.setColor(0x64748B);
                 for (int i = 0; i < shadowH; i++) {
@@ -174,7 +174,7 @@ public class SAVI extends Lifecycle {
             Image img = Image.createImage("/addButton.png");
             plus.setIcon(img.scaledWidth(Display.getInstance().convertToPixels(NAV_ADD_BTN)));
         } catch (java.io.IOException ex) {
-            ex.printStackTrace();
+            com.codename1.io.Log.e(ex);
             plus.getAllStyles().setFgColor(DARK_PURPLE);
             FontImage.setMaterialIcon(plus, FontImage.MATERIAL_ADD, 6f);   // fallback if the png is missing
         }
@@ -236,7 +236,5 @@ public class SAVI extends Lifecycle {
         personalList.load();
 
       new MainPage().show();
-//      new HomePage().show();
-      //  new ProfilePage().show();
     }
 }
