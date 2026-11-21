@@ -20,6 +20,15 @@ public class LogInPage {
         LogInForm.getAllStyles().setBgColor(SAVI.PALE_PURPLE);
         LogInForm.getAllStyles().setBgTransparency(255);
 
+        Container t = LogInForm.getTitleArea();
+        t.getAllStyles().setBgColor(SAVI.DARK_PURPLE);
+        t.getAllStyles().setBgTransparency(255);
+        for (int i = 0; i < t.getComponentCount(); i++) {
+            Style s = t.getComponentAt(i).getAllStyles();
+            s.setBgColor(SAVI.DARK_PURPLE);
+            s.setBgTransparency(255);
+        }
+
         Container header = new Container(BoxLayout.yCenter());
         header.getAllStyles().setBgColor(SAVI.DARK_PURPLE);
         header.getAllStyles().setBgTransparency(255);

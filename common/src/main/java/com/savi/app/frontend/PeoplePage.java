@@ -339,6 +339,15 @@ public class PeoplePage {
         base.getTitleArea().getAllStyles().setBgColor(SAVI.POWDER_WHITE);
         base.getTitleArea().getAllStyles().setBgTransparency(255);
 
+        Container t = base.getTitleArea();
+        t.getAllStyles().setBgColor(SAVI.POWDER_WHITE);
+        t.getAllStyles().setBgTransparency(255);
+        for (int i = 0; i < t.getComponentCount(); i++) {
+            Style s = t.getComponentAt(i).getAllStyles();
+            s.setBgColor(SAVI.POWDER_WHITE);
+            s.setBgTransparency(255);
+        }
+
         PeopleBackend.Member[] members = PeopleBackend.getMembers();
         if (members == null) {
             members = new PeopleBackend.Member[0];

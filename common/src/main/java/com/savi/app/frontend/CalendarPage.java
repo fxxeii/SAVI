@@ -23,6 +23,15 @@ public class CalendarPage {
         calendarForm.getContentPane().getAllStyles().setBgColor(SAVI.PALE_PURPLE);
         calendarForm.getContentPane().getAllStyles().setBgTransparency(255);
 
+        Container t = calendarForm.getTitleArea();
+        t.getAllStyles().setBgColor(SAVI.PALE_PURPLE);
+        t.getAllStyles().setBgTransparency(255);
+        for (int i = 0; i < t.getComponentCount(); i++) {
+            Style s = t.getComponentAt(i).getAllStyles();
+            s.setBgColor(SAVI.PALE_PURPLE);
+            s.setBgTransparency(255);
+        }
+
         Container content = new Container(BoxLayout.y());
         content.setScrollableY(true);
         content.getAllStyles().setBgColor(SAVI.PALE_PURPLE);

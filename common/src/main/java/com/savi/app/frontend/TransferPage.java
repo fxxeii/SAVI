@@ -196,6 +196,15 @@ public class TransferPage {
         base.getContentPane().getAllStyles().setBgColor(SAVI.PALE_PURPLE);
         base.getContentPane().getAllStyles().setBgTransparency(255);
 
+        Container t = base.getTitleArea();
+        t.getAllStyles().setBgColor(SAVI.PALE_PURPLE);
+        t.getAllStyles().setBgTransparency(255);
+        for (int i = 0; i < t.getComponentCount(); i++) {
+            Style s = t.getComponentAt(i).getAllStyles();
+            s.setBgColor(SAVI.PALE_PURPLE);
+            s.setBgTransparency(255);
+        }
+
         // BACKEND: every savings of the logged-in user (groups AND personal), members of the chosen one
         Transfer transfer = new Transfer(SAVI.user, SAVI.groupList.getGroups());
         String[] groups = toArray(transfer.getSavingsNames());

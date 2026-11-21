@@ -18,6 +18,19 @@ public class SignUpPage {
         signUpForm.getAllStyles().setBgColor(SAVI.PALE_PURPLE);
         signUpForm.getAllStyles().setBgTransparency(255);
 
+        Container t = signUpForm.getTitleArea();
+        t.getAllStyles().setBackgroundType(Style.BACKGROUND_GRADIENT_LINEAR_HORIZONTAL);
+        t.getAllStyles().setBackgroundGradientStartColor(SAVI.PINKISH);
+        t.getAllStyles().setBackgroundGradientEndColor(SAVI.DARK_PURPLE);
+        t.getAllStyles().setBgTransparency(255);
+        for (int i = 0; i < t.getComponentCount(); i++) {
+            Style s = t.getComponentAt(i).getAllStyles();
+            s.setBackgroundType(Style.BACKGROUND_GRADIENT_LINEAR_HORIZONTAL);
+            s.setBackgroundGradientStartColor(SAVI.PINKISH);
+            s.setBackgroundGradientEndColor(SAVI.DARK_PURPLE);
+            s.setBgTransparency(255);
+        }
+
         Container header = new Container(BoxLayout.yCenter());
 
         Style cont = header.getAllStyles();

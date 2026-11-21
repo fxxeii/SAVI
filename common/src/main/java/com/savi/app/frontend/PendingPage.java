@@ -27,6 +27,15 @@ public class PendingPage {
         pendingForm.getContentPane().getAllStyles().setBgColor(SAVI.PALE_PURPLE);
         pendingForm.getAllStyles().setBgTransparency(255);
 
+        Container t = pendingForm.getTitleArea();
+        t.getAllStyles().setBgColor(SAVI.PALE_PURPLE);
+        t.getAllStyles().setBgTransparency(255);
+        for (int i = 0; i < t.getComponentCount(); i++) {
+            Style s = t.getComponentAt(i).getAllStyles();
+            s.setBgColor(SAVI.PALE_PURPLE);
+            s.setBgTransparency(255);
+        }
+
         Container content = new Container(BoxLayout.y());
         content.setScrollableY(true);
         content.getAllStyles().setBgColor(SAVI.PALE_PURPLE);

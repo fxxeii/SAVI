@@ -28,6 +28,15 @@ public class ReminderPage {
         reminderForm.getContentPane().getAllStyles().setBgColor(SAVI.PALE_PURPLE);
         reminderForm.getContentPane().getAllStyles().setBgTransparency(255);
 
+        Container t = reminderForm.getTitleArea();
+        t.getAllStyles().setBgColor(SAVI.PALE_PURPLE);
+        t.getAllStyles().setBgTransparency(255);
+        for (int i = 0; i < t.getComponentCount(); i++) {
+            Style s = t.getComponentAt(i).getAllStyles();
+            s.setBgColor(SAVI.PALE_PURPLE);
+            s.setBgTransparency(255);
+        }
+
         Container body = new Container(BoxLayout.y());
         body.setScrollableY(true);
         body.getAllStyles().setBgColor(SAVI.PALE_PURPLE);

@@ -17,28 +17,19 @@ public class MainPage {
           mainForm.getContentPane().getAllStyles().setBgColor(SAVI.PALE_PURPLE);
           mainForm.getContentPane().getAllStyles().setBgTransparency(255);
 
+          Container t = mainForm.getTitleArea();
+          t.getAllStyles().setBgColor(SAVI.PALE_PURPLE);
+          t.getAllStyles().setBgTransparency(255);
+          for (int i = 0; i < t.getComponentCount(); i++) {
+               Style s = t.getComponentAt(i).getAllStyles();
+               s.setBgColor(SAVI.PALE_PURPLE);
+               s.setBgTransparency(255);
+          }
+
           Container content = new Container(BoxLayout.yCenter());
           content.getAllStyles().setBgColor(SAVI.PALE_PURPLE);
           content.getAllStyles().setBgTransparency(255);
-          /*
-          Container overlap = new Container(new LayeredLayout());
-          int outer = Display.getInstance().convertToPixels(45f);
-          int inner = Display.getInstance().convertToPixels(35f);
 
-          Container outerc = new Container();
-          outerc.getAllStyles().setBgTransparency(0);
-          outerc.getAllStyles().setBorder(Border.createRoundBorder(outer, outer, paleLavander));
-          outerc.setPreferredW(outer);
-          outerc.setPreferredH(outer);
-
-          Container innerc = new Container();
-          innerc.getAllStyles().setBgTransparency(0);
-          innerc.getAllStyles().setBorder(Border.createRoundBorder(inner, inner, pastelLavander));
-          innerc.setPreferredW(inner);
-          innerc.setPreferredH(inner);
-          innerc.getAllStyles().setPaddingUnit(Style.UNIT_TYPE_DIPS);
-          innerc.getAllStyles().setPadding(5, 0, 0, 0);
-          */
           Image img = null;
           try {
                Image logoimg = Image.createImage("/Logo_main.png");

@@ -36,6 +36,15 @@ public class PersonalSummaryPage {
         base.getContentPane().getAllStyles().setBgColor(SAVI.PALE_PURPLE);
         base.getContentPane().getAllStyles().setBgTransparency(255);
 
+        Container t = base.getTitleArea();
+        t.getAllStyles().setBgColor(SAVI.PALE_PURPLE);
+        t.getAllStyles().setBgTransparency(255);
+        for (int i = 0; i < t.getComponentCount(); i++) {
+            Style s = t.getComponentAt(i).getAllStyles();
+            s.setBgColor(SAVI.PALE_PURPLE);
+            s.setBgTransparency(255);
+        }
+
         // right side of the purple card: "Target Amount" + the amount
         Label targetLabel = ui.txt("Target Amount", SAVI.regular(2f), SAVI.WHITE);
         targetLabel.getAllStyles().setAlignment(Component.RIGHT);

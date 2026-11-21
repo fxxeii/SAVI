@@ -102,6 +102,15 @@ public class TransferConfirmationPage {
         base.getContentPane().getAllStyles().setBgColor(pageBg);
         base.getContentPane().getAllStyles().setBgTransparency(255);
 
+        Container t = base.getTitleArea();
+        t.getAllStyles().setBgColor(pageBg);
+        t.getAllStyles().setBgTransparency(255);
+        for (int i = 0; i < t.getComponentCount(); i++) {
+            Style s = t.getComponentAt(i).getAllStyles();
+            s.setBgColor(pageBg);
+            s.setBgTransparency(255);
+        }
+
         Label transferSuccessful = SAVI.text("Fund transfer successful", SAVI.bold(3f), SAVI.BLACK);
         transferSuccessful.getAllStyles().setAlignment(Component.CENTER);
         transferSuccessful.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);

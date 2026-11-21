@@ -576,6 +576,15 @@ public class ViewAllTransacPage {
         base.getContentPane().getAllStyles().setBgTransparency(255);
         paintStatusBar(base, SAVI.PALE_PURPLE);
 
+        Container t = base.getTitleArea();
+        t.getAllStyles().setBgColor(SAVI.PALE_PURPLE);
+        t.getAllStyles().setBgTransparency(255);
+        for (int i = 0; i < t.getComponentCount(); i++) {
+            Style s = t.getComponentAt(i).getAllStyles();
+            s.setBgColor(SAVI.PALE_PURPLE);
+            s.setBgTransparency(255);
+        }
+
         listContainer = new Container(BoxLayout.y());
 
         Container mainContents = new Container(BoxLayout.y());
