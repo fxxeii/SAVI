@@ -52,11 +52,11 @@ public class SAVI extends Lifecycle {
     public static final int NAV_PEOPLE = 2;
     public static final int NAV_PROFILE = 3;
 
-    private static final float NAV_ADD_BTN = 12f;  // width of addButton.png in mm
-    private static final float NAV_NOTCH = 2f;   // space above the bar where the + button sticks out
-    private static final float NAV_BAR_H = 14.5f;  // height of the bar itself
-    private static final float NAV_SHADOW_MM = 1.5f; // how far the shadow reaches above the bar
-    private static final int NAV_SHADOW_ALPHA = 90;  // shadow strength at the bar: 0 (none) to 255
+    private static final float NAV_ADD_BTN = 12f;
+    private static final float NAV_NOTCH = 2f;
+    private static final float NAV_BAR_H = 14.5f;
+    private static final float NAV_SHADOW_MM = 1.5f;
+    private static final int NAV_SHADOW_STRENGTH = 90;
 
     public static Font regular(float mm){
         if(regularFont==null){
@@ -93,7 +93,6 @@ public class SAVI extends Lifecycle {
         return lbl;
     }
 
-    /** Bottom bar with the + button; "active" is the tab drawn in purple (NAV_HOME, ...). */
     public static Container bottomNav(int active) {
         return bottomNav(active, QuickAddMenu::show);
     }
@@ -113,7 +112,7 @@ public class SAVI extends Lifecycle {
                 int shadowH = Display.getInstance().convertToPixels(NAV_SHADOW_MM);
                 g.setColor(0x64748B);
                 for (int i = 0; i < shadowH; i++) {
-                    g.setAlpha(NAV_SHADOW_ALPHA - (NAV_SHADOW_ALPHA * i / shadowH));
+                    g.setAlpha(NAV_SHADOW_STRENGTH - (NAV_SHADOW_STRENGTH * i / shadowH));
                     g.drawLine(x, barTop - 1 - i, x + w, barTop - 1 - i);
                 }
 
