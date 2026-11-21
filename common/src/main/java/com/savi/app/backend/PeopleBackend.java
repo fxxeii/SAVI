@@ -23,7 +23,7 @@ import java.util.Map;
  */
 public class PeopleBackend {
 
-    private static final String GROUPS_CSV = "Groups_Records.csv";
+    private static final String GROUPS_CSV = "Groups_Records.txt";
 
     private static String selectedGroupName = null;
 
@@ -107,7 +107,7 @@ public class PeopleBackend {
             return new String[0];
         }
         List<String> names = new ArrayList<>();
-        List<RawGroup> allRaw = loadAllFromCsv();
+        List<RawGroup> allRaw = loadAllFromTxt();
 
         if (SAVI.groupList != null) {
             SAVI.groupList.load();
@@ -186,7 +186,7 @@ public class PeopleBackend {
         if (me.isEmpty()) {
             return null;
         }
-        List<RawGroup> allRaw = loadAllFromCsv();
+        List<RawGroup> allRaw = loadAllFromTxt();
         if (SAVI.groupList != null) {
             SAVI.groupList.load();
             ArrayList<GroupSavings> groups = SAVI.groupList.getGroups();
@@ -223,7 +223,7 @@ public class PeopleBackend {
         if (me.isEmpty()) {
             return null;
         }
-        List<RawGroup> all = loadAllFromCsv();
+        List<RawGroup> all = loadAllFromTxt();
         if (selectedGroupName != null) {
             for (int i = 0; i < all.size(); i++) {
                 RawGroup g = all.get(i);
@@ -438,7 +438,7 @@ public class PeopleBackend {
         return MONTHS[d.getMonthValue() - 1] + " " + d.getYear();
     }
 
-    private static List<RawGroup> loadAllFromCsv() {
+    private static List<RawGroup> loadAllFromTxt() {
         Map<String, RawGroup> map = new LinkedHashMap<>();
         String text = readCsvText();
         if (text == null || text.trim().isEmpty()) {
