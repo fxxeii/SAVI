@@ -32,7 +32,7 @@ public class Profile {
     private static final String PREF_HANDLE_PREFIX = "savi_handle_";
     private static final String LEGACY_ACCOUNTS_FILE = "savi_accounts_v2.dat";
     private static final String USERS_TXT = "Users_Records.txt";
-    private static final String  = "Groups_Records.txt";
+    private static final String GROUPS_TXT = "Groups_Records.txt";
 
     private static final int G_CREATOR = 1;
     private static final int G_TOTAL = 2;
@@ -493,7 +493,7 @@ public class Profile {
     // ------------------------------------------------------------------ TXT: file access
 
     private static String txtPath() {
-        return FileSystemStorage.getInstance().getAppHomePath() + ;
+        return FileSystemStorage.getInstance().getAppHomePath() + GROUPS_TXT;
     }
 
     private static String readTxtText() {
@@ -510,8 +510,8 @@ public class Profile {
         } catch (Exception ignored) {
         }
         try {
-            if (Storage.getInstance().exists()) {
-                InputStream in = Storage.getInstance().createInputStream();
+            if (Storage.getInstance().exists(GROUPS_TXT)) {
+                InputStream in = Storage.getInstance().createInputStream(GROUPS_TXT);
                 String text = Util.readToString(in, "UTF-8");
                 if (text != null && !text.trim().isEmpty()) {
                     return text;
@@ -520,7 +520,7 @@ public class Profile {
         } catch (Exception ignored) {
         }
         try {
-            InputStream in = Display.getInstance().getResourceAsStream(Profile.class, "/" + );
+            InputStream in = Display.getInstance().getResourceAsStream(Profile.class, "/" + GROUPS_TXT);
             if (in != null) {
                 String text = Util.readToString(in, "UTF-8");
                 if (text != null) {
@@ -566,7 +566,7 @@ public class Profile {
             os.write(content.getBytes("UTF-8"));
         } catch (IOException ignored) {
         }
-        try (OutputStream os = Storage.getInstance().createOutputStream()) {
+        try (OutputStream os = Storage.getInstance().createOutputStream(GROUPS_TXT)) {
             os.write(content.getBytes("UTF-8"));
         } catch (IOException ignored) {
         }
