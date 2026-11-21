@@ -6,7 +6,6 @@ import com.codename1.ui.layouts.*;
 import com.codename1.ui.plaf.*;
 import com.codename1.ui.spinner.Picker;
 import com.savi.app.SAVI;
-import com.savi.app.backend.GroupSavings;
 import com.savi.app.backend.Home;
 import com.savi.app.backend.Reminder;
 
@@ -287,21 +286,21 @@ public class ReminderPage {
         fields.getAllStyles().setPaddingUnit(Style.UNIT_TYPE_DIPS);
         fields.getAllStyles().setPadding(1f, 1f, 1.5f, 1.5f);
 
+        Label rmd = SAVI.text("TITLE", SAVI.bold(1.6f), SAVI.DEEP_SLATE);
+        Label sv = SAVI.text("SAVINGS GROUP", SAVI.bold(1.6f), SAVI.DEEP_SLATE);
+        Label dt = SAVI.text("DATE", SAVI.bold(1.6f), SAVI.DEEP_SLATE);
+        Label tm = SAVI.text("TIME", SAVI.bold(1.6f), SAVI.DEEP_SLATE);
+        Label am = SAVI.text("AMOUNT (P)", SAVI.bold(1.6f), SAVI.DEEP_SLATE);
+
         TextField titleField = new TextField("", "Enter reminder title");
-        titleField.getAllStyles().setFont(SAVI.regular(2f));
-        titleField.getAllStyles().setFgColor(SAVI.DARK_KNIGHT);
-        titleField.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
-        titleField.getAllStyles().setMargin(0.4f, 1f, 0, 0);
+        TextField customGroupField = new TextField("", "Enter group name");
+        TextField amountField = new TextField("", "0.00");
+        amountField.setConstraint(TextArea.DECIMAL);
 
         // Group selector: uses real groups from SAVI.groupList.getGroups() if available, otherwise a text field
         boolean hasGroups = SAVI.groupList.getGroups() != null && !SAVI.groupList.getGroups().isEmpty();
-        Picker groupPicker = new Picker();
-        TextField customGroupField = new TextField("", "Enter group name");
-        customGroupField.getAllStyles().setFont(SAVI.regular(2f));
-        customGroupField.getAllStyles().setFgColor(SAVI.DARK_KNIGHT);
-        customGroupField.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
-        customGroupField.getAllStyles().setMargin(0.4f, 1f, 0, 0);
 
+        Picker groupPicker = new Picker();
         if (hasGroups) {
             // the dropdown lists every real group, plus an "Other" choice at the end
             String[] groupNames = new String[SAVI.groupList.getGroups().size() + 1];
@@ -312,10 +311,6 @@ public class ReminderPage {
             groupPicker.setType(Display.PICKER_TYPE_STRINGS);
             groupPicker.setStrings(groupNames);
             groupPicker.setSelectedStringIndex(0);
-            groupPicker.getAllStyles().setFont(SAVI.regular(2f));
-            groupPicker.getAllStyles().setFgColor(SAVI.DARK_KNIGHT);
-            groupPicker.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
-            groupPicker.getAllStyles().setMargin(0.4f, 0.6f, 0, 0);
 
             // the text box for a custom group name only appears when "Other" is chosen
             customGroupField.setHidden(true);
@@ -331,39 +326,50 @@ public class ReminderPage {
         Picker datePicker = new Picker();
         datePicker.setType(Display.PICKER_TYPE_DATE);
         datePicker.setDate(new Date());
-        datePicker.getAllStyles().setFont(SAVI.regular(2f));
-        datePicker.getAllStyles().setFgColor(SAVI.DARK_KNIGHT);
-        datePicker.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
-        datePicker.getAllStyles().setMargin(0.4f, 1f, 0, 0);
 
         Picker timePicker = new Picker();
         timePicker.setType(Display.PICKER_TYPE_TIME);
-        timePicker.getAllStyles().setFont(SAVI.regular(2f));
-        timePicker.getAllStyles().setFgColor(SAVI.DARK_KNIGHT);
-        timePicker.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
-        timePicker.getAllStyles().setMargin(0.4f, 1f, 0, 0);
 
-        TextField amountField = new TextField("", "0.00");
-        amountField.setConstraint(TextArea.DECIMAL);
-        amountField.getAllStyles().setFont(SAVI.regular(2f));
-        amountField.getAllStyles().setFgColor(SAVI.DARK_KNIGHT);
-        amountField.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
-        amountField.getAllStyles().setMargin(0.4f, 1f, 0, 0);
+        Label[] lb = {rmd, sv, am, dt, tm};
 
-        fields.add(SAVI.text("Reminder Title", SAVI.semiBold(1.8f), SAVI.SLATE_GRAY)).add(titleField);
-        fields.add(SAVI.text("Savings Group", SAVI.semiBold(1.8f), SAVI.SLATE_GRAY));
+        for (Label l : lb) {
+            l.getAllStyles().setPadding(1,1f,2,0);
+        }
+
+        TextField[] txt = {amountField, titleField, customGroupField };
+
+        for (TextField tf : txt) {
+            tf.getAllStyles().setFont(SAVI.regular(2f));
+            tf.getHintLabel().getAllStyles().setFont(SAVI.italic(2f));
+            tf.getHintLabel().getAllStyles().setFgColor(SAVI.SLATE_GRAY);
+            tf.getHintLabel().getAllStyles().setPadding(0,0,2,2);
+        }
+
+        Picker[] pk = {groupPicker, datePicker, timePicker };
+
+        for (Picker p : pk) {
+            p.getAllStyles().setFont(SAVI.regular(2f));
+            p.getAllStyles().setFgColor(SAVI.DEEP_SLATE);
+            p.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
+            p.getAllStyles().setMargin(0.4f, 1f, 2, 2);
+        }
+
+        fields.add(rmd).add(titleField);
+        fields.add(sv);
         if (hasGroups) {
             fields.add(groupPicker);
         }
         fields.add(customGroupField);
-        fields.add(SAVI.text("Date", SAVI.semiBold(1.8f), SAVI.SLATE_GRAY)).add(datePicker);
-        fields.add(SAVI.text("Time", SAVI.semiBold(1.8f), SAVI.SLATE_GRAY)).add(timePicker);
-        fields.add(SAVI.text("Amount (P)", SAVI.semiBold(1.8f), SAVI.SLATE_GRAY)).add(amountField);
+        fields.add(dt).add(datePicker);
+        fields.add(tm).add(timePicker);
+        fields.add(am).add(amountField);
 
         Button cancel = new Button("Cancel");
-        cancel.getAllStyles().setFgColor(SAVI.SLATE_GRAY);
+        cancel.getAllStyles().setFgColor(SAVI.DEEP_SLATE);
+        cancel.getAllStyles().setFont(SAVI.regular(2.5f));
         cancel.getAllStyles().setBgTransparency(0);
         cancel.getAllStyles().setBorder(Border.createEmpty());
+        cancel.getAllStyles().setPadding(3f, 1f, 2f, 1f);
         cancel.addActionListener(e -> dlg.dispose());
 
         Button save = new Button("Save");

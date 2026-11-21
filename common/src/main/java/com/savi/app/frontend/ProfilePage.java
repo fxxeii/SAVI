@@ -421,16 +421,22 @@ public class ProfilePage implements Profile.DataChangeListener {
         UserProfile profile = backend.getActiveProfile();
         Dialog dlg = new Dialog("Edit Username", new BorderLayout());
         Container body = new Container(BoxLayout.y());
-        setPadding(body, 1.5f, 1.5f, 2f, 2f);
+        setPadding(body, 2f, 1.5f, 2f, 2f);
 
         TextField usernameField = new TextField(profile.getUsername(), "Username", 20, TextField.ANY);
-        body.add(SAVI.text("USERNAME", SAVI.bold(1.6f), SAVI.SLATE_GRAY));
+        usernameField.getHintLabel().getAllStyles().setFont(SAVI.italic(2.3f));
+        usernameField.getHintLabel().getAllStyles().setFgColor(SAVI.SLATE_GRAY);
+        usernameField.getHintLabel().getAllStyles().setPadding(1,1,2,2);
+
+        body.add(SAVI.text("USERNAME", SAVI.bold(1.6f), SAVI.DEEP_SLATE));
         body.add(usernameField);
 
         Button cancel = new Button("Cancel");
+        cancel.getAllStyles().setFont(SAVI.regular(2.5f));
         cancel.addActionListener(e -> dlg.dispose());
 
         Button save = new Button("Save");
+        save.getAllStyles().setFont(SAVI.regular(2.5f));
         save.addActionListener(e -> {
             backend.updateProfileInfo(null, usernameField.getText(), null);
             dlg.dispose();
@@ -457,23 +463,34 @@ public class ProfilePage implements Profile.DataChangeListener {
         setPadding(body, 1.5f, 1.5f, 2f, 2f);
 
         TextField nameField = new TextField(existing.getName(), "Group Name", 24, TextField.ANY);
-        TextField dateField = new TextField(existing.getTargetDate(), "Target Date (e.g. 2026-12-10)", 20, TextField.ANY);
-        TextField dailyField = new TextField(String.valueOf(existing.getDailyTarget()), "Daily Target (P)", 12, TextField.DECIMAL);
-        TextField totalField = new TextField(String.valueOf(existing.getTotalTarget()), "Total Target (P)", 12, TextField.DECIMAL);
+        TextField dateField = new TextField(existing.getTargetDate(), "yyyy-mm-dd", 20, TextField.ANY);
+        TextField dailyField = new TextField(String.valueOf(existing.getDailyTarget()), "P 0.00", 12, TextField.DECIMAL);
+        TextField totalField = new TextField(String.valueOf(existing.getTotalTarget()), "P 0.00", 12, TextField.DECIMAL);
 
-        body.add(SAVI.text("GROUP NAME", SAVI.bold(1.6f), SAVI.SLATE_GRAY)).add(nameField);
-        body.add(SAVI.text("TARGET DATE", SAVI.bold(1.6f), SAVI.SLATE_GRAY)).add(dateField);
-        body.add(SAVI.text("DAILY TARGET (P)", SAVI.bold(1.6f), SAVI.SLATE_GRAY)).add(dailyField);
-        body.add(SAVI.text("TOTAL TARGET (P)", SAVI.bold(1.6f), SAVI.SLATE_GRAY)).add(totalField);
+        body.add(SAVI.text("GROUP NAME", SAVI.bold(1.6f), SAVI.DEEP_SLATE)).add(nameField);
+        body.add(SAVI.text("TARGET DATE", SAVI.bold(1.6f), SAVI.DEEP_SLATE)).add(dateField);
+        body.add(SAVI.text("DAILY TARGET (P)", SAVI.bold(1.6f), SAVI.DEEP_SLATE)).add(dailyField);
+        body.add(SAVI.text("TOTAL TARGET (P)", SAVI.bold(1.6f), SAVI.DEEP_SLATE)).add(totalField);
+
+        TextField[] txt = {nameField, dateField, dailyField, totalField};
+
+        for (TextField tf : txt) {
+            tf.getAllStyles().setFont(SAVI.regular(2.5f));
+            tf.getHintLabel().getAllStyles().setPadding(1,1,2,2);
+            tf.getHintLabel().getAllStyles().setFont(SAVI.italic(2f));
+            tf.getHintLabel().getAllStyles().setFgColor(SAVI.SLATE_GRAY);
+        }
 
         Container actions = new Container(new GridLayout(1, 3));
 
         Button cancel = new Button("Cancel");
+        cancel.getAllStyles().setFont(SAVI.regular(2.5f));
         cancel.addActionListener(e -> dlg.dispose());
         actions.add(cancel);
 
         Button delete = new Button("Delete");
         delete.getAllStyles().setFgColor(0xD32F2F);
+        delete.getAllStyles().setFont(SAVI.regular(2.5f));
         delete.addActionListener(e -> {
             boolean sure = Dialog.show("Delete Group",
                     "Delete \"" + existing.getName() + "\" and all its members and contributions?",
@@ -487,6 +504,7 @@ public class ProfilePage implements Profile.DataChangeListener {
         actions.add(delete);
 
         Button save = new Button("Save");
+        save.getAllStyles().setFont(SAVI.regular(2.5f));
         save.addActionListener(e -> {
             String name = nameField.getText().trim();
             if (name.isEmpty()) {
