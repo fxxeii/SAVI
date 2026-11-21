@@ -1,5 +1,6 @@
 package com.savi.app.backend;
 
+import com.codename1.io.Log;
 import com.codename1.io.Storage;
 import com.codename1.io.Util;
 import com.codename1.ui.Display;
@@ -200,34 +201,33 @@ public class PersonalList {
     private String readFile() {
         try {
             if (!Storage.getInstance().exists(fileRec)) return "";
-            InputStream in = Storage.getInstance().createInputStream(fileRec);
-            String text = Util.readToString(in, "UTF-8");
-            return text == null ? "" : text;
+            try (InputStream in = Storage.getInstance().createInputStream(fileRec)) {
+                return Util.readToString(in, "UTF-8");
+            }
         } catch (Exception ex) {
-            ex.printStackTrace();
+            Log.e(ex);
             return "";
         }
     }
 
     private String readRecords() {
         try {
-            InputStream in = Display.getInstance().getResourceAsStream(PersonalList.class, "/" + fileRec);
-            if (in == null) return "";
-            String text = Util.readToString(in, "UTF-8");
-            return text == null ? "" : text;
+            InputStream resource = Display.getInstance().getResourceAsStream(PersonalList.class, "/" + fileRec);
+            if (resource == null) return "";
+            try (InputStream in = resource) {
+                return Util.readToString(in, "UTF-8");
+            }
         } catch (Exception ex) {
-            ex.printStackTrace();
+            Log.e(ex);
             return "";
         }
     }
 
     private void writeFile(String text) {
-        try {
-            OutputStream out = Storage.getInstance().createOutputStream(fileRec);
+        try (OutputStream out = Storage.getInstance().createOutputStream(fileRec)) {
             out.write(text.getBytes("UTF-8"));
-            out.close();
         } catch (Exception ex) {
-            ex.printStackTrace();
+            Log.e(ex);
         }
     }
 

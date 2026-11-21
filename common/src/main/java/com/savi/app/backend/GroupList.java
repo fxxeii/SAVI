@@ -1,6 +1,7 @@
 package com.savi.app.backend;
 
 import com.codename1.io.FileSystemStorage;
+import com.codename1.io.Log;
 import com.codename1.io.Storage;
 import com.codename1.io.Util;
 import com.codename1.ui.Display;
@@ -262,9 +263,9 @@ public class GroupList {
                 }
             }
         } catch (Exception ex) {
-            System.out.println("Invalid group record: " + line);
-            ex.printStackTrace();
-        }
+        com.codename1.io.Log.p("Invalid group record: " + line);
+        com.codename1.io.Log.e(ex);
+    }
     }
 
     private ArrayList<String> splitLine(String line) {
@@ -294,18 +295,17 @@ public class GroupList {
                 }
             }
         } catch (Exception ex) {
-            ex.printStackTrace();
+            Log.e(ex);
         }
         try {
             if (!Storage.getInstance().exists(fileRec)) {
                 return "";
             }
             try (InputStream in = Storage.getInstance().createInputStream(fileRec)) {
-                String text = Util.readToString(in, "UTF-8");
-                return text == null ? "" : text;
+                return Util.readToString(in, "UTF-8");
             }
         } catch (Exception ex) {
-            ex.printStackTrace();
+            Log.e(ex);
             return "";
         }
     }
@@ -329,19 +329,19 @@ public class GroupList {
     }
 
     private boolean writeFile(String text) {
-        boolean fsOk = false;
+        boolean savedToFileSystem = false;
         try (OutputStream out = FileSystemStorage.getInstance().openOutputStream(txtPath())) {
             out.write(text.getBytes("UTF-8"));
-            fsOk = true;
+            savedToFileSystem = true;
         } catch (Exception ex) {
-            ex.printStackTrace();
+            Log.e(ex);
         }
         try (OutputStream out = Storage.getInstance().createOutputStream(fileRec)) {
             out.write(text.getBytes("UTF-8"));
             return true;
         } catch (Exception ex) {
-            ex.printStackTrace();
-            return fsOk;
+            Log.e(ex);
+            return savedToFileSystem;
         }
     }
 
