@@ -11,7 +11,7 @@ public abstract class Savings {
 
     // "protected" = visible to this class and its children (GroupSavings, PersonalSavings)
     protected final String savingsName;
-    protected final double targetAmount;
+    protected double targetAmount;
     protected double currentAmount;                      // total saved so far
     protected final ArrayList<Contribution> contributions = new ArrayList<>();
 
@@ -74,6 +74,13 @@ public abstract class Savings {
 
     public double getTargetAmount() {
         return targetAmount;
+    }
+
+    public void setTargetAmount(double targetAmount) {
+        if (targetAmount <= 0 || Double.isNaN(targetAmount) || Double.isInfinite(targetAmount)) {
+            throw new IllegalArgumentException("Target amount must be greater than zero.");
+        }
+        this.targetAmount = targetAmount;
     }
 
     // POLYMORPHISM: every child must write its own version of this method

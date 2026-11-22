@@ -1,7 +1,6 @@
 package com.savi.app.backend;
 
 import com.codename1.io.FileSystemStorage;
-import com.codename1.io.Log;
 import com.codename1.io.Storage;
 import com.codename1.io.Util;
 import com.codename1.ui.Display;
@@ -62,6 +61,7 @@ public class GroupList {
 
         String currentUser = (SAVI.user != null) ? SAVI.user.getCurrentName() : null;
         if (currentUser != null && !currentUser.trim().isEmpty()) {
+            created.setCreator(currentUser.trim());
             created.addMember(currentUser.trim());
         }
 
@@ -118,6 +118,56 @@ public class GroupList {
         return true;
     }
 
+    /** Returns groups created by or joined by the given user. */
+    public ArrayList<GroupSavings> getForUser(String username) {
+        ArrayList<GroupSavings> result = new ArrayList<>();
+        if (username == null || username.trim().isEmpty()) return result;
+        String user = username.trim();
+        for (GroupSavings group : groups) {
+            if (group.getCreator().equalsIgnoreCase(user) || group.hasMember(user)) {
+                result.add(group);
+            }
+        }
+        return result;
+    }
+
+    /** Updates group settings without changing its original creation date. */
+    public boolean updateGroup(String oldName, String newName, String targetDate,
+                               double dailyTarget, double totalTarget) {
+        GroupSavings group = findGroup(oldName);
+        if (group == null || newName == null || newName.trim().isEmpty()
+                || dailyTarget < 0 || Double.isNaN(dailyTarget) || Double.isInfinite(dailyTarget)
+                || totalTarget <= 0 || Double.isNaN(totalTarget) || Double.isInfinite(totalTarget)) return false;
+        GroupSavings conflict = findGroup(newName);
+        if (conflict != null && conflict != group) return false;
+        try {
+            group.setTargetDate(targetDate);
+            group.setExpectedPerMember(dailyTarget);
+            group.setTargetAmount(totalTarget);
+            group.setGroupName(newName.trim());
+            saveAll();
+            return true;
+        } catch (IllegalArgumentException ex) {
+            return false;
+        }
+    }
+
+    /** Renames a member in group membership, creator, and contribution records. */
+    public void renameMember(String oldName, String newName) {
+        if (oldName == null || newName == null || oldName.trim().isEmpty() || newName.trim().isEmpty()) return;
+        for (GroupSavings group : groups) group.renameMember(oldName, newName);
+        saveAll();
+    }
+
+    /** Deletes the group and its associated members/contributions from memory and storage. */
+    public boolean deleteGroup(String groupName) {
+        GroupSavings group = findGroup(groupName);
+        if (group == null) return false;
+        groups.remove(group);
+        saveAll();
+        return true;
+    }
+
     public void clearLocalFile() {
         try {
             String path = txtPath();
@@ -136,17 +186,15 @@ public class GroupList {
 
     private boolean saveAll() {
         StringBuilder sb = new StringBuilder();
-        String owner = (SAVI.user != null && SAVI.user.getCurrentName() != null)
-                ? SAVI.user.getCurrentName() : "";
-
         for (GroupSavings g : groups) {
-            sb.append("G,").append(encode(owner)).append(",")
+            sb.append("G,").append(encode(g.getCreator())).append(",")
                     .append(g.getTargetAmount()).append(",")
                     .append(encode(g.getGroupName())).append(",")
                     .append(g.getExpectedPerMember()).append(",")
                     .append(g.getCreatedDate()).append(",")
                     .append(g.getWeeklyTarget()).append(",")
-                    .append(encode(g.getSavingsName())).append("\n");
+                    .append(encode(g.getSavingsName())).append(",")
+                    .append(encode(g.getTargetDate())).append("\n");
 
             for (String m : g.getMembers()) {
                 sb.append("M,").append(encode(g.getGroupName())).append(",")
@@ -209,13 +257,14 @@ public class GroupList {
                 }
 
                 if (findGroup(groupName) == null) {
-                    groups.add(new GroupSavings(
-                            savingsName,
-                            target,
-                            groupName,
-                            expected,
-                            createdDate
-                    ));
+                    GroupSavings loaded = new GroupSavings(
+                            savingsName, target, groupName, expected, createdDate
+                    );
+                    loaded.setCreator(decode(p.get(1)));
+                    if (p.size() >= 9) {
+                        loaded.setTargetDate(decode(p.get(8)));
+                    }
+                    groups.add(loaded);
 
                     if (p.size() >= 7 && !p.get(6).trim().isEmpty()) {
                         try {
@@ -263,9 +312,9 @@ public class GroupList {
                 }
             }
         } catch (Exception ex) {
-        com.codename1.io.Log.p("Invalid group record: " + line);
-        com.codename1.io.Log.e(ex);
-    }
+            System.out.println("Invalid group record: " + line);
+            ex.printStackTrace();
+        }
     }
 
     private ArrayList<String> splitLine(String line) {
@@ -295,17 +344,18 @@ public class GroupList {
                 }
             }
         } catch (Exception ex) {
-            Log.e(ex);
+            ex.printStackTrace();
         }
         try {
             if (!Storage.getInstance().exists(fileRec)) {
                 return "";
             }
             try (InputStream in = Storage.getInstance().createInputStream(fileRec)) {
-                return Util.readToString(in, "UTF-8");
+                String text = Util.readToString(in, "UTF-8");
+                return text == null ? "" : text;
             }
         } catch (Exception ex) {
-            Log.e(ex);
+            ex.printStackTrace();
             return "";
         }
     }
@@ -329,19 +379,19 @@ public class GroupList {
     }
 
     private boolean writeFile(String text) {
-        boolean savedToFileSystem = false;
+        boolean fsOk = false;
         try (OutputStream out = FileSystemStorage.getInstance().openOutputStream(txtPath())) {
             out.write(text.getBytes("UTF-8"));
-            savedToFileSystem = true;
+            fsOk = true;
         } catch (Exception ex) {
-            Log.e(ex);
+            ex.printStackTrace();
         }
         try (OutputStream out = Storage.getInstance().createOutputStream(fileRec)) {
             out.write(text.getBytes("UTF-8"));
             return true;
         } catch (Exception ex) {
-            Log.e(ex);
-            return savedToFileSystem;
+            ex.printStackTrace();
+            return fsOk;
         }
     }
 

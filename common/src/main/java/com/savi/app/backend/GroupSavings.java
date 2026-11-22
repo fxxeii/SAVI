@@ -10,9 +10,11 @@ import java.util.ArrayList;
 // members, the expected amount per member, and the missed-amount calculation.
 public class GroupSavings extends Savings {
 
-    private final String groupName;
+    private String groupName;
+    private String creator;
+    private String targetDate = "TBD";
     private final ArrayList<String> members = new ArrayList<>();
-    private final double expectedPerMember;   // how much each member should save per day
+    private double expectedPerMember;   // how much each member should save per day
     private final LocalDate createdDate;      // counting of missed days starts here
     private double weeklyTarget;   // goal for each week (0 = not set)
 
@@ -70,6 +72,27 @@ public class GroupSavings extends Savings {
         members.add(cleanName);
     }
 
+    public void renameMember(String oldName, String newName) {
+        if (oldName == null || newName == null || newName.trim().isEmpty()) return;
+        for (int i = 0; i < members.size(); i++) {
+            if (members.get(i).equalsIgnoreCase(oldName.trim())) {
+                members.set(i, newName.trim());
+            }
+        }
+        if (creator != null && creator.equalsIgnoreCase(oldName.trim())) creator = newName.trim();
+        ArrayList<Contribution> renamed = new ArrayList<>();
+        for (Contribution contribution : contributions) {
+            String memberName = contribution.getMember().equalsIgnoreCase(oldName.trim())
+                    ? newName.trim() : contribution.getMember();
+            Contribution copy = new Contribution(memberName, contribution.getAmount(),
+                    contribution.getDate(), contribution.getNote());
+            copy.setTimestamp(contribution.getTimestamp());
+            renamed.add(copy);
+        }
+        contributions.clear();
+        contributions.addAll(renamed);
+    }
+
     public boolean hasMember(String name) {
         if (name == null || name.trim().isEmpty()) {
             return false;
@@ -91,6 +114,44 @@ public class GroupSavings extends Savings {
 
     public double getExpectedPerMember() {
         return expectedPerMember;
+    }
+
+    public void setExpectedPerMember(double expectedPerMember) {
+        if (expectedPerMember < 0 || Double.isNaN(expectedPerMember) || Double.isInfinite(expectedPerMember)) {
+            throw new IllegalArgumentException("Invalid expected contribution.");
+        }
+        this.expectedPerMember = expectedPerMember;
+    }
+
+    public String getCreator() {
+        return creator == null ? "" : creator;
+    }
+
+    public void setCreator(String creator) {
+        this.creator = creator == null ? "" : creator.trim();
+    }
+
+    public String getTargetDate() {
+        return targetDate == null || targetDate.trim().isEmpty() ? "TBD" : targetDate;
+    }
+
+    public void setTargetDate(String targetDate) {
+        String value = targetDate == null ? "" : targetDate.trim();
+        if (!value.isEmpty() && !"TBD".equalsIgnoreCase(value)) {
+            try {
+                LocalDate.parse(value);
+            } catch (Exception ex) {
+                throw new IllegalArgumentException("Target date must use YYYY-MM-DD or TBD.");
+            }
+        }
+        this.targetDate = value.isEmpty() ? "TBD" : value;
+    }
+
+    public void setGroupName(String groupName) {
+        if (groupName == null || groupName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Group name is required.");
+        }
+        this.groupName = groupName.trim();
     }
 
     public LocalDate getCreatedDate() {
