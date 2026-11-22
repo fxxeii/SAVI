@@ -650,7 +650,7 @@ public class SummaryPage {
 
     // opens on the group with this name (used by the group popup)
     public void show(String groupName) {
-        summary = new GroupSummary(SAVI.user, SAVI.groupList.getGroups());
+        summary = new GroupSummary(SAVI.user, SAVI.groupList.getForUser(SAVI.user.getCurrentName()));
         if (groupName != null) {
             summary.selectGroup(groupName);
         }

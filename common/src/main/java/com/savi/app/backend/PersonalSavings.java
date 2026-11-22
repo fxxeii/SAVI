@@ -1,36 +1,31 @@
 package com.savi.app.backend;
 
+// CHILD CLASS 2: PERSONAL SAVINGS (Inheritance + Polymorphism)
 public class PersonalSavings extends Savings {
 
-    private String ownerName;
-    private double weeklyTarget;   // goal for each week (0 = not set)
-
-    public PersonalSavings(String savingsName, double targetAmount, String owner) {
-        super(savingsName, targetAmount);
-        this.ownerName = owner;
+    public PersonalSavings(String creator, double targetAmount, String savingsName) {
+        this(creator, targetAmount, savingsName, 0, "");
     }
 
-    public String getOwner() {
-        return ownerName;
+    public PersonalSavings(String creator, double targetAmount, String savingsName, double weeklyTarget) {
+        this(creator, targetAmount, savingsName, weeklyTarget, "");
     }
 
-    public double getWeeklyTarget() {
-        return weeklyTarget;
-    }
-
-    public void setWeeklyTarget(double weeklyTarget) {
-        if (weeklyTarget < 0 || Double.isNaN(weeklyTarget) || Double.isInfinite(weeklyTarget)) {
-            throw new IllegalArgumentException("Invalid weekly target.");
+    public PersonalSavings(String creator, double targetAmount, String savingsName,
+                           double weeklyTarget, String targetDate) {
+        super(creator, targetAmount, savingsName, targetDate, weeklyTarget);
+        if (savingsName == null || savingsName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Savings name is required.");
         }
-        this.weeklyTarget = weeklyTarget;
+    }
+
+    @Override
+    public String getSummaryLabel() {
+        return getSavingsName() + " (Personal)";
     }
 
     @Override
     public void displayInfo() {
-        System.out.println("Type: Personal Savings");
-        System.out.println("Savings Name: " + savingsName);
-        System.out.println("Owner: " + ownerName);
-        System.out.println("Target Amount: " + targetAmount);
-        System.out.println("Current Amount: " + currentAmount);
+        System.out.println("Personal Goal: " + getSavingsName() + " | Target: " + getTargetAmount() + " | Current: " + getCurrentAmount());
     }
 }

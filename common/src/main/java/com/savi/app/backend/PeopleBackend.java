@@ -91,12 +91,23 @@ public class PeopleBackend {
             String name = names.get(i);
             double paid = 0;
             for (Contribution contribution : contributions) {
-                if (contribution.getMember().equalsIgnoreCase(name)) paid += contribution.getAmount();
+                if (contribution.getMember().equalsIgnoreCase(name)) {
+                    paid += contribution.getAmount();
+                }
             }
             boolean admin = group.getCreator().equalsIgnoreCase(name);
-            result[i] = new Member(name, admin ? "Admin" : "Member", toHandle(name),
-                    group.getGroupName(), paid > 0, paid, Math.max(0, expected - paid),
-                    goal > 0 ? goal : 1.0);
+            double totalMissed = group.getTotalMissed(name);
+
+            result[i] = new Member(
+                    name,
+                    admin ? "Admin" : "Member",
+                    toHandle(name),
+                    group.getGroupName(),
+                    paid > 0,
+                    paid,
+                    totalMissed,
+                    goal > 0 ? goal : 1.0
+            );
         }
         return result;
     }

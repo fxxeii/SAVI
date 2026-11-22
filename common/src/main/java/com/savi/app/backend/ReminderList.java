@@ -1,251 +1,188 @@
 package com.savi.app.backend;
 
-import com.codename1.io.Storage;
-import com.codename1.io.Util;
-import com.codename1.ui.Display;
-
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.time.LocalDate;
 import java.util.ArrayList;
 
-// REMINDER LIST - the backend of the Reminder page.
-// DATA STRUCTURE: a singly linked list of Reminder nodes (head -> next -> next -> null).
-// FILE HANDLING: every change is saved to Reminders_Records.txt, and load() reads it back at startup.
-// ENCAPSULATION: head is private, so the pages can only use the methods below.
+// REMINDER LIST (backend linked list + file storage)
+// File format (Reminders_Records.txt):
+//   title,groupName,yyyy-MM-dd,time,amount,completed
 public class ReminderList {
-    private Reminder head;                                   // first node of the list
+
+    private Reminder head;
     private final String fileRec = "Reminders_Records.txt";
 
-    // create a node, link it at the end of the list, then save
+    // CREATE
     public void addReminder(String title, String groupName, LocalDate date, String time, double amount) {
-        Reminder node = new Reminder(title, groupName, date, time, amount);
-        insertNode(node);
+        Reminder node = new Reminder(title, groupName, date, time, amount, false);
+        appendNode(node);
         saveAll();
     }
 
-    // INSERT AT TAIL: if the list is empty the node becomes the head,
-    // otherwise walk to the last node and link the new one after it
-    private void insertNode(Reminder node) {
-        if (head == null) {
-            head = node;
-        } else {
-            Reminder temp = head;
-            while (temp.getNext() != null) {
-                temp = temp.getNext();
-            }
-            temp.setNext(node);
-        }
-    }
-
-    // TRAVERSE the list until we find the same node, mark it done, and save
-    public void markCompleted(Reminder target) {
-        Reminder temp = head;
-        while (temp != null) {
-            if (temp == target) {
-                temp.markCompleted();
-                saveAll();
-                return;
-            }
-            temp = temp.getNext();
-        }
-    }
-
-    // TRAVERSAL: collect the reminders that are not completed (the Upcoming tab)
+    // READ
     public ArrayList<Reminder> getUpcoming() {
-        ArrayList<Reminder> list = new ArrayList<>();
-        Reminder temp = head;
-        while (temp != null) {
-            if (!temp.isCompleted()) {
-                list.add(temp);
+        ArrayList<Reminder> result = new ArrayList<>();
+        Reminder curr = head;
+        while (curr != null) {
+            if (!curr.isCompleted()) {
+                result.add(curr);
             }
-            temp = temp.getNext();
+            curr = curr.getNext();
         }
-        return list;
+        return result;
     }
 
-    // TRAVERSAL: collect the reminders that are completed (the Completed tab)
     public ArrayList<Reminder> getCompleted() {
-        ArrayList<Reminder> list = new ArrayList<>();
-        Reminder temp = head;
-        while (temp != null) {
-            if (temp.isCompleted()) {
-                list.add(temp);
+        ArrayList<Reminder> result = new ArrayList<>();
+        Reminder curr = head;
+        while (curr != null) {
+            if (curr.isCompleted()) {
+                result.add(curr);
             }
-            temp = temp.getNext();
+            curr = curr.getNext();
         }
-        return list;
+        return result;
     }
 
-    // numbers shown in the tab badges, e.g. "Upcomings (3)"
     public int countUpcoming() {
-        return getUpcoming().size();
+        int count = 0;
+        Reminder curr = head;
+        while (curr != null) {
+            if (!curr.isCompleted()) {
+                count++;
+            }
+            curr = curr.getNext();
+        }
+        return count;
     }
 
     public int countCompleted() {
-        return getCompleted().size();
+        int count = 0;
+        Reminder curr = head;
+        while (curr != null) {
+            if (curr.isCompleted()) {
+                count++;
+            }
+            curr = curr.getNext();
+        }
+        return count;
     }
 
-    // ---------------------------------------------------------------- FILE HANDLING (TXT)
-    // Format per line: title,groupName,yyyy-MM-dd,time,amount,completed
+    // UPDATE
+    public void markCompleted(Reminder target) {
+        if (target == null) {
+            return;
+        }
+        Reminder curr = head;
+        while (curr != null) {
+            if (curr == target) {
+                curr.setCompleted(true);
+                saveAll();
+                return;
+            }
+            curr = curr.getNext();
+        }
+    }
 
-    // Rewrites the whole file from the linked list (Storage cannot append).
+    // DELETE
+    public void deleteReminder(Reminder target) {
+        if (target == null || head == null) {
+            return;
+        }
+        if (head == target) {
+            head = head.getNext();
+            saveAll();
+            return;
+        }
+        Reminder curr = head;
+        while (curr.getNext() != null) {
+            if (curr.getNext() == target) {
+                curr.setNext(curr.getNext().getNext());
+                saveAll();
+                return;
+            }
+            curr = curr.getNext();
+        }
+    }
+
+    // LINKED LIST HELPER
+    private void appendNode(Reminder node) {
+        if (head == null) {
+            head = node;
+            return;
+        }
+        Reminder curr = head;
+        while (curr.getNext() != null) {
+            curr = curr.getNext();
+        }
+        curr.setNext(node);
+    }
+
+    // PERSISTENCE (Storage)
     private void saveAll() {
         StringBuilder sb = new StringBuilder();
-        Reminder temp = head;
-        while (temp != null) {
-            // encode() protects commas inside text so they do not break the TXT
-            sb.append(encode(temp.getTitle())).append(",")
-                    .append(encode(temp.getGroupName())).append(",")
-                    .append(temp.getDate().toString()).append(",")
-                    .append(encode(temp.getTime())).append(",")
-                    .append(temp.getAmount()).append(",")
-                    .append(temp.isCompleted()).append("\n");
-            temp = temp.getNext();
+        Reminder curr = head;
+        while (curr != null) {
+            sb.append(RecordStorage.encode(curr.getTitle())).append(",")
+                    .append(RecordStorage.encode(curr.getGroupName())).append(",")
+                    .append(curr.getDate() != null ? curr.getDate().toString() : LocalDate.now().toString()).append(",")
+                    .append(RecordStorage.encode(curr.getTime())).append(",")
+                    .append(curr.getAmount()).append(",")
+                    .append(curr.isCompleted()).append("\n");
+            curr = curr.getNext();
         }
-        try {
-            // Codename One has no FileWriter, so the text is saved with Storage
-            OutputStream out = Storage.getInstance().createOutputStream(fileRec);
-            out.write(sb.toString().getBytes("UTF-8"));
-            out.close();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+        RecordStorage.writeLocal(fileRec, sb.toString());
     }
 
-    // Called once at startup: rebuilds the linked list from the saved text.
     public void load() {
         head = null;
-
-        loadText(readRecords());   // shared file from resources
-        loadText(readFile());      // this device's saved file
+        loadText(RecordStorage.loadOrSeed(ReminderList.class, fileRec));
     }
 
-    // split the text into lines, turn each line into a Reminder, and link it into the list
     private void loadText(String text) {
-        int start = 0;
-        while (start < text.length()) {
-            int end = text.indexOf('\n', start);
-            if (end == -1) end = text.length();
-            String line = text.substring(start, end);
-            start = end + 1;
-            if (line.endsWith("\r")) line = line.substring(0, line.length() - 1);
+        if (text == null || text.isEmpty()) {
+            return;
+        }
 
-            Reminder r = parseLine(line);
-            if (r == null) continue;          // damaged or blank line: skip it
-
-            Reminder same = findSame(r);
-            if (same == null) {
-                insertNode(r);
-            } else if (r.isCompleted()) {
-                same.markCompleted();   // "completed" wins over "upcoming"
+        int lineStart = 0;
+        for (int i = 0; i <= text.length(); i++) {
+            if (i == text.length() || text.charAt(i) == '\n') {
+                String line = text.substring(lineStart, i).trim();
+                lineStart = i + 1;
+                if (!line.isEmpty()) {
+                    parseLine(line);
+                }
             }
         }
     }
 
-    // reminders have no unique name, so compare their details to avoid duplicates
-    // (the same reminder can be in both the shared file and the device file)
-    private Reminder findSame(Reminder r) {
-        Reminder temp = head;
-        while (temp != null) {
-            if (temp.getTitle().equals(r.getTitle())
-                    && temp.getGroupName().equals(r.getGroupName())
-                    && temp.getDate().equals(r.getDate())
-                    && temp.getTime().equals(r.getTime())) {
-                return temp;
-            }
-            temp = temp.getNext();
+    private void parseLine(String line) {
+        ArrayList<String> parts = RecordStorage.splitLine(line);
+        if (parts.size() < 6) {
+            return;
         }
-        return null;
-    }
-
-    // reads this device's saved file (empty text if nothing was saved yet)
-    private String readFile() {
         try {
-            if (!Storage.getInstance().exists(fileRec)) {
-                return "";
-            }
-            InputStream in = Storage.getInstance().createInputStream(fileRec);
-            String text = Util.readToString(in, "UTF-8");
-            return text == null ? "" : text;
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return "";
+            String title = RecordStorage.decode(parts.get(0));
+            String groupName = RecordStorage.decode(parts.get(1));
+            LocalDate date = parseDate(parts.get(2));
+            String time = RecordStorage.decode(parts.get(3));
+            double amount = Double.parseDouble(parts.get(4));
+            boolean completed = Boolean.parseBoolean(parts.get(5));
+            appendNode(new Reminder(title, groupName, date, time, amount, completed));
+        } catch (Exception ignored) {
         }
     }
 
-    // reads the shared starter file packaged inside the app (src/main/resources)
-    private String readRecords() {
-        try {
-            InputStream in = Display.getInstance().getResourceAsStream(ReminderList.class, "/" + fileRec);
-            if (in == null) {
-                return "";
-            }
-            String text = Util.readToString(in, "UTF-8");
-            return text == null ? "" : text;
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return "";
+    private LocalDate parseDate(String s) {
+        if (s == null || s.length() < 10) {
+            return LocalDate.now();
         }
-    }
-
-    // one TXT line -> one Reminder. The commas are found by position (c1..c5)
-    // and the text between them is cut out with substring().
-    private Reminder parseLine(String line) {
-        int c1 = line.indexOf(',');
-        int c2 = line.indexOf(',', c1 + 1);
-        int c3 = line.indexOf(',', c2 + 1);
-        int c4 = line.indexOf(',', c3 + 1);
-        int c5 = line.indexOf(',', c4 + 1);
-        if (c1 < 0 || c2 < 0 || c3 < 0 || c4 < 0 || c5 < 0) return null;
-
         try {
-            String title = decode(line.substring(0, c1));
-            String group = decode(line.substring(c1 + 1, c2));
-            LocalDate date = LocalDate.parse(line.substring(c2 + 1, c3));
-            String time = decode(line.substring(c3 + 1, c4));
-            double amount = Double.parseDouble(line.substring(c4 + 1, c5));
-            boolean done = "true".equalsIgnoreCase(line.substring(c5 + 1).trim());
-
-            Reminder r = new Reminder(title, group, date, time, amount);
-            if (done) r.markCompleted();
-            return r;
+            int y = Integer.parseInt(s.substring(0, 4));
+            int m = Integer.parseInt(s.substring(5, 7));
+            int d = Integer.parseInt(s.substring(8, 10));
+            return LocalDate.of(y, m, d);
         } catch (Exception e) {
-            return null;
+            return LocalDate.now();
         }
-    }
-
-    // A comma or new line typed into a field would break the TXT, so those characters
-    // are stored as %2C / %0A / %0D (and "%" itself as %25), then turned back by decode().
-    private String encode(String s) {
-        if (s == null) return "";
-        StringBuilder out = new StringBuilder();
-        for (int i = 0; i < s.length(); i++) {
-            char c = s.charAt(i);
-            if (c == '%') out.append("%25");
-            else if (c == ',') out.append("%2C");
-            else if (c == '\n') out.append("%0A");
-            else if (c == '\r') out.append("%0D");
-            else out.append(c);
-        }
-        return out.toString();
-    }
-
-    private String decode(String s) {
-        StringBuilder out = new StringBuilder();
-        int i = 0;
-        while (i < s.length()) {
-            char c = s.charAt(i);
-            if (c == '%' && i + 3 <= s.length()) {
-                String code = s.substring(i, i + 3);
-                if (code.equals("%25")) { out.append('%'); i += 3; continue; }
-                if (code.equals("%2C")) { out.append(','); i += 3; continue; }
-                if (code.equals("%0A")) { out.append('\n'); i += 3; continue; }
-                if (code.equals("%0D")) { out.append('\r'); i += 3; continue; }
-            }
-            out.append(c);
-            i++;
-        }
-        return out.toString();
     }
 }

@@ -206,7 +206,7 @@ public class TransferPage {
         }
 
         // BACKEND: every savings of the logged-in user (groups AND personal), members of the chosen one
-        Transfer transfer = new Transfer(SAVI.user, SAVI.groupList.getGroups());
+        Transfer transfer = new Transfer(SAVI.user, SAVI.groupList.getForUser(SAVI.user.getCurrentName()));
         String[] groups = toArray(transfer.getSavingsNames());
         String[] noMembers = new String[0];     // filled in once a group is chosen
 

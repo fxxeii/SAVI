@@ -1,429 +1,288 @@
 package com.savi.app.backend;
 
-import com.codename1.io.FileSystemStorage;
 import com.codename1.io.Storage;
-import com.codename1.io.Util;
-import com.codename1.ui.Display;
-import com.savi.app.SAVI;
 
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.List;
 
+// GROUP LIST (manages all GroupSavings + saves to Groups_Records.txt via Codename One Storage)
+// File format (3 record types):
+//   G,creator,targetAmount,groupName,expectedPerMember,createdDate,weeklyTarget,savingsName,targetDate
+//   M,groupName,memberName
+//   C,groupName,memberName,amount,date,note[,timestamp]
 public class GroupList {
+
     private final ArrayList<GroupSavings> groups = new ArrayList<>();
     private final String fileRec = "Groups_Records.txt";
 
-    public ArrayList<GroupSavings> getGroups() {
+    // CREATE
+    public String addGroup(String creator, double targetAmount, String groupName,
+                           double expectedPerMember, LocalDate createdDate,
+                           ArrayList<String> initialMembers) {
+        return addGroup(creator, targetAmount, groupName, expectedPerMember, createdDate, initialMembers, 0);
+    }
+
+    public String addGroup(String creator, double targetAmount, String groupName,
+                           double expectedPerMember, LocalDate createdDate,
+                           ArrayList<String> initialMembers, double weeklyTarget) {
+        return addGroup(creator, targetAmount, groupName, expectedPerMember, createdDate,
+                initialMembers, weeklyTarget, groupName, "");
+    }
+
+    public String addGroup(String creator, double targetAmount, String groupName,
+                           double expectedPerMember, LocalDate createdDate,
+                           ArrayList<String> initialMembers, double weeklyTarget,
+                           String savingsName, String targetDate) {
+        if (creator == null || creator.trim().isEmpty()) {
+            return "Creator name is required.";
+        }
+        if (groupName == null || groupName.trim().isEmpty()) {
+            return "Group name is required.";
+        }
+        if (targetAmount <= 0) {
+            return "Target amount must be greater than 0.";
+        }
+        if (expectedPerMember < 0) {
+            return "Expected per member cannot be negative.";
+        }
+        if (findByName(groupName) != null) {
+            return "A group with that name already exists.";
+        }
+
+        GroupSavings g = new GroupSavings(creator.trim(), targetAmount, groupName.trim(),
+                expectedPerMember, createdDate, weeklyTarget, savingsName, targetDate);
+
+        if (initialMembers != null) {
+            for (String m : initialMembers) {
+                g.addMember(m);
+            }
+        }
+
+        groups.add(g);
+        if (!saveAll()) {
+            return "Could not save group to file.";
+        }
+        return "success";
+    }
+
+    // READ
+    public List<GroupSavings> getGroups() {
         return new ArrayList<>(groups);
     }
 
-    public boolean isEmpty() {
-        return groups.isEmpty();
+    public List<GroupSavings> getForUser(String username) {
+        ArrayList<GroupSavings> out = new ArrayList<>();
+        if (username == null || username.trim().isEmpty()) {
+            return out;
+        }
+        String u = username.trim();
+        for (GroupSavings g : groups) {
+            if (g.getCreator().equalsIgnoreCase(u) || g.hasMember(u)) {
+                out.add(g);
+            }
+        }
+        return out;
     }
 
-    public GroupSavings findGroup(String groupName) {
-        if (groupName == null || groupName.trim().isEmpty()) {
+    public GroupSavings findByName(String groupName) {
+        if (groupName == null) {
             return null;
         }
+        String target = groupName.trim();
         for (GroupSavings g : groups) {
-            if (g.getGroupName().equalsIgnoreCase(groupName.trim())) {
+            if (g.getGroupName().equalsIgnoreCase(target)) {
                 return g;
             }
         }
         return null;
     }
 
-    public String addGroup(String savingsName, double target, String groupName, double expectedPerMember) {
-        if (savingsName == null || savingsName.trim().isEmpty()) {
-            return "Savings name is required.";
+    // UPDATE
+    public String addMemberToGroup(String groupName, String memberName) {
+        GroupSavings g = findByName(groupName);
+        if (g == null) {
+            return "Group not found.";
         }
-        if (groupName == null || groupName.trim().isEmpty()) {
-            return "Group name is required.";
+        if (memberName == null || memberName.trim().isEmpty()) {
+            return "Member name is required.";
         }
-        if (target <= 0 || Double.isNaN(target) || Double.isInfinite(target)) {
-            return "Target amount must be greater than zero.";
+        if (g.hasMember(memberName)) {
+            return memberName.trim() + " is already in this group.";
         }
-        if (expectedPerMember < 0 || Double.isNaN(expectedPerMember) || Double.isInfinite(expectedPerMember)) {
-            return "Invalid expected contribution.";
-        }
-        if (findGroup(groupName) != null) {
-            return "Group already exists.";
-        }
-
-        GroupSavings created = new GroupSavings(
-                savingsName.trim(),
-                target,
-                groupName.trim(),
-                expectedPerMember
-        );
-
-        String currentUser = (SAVI.user != null) ? SAVI.user.getCurrentName() : null;
-        if (currentUser != null && !currentUser.trim().isEmpty()) {
-            created.setCreator(currentUser.trim());
-            created.addMember(currentUser.trim());
-        }
-
-        groups.add(created);
+        g.addMember(memberName.trim());
         saveAll();
         return "success";
     }
 
-    public String addGroup(String savingsName, double target, String groupName,
-                           double expectedPerMember, double weeklyTarget) {
-        if (weeklyTarget < 0 || Double.isNaN(weeklyTarget) || Double.isInfinite(weeklyTarget)) {
-            return "Invalid weekly target.";
+    public String removeMemberFromGroup(String groupName, String memberName) {
+        GroupSavings g = findByName(groupName);
+        if (g == null) {
+            return "Group not found.";
         }
-        String result = addGroup(savingsName, target, groupName, expectedPerMember);
-        if (result.equals("success")) {
-            GroupSavings g = findGroup(groupName);
-            if (g != null) {
-                g.setWeeklyTarget(weeklyTarget);
-                saveAll();
-            }
+        if (memberName != null && g.getCreator().equalsIgnoreCase(memberName.trim())) {
+            return "Cannot remove the group creator.";
         }
-        return result;
-    }
-
-    public boolean addMember(String groupName, String member) {
-        GroupSavings g = findGroup(groupName);
-        if (g == null || member == null || member.trim().isEmpty()) {
-            return false;
+        if (!g.removeMember(memberName)) {
+            return "Member not found.";
         }
-        if (g.hasMember(member)) {
-            return false;
-        }
-        g.addMember(member);
         saveAll();
-        return true;
+        return "success";
     }
 
-    public boolean addContribution(String groupName, String member, double amount, LocalDate date, String note) {
-        GroupSavings g = findGroup(groupName);
+    public String recordContribution(String groupName, String memberName, double amount, LocalDate date, String note) {
+        GroupSavings g = findByName(groupName);
+        if (g == null) {
+            return "Group not found.";
+        }
+        if (memberName == null || memberName.trim().isEmpty()) {
+            return "Member name is required.";
+        }
+        if (amount <= 0) {
+            return "Amount must be greater than 0.";
+        }
+        try {
+            if (!g.hasMember(memberName)) {
+                g.addMember(memberName.trim());
+            }
+            g.addContribution(memberName.trim(), amount, date, note);
+        } catch (IllegalArgumentException ex) {
+            return ex.getMessage();
+        }
+        saveAll();
+        return "success";
+    }
+
+    public boolean saveChanges() {
+        return saveAll();
+    }
+
+    // DELETE
+    public boolean deleteGroup(String groupName) {
+        GroupSavings g = findByName(groupName);
         if (g == null) {
             return false;
         }
-        if (!g.hasMember(member)) {
-            return false;
-        }
-        if (amount == 0 || Double.isNaN(amount) || Double.isInfinite(amount)) {
-            return false;
-        }
-        if (date == null) {
-            return false;
-        }
-        g.addContribution(member.trim(), amount, date, note);
-        saveAll();
-        return true;
-    }
-
-    /** Returns groups created by or joined by the given user. */
-    public ArrayList<GroupSavings> getForUser(String username) {
-        ArrayList<GroupSavings> result = new ArrayList<>();
-        if (username == null || username.trim().isEmpty()) return result;
-        String user = username.trim();
-        for (GroupSavings group : groups) {
-            if (group.getCreator().equalsIgnoreCase(user) || group.hasMember(user)) {
-                result.add(group);
-            }
-        }
-        return result;
-    }
-
-    /** Updates group settings without changing its original creation date. */
-    public boolean updateGroup(String oldName, String newName, String targetDate,
-                               double dailyTarget, double totalTarget) {
-        GroupSavings group = findGroup(oldName);
-        if (group == null || newName == null || newName.trim().isEmpty()
-                || dailyTarget < 0 || Double.isNaN(dailyTarget) || Double.isInfinite(dailyTarget)
-                || totalTarget <= 0 || Double.isNaN(totalTarget) || Double.isInfinite(totalTarget)) return false;
-        GroupSavings conflict = findGroup(newName);
-        if (conflict != null && conflict != group) return false;
-        try {
-            group.setTargetDate(targetDate);
-            group.setExpectedPerMember(dailyTarget);
-            group.setTargetAmount(totalTarget);
-            group.setGroupName(newName.trim());
-            saveAll();
-            return true;
-        } catch (IllegalArgumentException ex) {
-            return false;
-        }
-    }
-
-    /** Renames a member in group membership, creator, and contribution records. */
-    public void renameMember(String oldName, String newName) {
-        if (oldName == null || newName == null || oldName.trim().isEmpty() || newName.trim().isEmpty()) return;
-        for (GroupSavings group : groups) group.renameMember(oldName, newName);
-        saveAll();
-    }
-
-    /** Deletes the group and its associated members/contributions from memory and storage. */
-    public boolean deleteGroup(String groupName) {
-        GroupSavings group = findGroup(groupName);
-        if (group == null) return false;
-        groups.remove(group);
+        groups.remove(g);
         saveAll();
         return true;
     }
 
     public void clearLocalFile() {
-        try {
-            String path = txtPath();
-            if (FileSystemStorage.getInstance().exists(path)) {
-                FileSystemStorage.getInstance().delete(path);
-            }
-        } catch (Exception ignored) {
-        }
         Storage.getInstance().deleteStorageFile(fileRec);
         groups.clear();
     }
 
-    private String txtPath() {
-        return FileSystemStorage.getInstance().getAppHomePath() + fileRec;
-    }
-
+    // PERSISTENCE (Storage)
     private boolean saveAll() {
         StringBuilder sb = new StringBuilder();
         for (GroupSavings g : groups) {
-            sb.append("G,").append(encode(g.getCreator())).append(",")
+            sb.append("G,").append(RecordStorage.encode(g.getCreator())).append(",")
                     .append(g.getTargetAmount()).append(",")
-                    .append(encode(g.getGroupName())).append(",")
+                    .append(RecordStorage.encode(g.getGroupName())).append(",")
                     .append(g.getExpectedPerMember()).append(",")
                     .append(g.getCreatedDate()).append(",")
                     .append(g.getWeeklyTarget()).append(",")
-                    .append(encode(g.getSavingsName())).append(",")
-                    .append(encode(g.getTargetDate())).append("\n");
+                    .append(RecordStorage.encode(g.getSavingsName())).append(",")
+                    .append(RecordStorage.encode(g.getTargetDate())).append("\n");
 
             for (String m : g.getMembers()) {
-                sb.append("M,").append(encode(g.getGroupName())).append(",")
-                        .append(encode(m)).append("\n");
+                sb.append("M,").append(RecordStorage.encode(g.getGroupName())).append(",")
+                        .append(RecordStorage.encode(m)).append("\n");
             }
 
             for (Contribution c : g.getContributions()) {
-                sb.append("C,").append(encode(g.getGroupName())).append(",")
-                        .append(encode(c.getMember())).append(",")
+                sb.append("C,").append(RecordStorage.encode(g.getGroupName())).append(",")
+                        .append(RecordStorage.encode(c.getMember())).append(",")
                         .append(c.getAmount()).append(",")
                         .append(c.getDate().toString()).append(",")
-                        .append(encode(c.getNote())).append(",")
+                        .append(RecordStorage.encode(c.getNote())).append(",")
                         .append(c.getTimestamp()).append("\n");
             }
         }
-        return writeFile(sb.toString());
+        return RecordStorage.writeLocal(fileRec, sb.toString());
     }
 
     public void load() {
         groups.clear();
-        String text = readFile();
-        if (text == null || text.trim().isEmpty()) {
-            text = readRecords();
-        }
-        loadText(text == null ? "" : text);
+        loadText(RecordStorage.loadOrSeed(GroupList.class, fileRec));
     }
 
     private void loadText(String text) {
-        int start = 0;
-        while (start < text.length()) {
-            int end = text.indexOf('\n', start);
-            if (end == -1) end = text.length();
-            String line = text.substring(start, end);
-            start = end + 1;
-            if (line.endsWith("\r")) line = line.substring(0, line.length() - 1);
-            if (line.length() == 0) continue;
+        if (text == null || text.isEmpty()) {
+            return;
+        }
 
-            parseLine(line);
+        int lineStart = 0;
+        for (int i = 0; i <= text.length(); i++) {
+            if (i == text.length() || text.charAt(i) == '\n') {
+                String line = text.substring(lineStart, i).trim();
+                lineStart = i + 1;
+                if (!line.isEmpty()) {
+                    parseLine(line);
+                }
+            }
         }
     }
 
     private void parseLine(String line) {
-        ArrayList<String> p = splitLine(line);
-        try {
-            String type = p.get(0);
+        ArrayList<String> parts = RecordStorage.splitLine(line);
+        if (parts.isEmpty()) {
+            return;
+        }
+        String type = parts.get(0);
 
-            if (type.equals("G") && p.size() >= 5) {
-                double target = Double.parseDouble(p.get(2));
-                String groupName = decode(p.get(3));
-                double expected = Double.parseDouble(p.get(4));
-                String savingsName = p.size() >= 8 && !decode(p.get(7)).trim().isEmpty()
-                        ? decode(p.get(7))
-                        : groupName;
-
-                LocalDate createdDate;
-                if (p.size() >= 6 && !p.get(5).trim().isEmpty()) {
-                    createdDate = LocalDate.parse(p.get(5).trim());
-                } else {
-                    createdDate = LocalDate.now();
+        if (type.equals("G") && parts.size() >= 6) {
+            try {
+                String creator = RecordStorage.decode(parts.get(1));
+                double target = Double.parseDouble(parts.get(2));
+                String name = RecordStorage.decode(parts.get(3));
+                double expected = Double.parseDouble(parts.get(4));
+                LocalDate created = parseDate(parts.get(5));
+                double weeklyTarget = parts.size() >= 7 ? Double.parseDouble(parts.get(6)) : 0;
+                String savingsName = parts.size() >= 8 ? RecordStorage.decode(parts.get(7)) : name;
+                String targetDate = parts.size() >= 9 ? RecordStorage.decode(parts.get(8)) : "";
+                if (findByName(name) == null) {
+                    groups.add(new GroupSavings(creator, target, name, expected, created,
+                            weeklyTarget, savingsName, targetDate));
                 }
-
-                if (findGroup(groupName) == null) {
-                    GroupSavings loaded = new GroupSavings(
-                            savingsName, target, groupName, expected, createdDate
-                    );
-                    loaded.setCreator(decode(p.get(1)));
-                    if (p.size() >= 9) {
-                        loaded.setTargetDate(decode(p.get(8)));
+            } catch (Exception ignored) {
+            }
+        } else if (type.equals("M") && parts.size() >= 3) {
+            GroupSavings g = findByName(RecordStorage.decode(parts.get(1)));
+            if (g != null) {
+                g.addMember(RecordStorage.decode(parts.get(2)));
+            }
+        } else if (type.equals("C") && parts.size() >= 6) {
+            GroupSavings g = findByName(RecordStorage.decode(parts.get(1)));
+            if (g != null) {
+                try {
+                    String member = RecordStorage.decode(parts.get(2));
+                    double amount = Double.parseDouble(parts.get(3));
+                    LocalDate date = parseDate(parts.get(4));
+                    String note = RecordStorage.decode(parts.get(5));
+                    long timestamp = parts.size() >= 7 ? Long.parseLong(parts.get(6).trim()) : 0L;
+                    if (!g.hasMember(member)) {
+                        g.addMember(member);
                     }
-                    groups.add(loaded);
-
-                    if (p.size() >= 7 && !p.get(6).trim().isEmpty()) {
-                        try {
-                            findGroup(groupName).setWeeklyTarget(Double.parseDouble(p.get(6).trim()));
-                        } catch (Exception ignored) {
-                        }
-                    }
-                }
-
-            } else if (type.equals("M") && p.size() >= 3) {
-                GroupSavings g = findGroup(decode(p.get(1)));
-                if (g != null) {
-                    g.addMember(decode(p.get(2)));
-                }
-
-            } else if (type.equals("C") && p.size() >= 6) {
-                GroupSavings g = findGroup(decode(p.get(1)));
-                String member = decode(p.get(2));
-                double amount = Double.parseDouble(p.get(3));
-                LocalDate date = LocalDate.parse(p.get(4));
-                String note = decode(p.get(5));
-
-                if (g != null && g.hasMember(member)
-                        && amount != 0
-                        && !Double.isInfinite(amount)
-                        && !Double.isNaN(amount)) {
-
-                    g.addContribution(member, amount, date, note);
-
-                    long recordedAt = 0;
-                    if (p.size() >= 7) {
-                        try {
-                            recordedAt = Long.parseLong(p.get(6).trim());
-                        } catch (NumberFormatException e) {
-                            recordedAt = 0;
-                        }
-                    }
-                    Contribution added = null;
-                    for (Contribution c : g.getContributions()) {
-                        added = c;
-                    }
-                    if (added != null) {
-                        added.setTimestamp(recordedAt);
-                    }
+                    g.addContribution(member, amount, date, note, timestamp);
+                } catch (Exception ignored) {
                 }
             }
-        } catch (Exception ex) {
-            System.out.println("Invalid group record: " + line);
-            ex.printStackTrace();
         }
     }
 
-    private ArrayList<String> splitLine(String line) {
-        ArrayList<String> parts = new ArrayList<>();
-        int start = 0;
-        while (true) {
-            int comma = line.indexOf(',', start);
-            if (comma == -1) {
-                parts.add(line.substring(start));
-                break;
-            }
-            parts.add(line.substring(start, comma));
-            start = comma + 1;
-        }
-        return parts;
-    }
-
-    private String readFile() {
-        try {
-            String path = txtPath();
-            if (FileSystemStorage.getInstance().exists(path)) {
-                try (InputStream in = FileSystemStorage.getInstance().openInputStream(path)) {
-                    String text = Util.readToString(in, "UTF-8");
-                    if (text != null) {
-                        return text;
-                    }
-                }
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
+    private LocalDate parseDate(String s) {
+        if (s == null || s.length() < 10) {
+            return LocalDate.now();
         }
         try {
-            if (!Storage.getInstance().exists(fileRec)) {
-                return "";
-            }
-            try (InputStream in = Storage.getInstance().createInputStream(fileRec)) {
-                String text = Util.readToString(in, "UTF-8");
-                return text == null ? "" : text;
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return "";
+            int y = Integer.parseInt(s.substring(0, 4));
+            int m = Integer.parseInt(s.substring(5, 7));
+            int d = Integer.parseInt(s.substring(8, 10));
+            return LocalDate.of(y, m, d);
+        } catch (Exception e) {
+            return LocalDate.now();
         }
-    }
-
-    private String readRecords() {
-        try {
-            InputStream resource = Display.getInstance().getResourceAsStream(
-                    GroupList.class, "/" + fileRec
-            );
-            if (resource == null) {
-                return "";
-            }
-            try (InputStream in = resource) {
-                String text = Util.readToString(in, "UTF-8");
-                return text == null ? "" : text;
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return "";
-        }
-    }
-
-    private boolean writeFile(String text) {
-        boolean fsOk = false;
-        try (OutputStream out = FileSystemStorage.getInstance().openOutputStream(txtPath())) {
-            out.write(text.getBytes("UTF-8"));
-            fsOk = true;
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        try (OutputStream out = Storage.getInstance().createOutputStream(fileRec)) {
-            out.write(text.getBytes("UTF-8"));
-            return true;
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return fsOk;
-        }
-    }
-
-    private String encode(String s) {
-        if (s == null) return "";
-        StringBuilder out = new StringBuilder();
-        for (int i = 0; i < s.length(); i++) {
-            char c = s.charAt(i);
-            if (c == '%') out.append("%25");
-            else if (c == ',') out.append("%2C");
-            else if (c == '\n') out.append("%0A");
-            else if (c == '\r') out.append("%0D");
-            else out.append(c);
-        }
-        return out.toString();
-    }
-
-    private String decode(String s) {
-        StringBuilder out = new StringBuilder();
-        int i = 0;
-        while (i < s.length()) {
-            char c = s.charAt(i);
-            if (c == '%' && i + 3 <= s.length()) {
-                String code = s.substring(i, i + 3);
-                if (code.equals("%25")) { out.append('%'); i += 3; continue; }
-                if (code.equals("%2C")) { out.append(','); i += 3; continue; }
-                if (code.equals("%0A")) { out.append('\n'); i += 3; continue; }
-                if (code.equals("%0D")) { out.append('\r'); i += 3; continue; }
-            }
-            out.append(c);
-            i++;
-        }
-        return out.toString();
     }
 }
