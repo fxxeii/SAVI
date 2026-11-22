@@ -1,10 +1,8 @@
 package com.savi.app.backend;
 
 import com.codename1.io.Preferences;
-import com.codename1.io.Storage;
 import com.savi.app.SAVI;
 
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,7 +16,6 @@ public class Profile {
     private static final String PREF_MEMBER_PREFIX = "savi_member_name_";
     private static final String PREF_GREETING_PREFIX = "savi_greeting_";
     private static final String PREF_HANDLE_PREFIX = "savi_handle_";
-    private static final String USERS_TXT = "Users_Records.txt";
 
     private static Profile instance;
     private final List<UserProfile> accounts = new ArrayList<>();
@@ -129,7 +126,7 @@ public class Profile {
         if (SAVI.user != null && SAVI.user.getCurrentName() != null) member = SAVI.user.getCurrentName();
         double total = 0;
         if (SAVI.personalList != null) {
-            for (PersonalSavings savings : SAVI.personalList.getForOwner(member)) {
+            for (PersonalSavings savings : SAVI.personalList.getForUser(member)) {
                 total += savings.getCurrentAmount();
             }
         }
@@ -149,9 +146,10 @@ public class Profile {
         notifyListeners();
     }
 
-    public void updateProfileInfo(String greetingName, String username, String handle) {
+    /** Returns "success" or the message to show (e.g. the new username is already taken). */
+    public String updateProfileInfo(String greetingName, String username, String handle) {
         UserProfile current = getActiveProfile();
-        if (current == null) return;
+        if (current == null) return "No active account.";
 
         String oldUsername = current.getUsername();
         if (greetingName != null && !greetingName.trim().isEmpty()) {
@@ -161,7 +159,11 @@ public class Profile {
         if (username != null && !username.trim().isEmpty()) {
             String newUsername = username.trim();
             if (!newUsername.equalsIgnoreCase(oldUsername)) {
-                updateUsernameInUsersTxt(oldUsername, newUsername);
+                // User owns the account list, so it checks the name is valid and not taken
+                String result = SAVI.user.rename(oldUsername, newUsername);
+                if (!result.equals("success")) {
+                    return result;
+                }
                 updateUsernameInGroupMemberships(oldUsername, newUsername);
                 current.setUsername(newUsername);
                 Preferences.set(PREF_MEMBER_PREFIX + current.getId(), newUsername);
@@ -176,34 +178,14 @@ public class Profile {
         }
         Preferences.set(PREF_ACTIVE_ACCOUNT, current.getId());
         notifyListeners();
-    }
-
-    private void updateUsernameInUsersTxt(String oldName, String newName) {
-        if (SAVI.user == null || SAVI.user.head == null) return;
-        Node node = SAVI.user.head;
-        while (node != null) {
-            if (node.name != null && node.name.equalsIgnoreCase(oldName)) {
-                node.name = newName;
-                break;
-            }
-            node = node.pntnext;
-        }
-        StringBuilder content = new StringBuilder();
-        for (Node current = SAVI.user.head; current != null; current = current.pntnext) {
-            content.append(encode(current.name)).append(',').append(encode(current.pass)).append('\n');
-        }
-        try (OutputStream out = Storage.getInstance().createOutputStream(USERS_TXT)) {
-            out.write(content.toString().getBytes("UTF-8"));
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+        return "success";
     }
 
     private void updateUsernameInGroupMemberships(String oldName, String newName) {
         if (SAVI.groupList == null) return;
-        // Membership/creator values are changed through the manager so Profile
-        // never edits Groups_Records.txt directly.
+        // Each list renames its own records, so Profile never edits a data file directly.
         SAVI.groupList.renameMember(oldName, newName);
+        if (SAVI.personalList != null) SAVI.personalList.renameOwner(oldName, newName);
     }
 
     public boolean updateGroup(String groupId, String name, String targetDate,
@@ -231,24 +213,9 @@ public class Profile {
                 + " | People: " + getTotalPeople();
     }
 
+    /** Amount without the peso sign ("1,250" / "1,250.50"): same formatter as the rest of the app. */
     public static String formatAmount(double amount) {
-        if (amount == (long) amount) return formatWithCommas((long) amount);
-        long whole = (long) amount;
-        int tenths = (int) Math.round((amount - whole) * 10);
-        if (tenths == 10) { whole++; tenths = 0; }
-        return formatWithCommas(whole) + "." + tenths;
-    }
-
-    private static String formatWithCommas(long value) {
-        String raw = String.valueOf(value);
-        StringBuilder result = new StringBuilder();
-        int count = 0;
-        for (int i = raw.length() - 1; i >= 0; i--) {
-            result.insert(0, raw.charAt(i));
-            count++;
-            if (count % 3 == 0 && i > 0 && raw.charAt(i - 1) != '-') result.insert(0, ',');
-        }
-        return result.toString();
+        return Home.pesoShort(amount).replace("P", "");
     }
 
     private void seedDefaultAccount() {
@@ -261,10 +228,10 @@ public class Profile {
     private void loadAccounts() {
         accounts.clear();
         if (SAVI.user != null) {
-            if (SAVI.user.head == null) SAVI.user.load();
-            for (Node node = SAVI.user.head; node != null; node = node.pntnext) {
-                if (node.name == null || node.name.trim().isEmpty()) continue;
-                String name = node.name.trim();
+            if (SAVI.user.getUsernames().isEmpty()) SAVI.user.load();
+            for (String username : SAVI.user.getUsernames()) {
+                if (username == null || username.trim().isEmpty()) continue;
+                String name = username.trim();
                 String id = "acc_" + name.toLowerCase();
                 String greeting = Preferences.get(PREF_GREETING_PREFIX + id, name);
                 String handle = Preferences.get(PREF_HANDLE_PREFIX + id,
@@ -289,9 +256,4 @@ public class Profile {
         setActive(chosen);
     }
 
-    private String encode(String value) {
-        if (value == null) return "";
-        return value.replace("%", "%25").replace(",", "%2C")
-                .replace("\n", "%0A").replace("\r", "%0D");
-    }
 }

@@ -15,12 +15,17 @@ public class Reminder {
     private Reminder next;         // DATA STRUCTURE: pointer to the next node (singly linked list)
 
     public Reminder(String title, String groupName, LocalDate date, String time, double amount) {
+        this(title, groupName, date, time, amount, false);   // every new reminder starts as upcoming
+    }
+
+    // used when loading from the file (the record may already be completed)
+    public Reminder(String title, String groupName, LocalDate date, String time, double amount, boolean completed) {
         this.title = title;
         this.groupName = groupName;
         this.date = date;
         this.time = time;
         this.amount = amount;
-        this.completed = false;    // every new reminder starts as upcoming
+        this.completed = completed;
         this.next = null;          // a new node points to nothing until it is linked
     }
 

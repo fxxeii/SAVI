@@ -7,10 +7,12 @@ import com.codename1.ui.plaf.*;
 import com.codename1.ui.spinner.Picker;
 import com.savi.app.SAVI;
 import com.savi.app.backend.Home;
+import com.savi.app.backend.GroupSavings;
 import com.savi.app.backend.Reminder;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -306,17 +308,18 @@ public class ReminderPage {
         TextField amountField = new TextField("", "0.00");
         amountField.setConstraint(TextArea.DECIMAL);
 
-        // Group selector: uses real groups from SAVI.groupList.getGroups() if available, otherwise a text field
-        boolean hasGroups = SAVI.groupList.getGroups() != null && !SAVI.groupList.getGroups().isEmpty();
+        // Group selector: uses the logged-in user's groups if available, otherwise a text field
+        List<GroupSavings> myGroups = SAVI.groupList.getForUser(SAVI.user.getCurrentName());
+        boolean hasGroups = !myGroups.isEmpty();
 
         Picker groupPicker = new Picker();
         if (hasGroups) {
             // the dropdown lists every real group, plus an "Other" choice at the end
-            String[] groupNames = new String[SAVI.groupList.getGroups().size() + 1];
-            for (int i = 0; i < SAVI.groupList.getGroups().size(); i++) {
-                groupNames[i] = SAVI.groupList.getGroups().get(i).getGroupName();
+            String[] groupNames = new String[myGroups.size() + 1];
+            for (int i = 0; i < myGroups.size(); i++) {
+                groupNames[i] = myGroups.get(i).getGroupName();
             }
-            groupNames[SAVI.groupList.getGroups().size()] = "Other";
+            groupNames[myGroups.size()] = "Other";
             groupPicker.setType(Display.PICKER_TYPE_STRINGS);
             groupPicker.setStrings(groupNames);
             groupPicker.setSelectedStringIndex(0);

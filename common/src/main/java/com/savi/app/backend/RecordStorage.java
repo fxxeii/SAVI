@@ -7,6 +7,7 @@ import com.codename1.ui.Display;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.time.LocalDate;
 import java.util.ArrayList;
 
 final class RecordStorage {
@@ -62,6 +63,46 @@ final class RecordStorage {
         } catch (Exception ex) {
             Log.e(ex);
             return false;
+        }
+    }
+
+    static void deleteLocal(String fileRec) {
+        if (Storage.getInstance().exists(fileRec)) {
+            Storage.getInstance().deleteStorageFile(fileRec);
+        }
+    }
+
+    /** Splits a whole file into its non-empty, trimmed lines. */
+    static ArrayList<String> lines(String text) {
+        ArrayList<String> out = new ArrayList<>();
+        if (text == null || text.isEmpty()) {
+            return out;
+        }
+        int lineStart = 0;
+        for (int i = 0; i <= text.length(); i++) {
+            if (i == text.length() || text.charAt(i) == '\n') {
+                String line = text.substring(lineStart, i).trim();
+                lineStart = i + 1;
+                if (!line.isEmpty()) {
+                    out.add(line);
+                }
+            }
+        }
+        return out;
+    }
+
+    /** "2026-11-18" -> LocalDate (today if the text is damaged). One copy for every list class. */
+    static LocalDate parseDate(String s) {
+        if (s == null || s.length() < 10) {
+            return LocalDate.now();
+        }
+        try {
+            int y = Integer.parseInt(s.substring(0, 4));
+            int m = Integer.parseInt(s.substring(5, 7));
+            int d = Integer.parseInt(s.substring(8, 10));
+            return LocalDate.of(y, m, d);
+        } catch (Exception e) {
+            return LocalDate.now();
         }
     }
 

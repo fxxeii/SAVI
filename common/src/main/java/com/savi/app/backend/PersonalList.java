@@ -8,7 +8,7 @@ import java.util.List;
 // File format:
 //   P,creator,targetAmount,savingsName,weeklyTarget,targetDate
 //   C,creator,savingsName,amount,date,note[,timestamp]
-public class PersonalList {
+public class PersonalList implements SavingsStore {
 
     private final ArrayList<PersonalSavings> list = new ArrayList<>();
     private final String fileRec = "Personal_Records.txt";
@@ -51,12 +51,8 @@ public class PersonalList {
 
     public List<PersonalSavings> getForUser(String username) {
         ArrayList<PersonalSavings> out = new ArrayList<>();
-        if (username == null || username.trim().isEmpty()) {
-            return out;
-        }
-        String u = username.trim();
         for (PersonalSavings p : list) {
-            if (p.getCreator().equalsIgnoreCase(u)) {
+            if (p.isOwnedBy(username)) {
                 out.add(p);
             }
         }
@@ -78,23 +74,30 @@ public class PersonalList {
     }
 
     // UPDATE
-    public String recordDeposit(String creator, String savingsName, double amount, LocalDate date, String note) {
-        PersonalSavings p = findByCreatorAndName(creator, savingsName);
-        if (p == null) {
-            return "Personal savings goal not found.";
-        }
-        if (amount <= 0) {
-            return "Amount must be greater than 0.";
+    /** member = the owner of the savings (a personal savings has only one member). */
+    @Override
+    public boolean addContribution(String savingsName, String member, double amount, LocalDate date, String note) {
+        PersonalSavings p = findByCreatorAndName(member, savingsName);
+        if (p == null || amount == 0) {
+            return false;
         }
         try {
             p.addContribution(p.getCreator(), amount, date, note);
         } catch (IllegalArgumentException ex) {
-            return ex.getMessage();
+            return false;
         }
-        saveAll();
-        return "success";
+        return saveAll();
     }
 
+    /** A user changed their username: their personal savings follow. */
+    public boolean renameOwner(String oldName, String newName) {
+        for (PersonalSavings p : list) {
+            p.renameMember(oldName, newName);
+        }
+        return saveAll();
+    }
+
+    @Override
     public boolean saveChanges() {
         return saveAll();
     }
@@ -138,19 +141,8 @@ public class PersonalList {
     }
 
     private void loadText(String text) {
-        if (text == null || text.isEmpty()) {
-            return;
-        }
-
-        int lineStart = 0;
-        for (int i = 0; i <= text.length(); i++) {
-            if (i == text.length() || text.charAt(i) == '\n') {
-                String line = text.substring(lineStart, i).trim();
-                lineStart = i + 1;
-                if (!line.isEmpty()) {
-                    parseLine(line);
-                }
-            }
+        for (String line : RecordStorage.lines(text)) {
+            parseLine(line);
         }
     }
 
@@ -181,27 +173,13 @@ public class PersonalList {
             if (p != null) {
                 try {
                     double amount = Double.parseDouble(parts.get(3));
-                    LocalDate date = parseDate(parts.get(4));
+                    LocalDate date = RecordStorage.parseDate(parts.get(4));
                     String note = RecordStorage.decode(parts.get(5));
                     long timestamp = parts.size() >= 7 ? Long.parseLong(parts.get(6).trim()) : 0L;
                     p.addContribution(p.getCreator(), amount, date, note, timestamp);
                 } catch (Exception ignored) {
                 }
             }
-        }
-    }
-
-    private LocalDate parseDate(String s) {
-        if (s == null || s.length() < 10) {
-            return LocalDate.now();
-        }
-        try {
-            int y = Integer.parseInt(s.substring(0, 4));
-            int m = Integer.parseInt(s.substring(5, 7));
-            int d = Integer.parseInt(s.substring(8, 10));
-            return LocalDate.of(y, m, d);
-        } catch (Exception e) {
-            return LocalDate.now();
         }
     }
 }

@@ -8,7 +8,7 @@ import com.savi.app.SAVI;
 import com.savi.app.backend.Savings;
 import com.savi.app.backend.GroupSavings;
 import com.savi.app.backend.PersonalSavings;
-import org.w3c.dom.Text;
+import com.savi.app.backend.SavingsStore;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -147,11 +147,11 @@ public class QuickAddMenu {
         ArrayList<Savings> targets = new ArrayList<>();
         ArrayList<String> labels = new ArrayList<>();
 
-        for (GroupSavings g : SAVI.groupList.getGroups()) {
+        for (GroupSavings g : SAVI.groupList.getForUser(currentUser)) {
             targets.add(g);
             labels.add("[Group] " + g.getGroupName());
         }
-        for (PersonalSavings p : SAVI.personalList.getForOwner(currentUser)) {
+        for (PersonalSavings p : SAVI.personalList.getForUser(currentUser)) {
             targets.add(p);
             labels.add("[Personal] " + p.getSavingsName());
         }
@@ -193,9 +193,8 @@ public class QuickAddMenu {
             if (idx < 0 || idx >= targets.size()) return;
             Savings selected = targets.get(idx);
 
-            if (selected instanceof GroupSavings) {
-                GroupSavings gs = (GroupSavings) selected;
-                ArrayList<String> mems = gs.getMembers();
+            if (!selected.isPersonal()) {
+                ArrayList<String> mems = new ArrayList<>(selected.getParticipants());
                 if (mems.isEmpty() && currentUser != null) {
                     mems.add(currentUser);
                 }
@@ -266,17 +265,17 @@ public class QuickAddMenu {
             LocalDate date = toLocalDate(datePicker.getDate());
             String note = noteField.getText().trim();
 
-            if (selected instanceof GroupSavings) {
-                GroupSavings gs = (GroupSavings) selected;
-                String member = memberPicker.getSelectedString();
-                if (member == null || member.trim().isEmpty()) {
-                    Dialog.show("Missing Member", "Please select a member.", "OK", null);
-                    return;
-                }
-                SAVI.groupList.addContribution(gs.getGroupName(), member, amt, date, note);
-            } else if (selected instanceof PersonalSavings) {
-                PersonalSavings ps = (PersonalSavings) selected;
-                SAVI.personalList.addContribution(ps.getSavingsName(), currentUser, amt, date, note);
+            // a personal savings has one member (its owner); a group needs the picked member
+            String member = selected.isPersonal() ? currentUser : memberPicker.getSelectedString();
+            if (member == null || member.trim().isEmpty()) {
+                Dialog.show("Missing Member", "Please select a member.", "OK", null);
+                return;
+            }
+            // both lists are a SavingsStore, so the same call saves either kind
+            SavingsStore store = selected.isPersonal() ? SAVI.personalList : SAVI.groupList;
+            if (!store.addContribution(selected.getDisplayName(), member, amt, date, note)) {
+                Dialog.show("Could Not Save", "The contribution could not be saved.", "OK", null);
+                return;
             }
 
             dlg.dispose();
@@ -355,35 +354,29 @@ public class QuickAddMenu {
                 return;
             }
 
-            String res = SAVI.groupList.addGroup(savName, target, grpName, expected, weekly);
+            // the creator is the logged-in user (NOT the savings title); the typed members are added too
+            String me = SAVI.user.getCurrentName();
+            ArrayList<String> members = new ArrayList<>();
+            String rawMembers = membersField.getText().trim();
+            int start = 0;
+            while (!rawMembers.isEmpty() && start <= rawMembers.length()) {
+                int comma = rawMembers.indexOf(',', start);
+                String part = (comma == -1)
+                        ? rawMembers.substring(start).trim()
+                        : rawMembers.substring(start, comma).trim();
+                if (!part.isEmpty()) {
+                    members.add(part);
+                }
+                if (comma == -1) break;
+                start = comma + 1;
+            }
+
+            String res = SAVI.groupList.addGroup(me, target, grpName, expected, LocalDate.now(),
+                    members, weekly, savName, "");
             if (!"success".equals(res)) {
                 Dialog.show("Error", res, "OK", null);
                 return;
             }
-
-            // Automatically include the logged-in user so the group appears on their Home & Transfer pages
-            String me = SAVI.user.getCurrentName();
-            if (me != null && !me.trim().isEmpty()) {
-                SAVI.groupList.addMember(grpName, me.trim());
-            }
-
-            // Add comma-separated members
-            String rawMembers = membersField.getText().trim();
-            if (!rawMembers.isEmpty()) {
-                int start = 0;
-                while (start <= rawMembers.length()) {
-                    int comma = rawMembers.indexOf(',', start);
-                    String part = (comma == -1)
-                            ? rawMembers.substring(start).trim()
-                            : rawMembers.substring(start, comma).trim();
-                    if (!part.isEmpty()) {
-                        SAVI.groupList.addMember(grpName, part);
-                    }
-                    if (comma == -1) break;
-                    start = comma + 1;
-                }
-            }
-
             dlg.dispose();
             new HomePage().show();
         }));

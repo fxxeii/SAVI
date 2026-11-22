@@ -1,7 +1,5 @@
 package com.savi.app.backend;
 
-import com.codename1.io.Storage;
-
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,7 +9,7 @@ import java.util.List;
 //   G,creator,targetAmount,groupName,expectedPerMember,createdDate,weeklyTarget,savingsName,targetDate
 //   M,groupName,memberName
 //   C,groupName,memberName,amount,date,note[,timestamp]
-public class GroupList {
+public class GroupList implements SavingsStore {
 
     private final ArrayList<GroupSavings> groups = new ArrayList<>();
     private final String fileRec = "Groups_Records.txt";
@@ -73,12 +71,8 @@ public class GroupList {
 
     public List<GroupSavings> getForUser(String username) {
         ArrayList<GroupSavings> out = new ArrayList<>();
-        if (username == null || username.trim().isEmpty()) {
-            return out;
-        }
-        String u = username.trim();
         for (GroupSavings g : groups) {
-            if (g.getCreator().equalsIgnoreCase(u) || g.hasMember(u)) {
+            if (g.isOwnedBy(username)) {
                 out.add(g);
             }
         }
@@ -130,16 +124,12 @@ public class GroupList {
         return "success";
     }
 
-    public String recordContribution(String groupName, String memberName, double amount, LocalDate date, String note) {
+    /** A negative amount is a transfer out; zero is rejected. Returns true when it was saved. */
+    @Override
+    public boolean addContribution(String groupName, String memberName, double amount, LocalDate date, String note) {
         GroupSavings g = findByName(groupName);
-        if (g == null) {
-            return "Group not found.";
-        }
-        if (memberName == null || memberName.trim().isEmpty()) {
-            return "Member name is required.";
-        }
-        if (amount <= 0) {
-            return "Amount must be greater than 0.";
+        if (g == null || memberName == null || memberName.trim().isEmpty() || amount == 0) {
+            return false;
         }
         try {
             if (!g.hasMember(memberName)) {
@@ -147,12 +137,38 @@ public class GroupList {
             }
             g.addContribution(memberName.trim(), amount, date, note);
         } catch (IllegalArgumentException ex) {
-            return ex.getMessage();
+            return false;
         }
-        saveAll();
-        return "success";
+        return saveAll();
     }
 
+    /** Edits a group from the Profile page. dailyTarget = expected per member, totalTarget = target amount. */
+    public boolean updateGroup(String groupName, String newName, String targetDate,
+                               double dailyTarget, double totalTarget) {
+        GroupSavings g = findByName(groupName);
+        if (g == null || newName == null || newName.trim().isEmpty() || totalTarget <= 0 || dailyTarget < 0) {
+            return false;
+        }
+        GroupSavings other = findByName(newName);
+        if (other != null && other != g) {
+            return false;                       // the new name belongs to another group
+        }
+        g.setGroupName(newName);
+        g.setTargetDate(targetDate);
+        g.setExpectedPerMember(dailyTarget);
+        g.setTargetAmount(totalTarget);
+        return saveAll();
+    }
+
+    /** A user changed their username: every group, member and contribution follows. */
+    public boolean renameMember(String oldName, String newName) {
+        for (GroupSavings g : groups) {
+            g.renameMember(oldName, newName);
+        }
+        return saveAll();
+    }
+
+    @Override
     public boolean saveChanges() {
         return saveAll();
     }
@@ -169,7 +185,7 @@ public class GroupList {
     }
 
     public void clearLocalFile() {
-        Storage.getInstance().deleteStorageFile(fileRec);
+        RecordStorage.deleteLocal(fileRec);
         groups.clear();
     }
 
@@ -209,19 +225,8 @@ public class GroupList {
     }
 
     private void loadText(String text) {
-        if (text == null || text.isEmpty()) {
-            return;
-        }
-
-        int lineStart = 0;
-        for (int i = 0; i <= text.length(); i++) {
-            if (i == text.length() || text.charAt(i) == '\n') {
-                String line = text.substring(lineStart, i).trim();
-                lineStart = i + 1;
-                if (!line.isEmpty()) {
-                    parseLine(line);
-                }
-            }
+        for (String line : RecordStorage.lines(text)) {
+            parseLine(line);
         }
     }
 
@@ -238,7 +243,7 @@ public class GroupList {
                 double target = Double.parseDouble(parts.get(2));
                 String name = RecordStorage.decode(parts.get(3));
                 double expected = Double.parseDouble(parts.get(4));
-                LocalDate created = parseDate(parts.get(5));
+                LocalDate created = RecordStorage.parseDate(parts.get(5));
                 double weeklyTarget = parts.size() >= 7 ? Double.parseDouble(parts.get(6)) : 0;
                 String savingsName = parts.size() >= 8 ? RecordStorage.decode(parts.get(7)) : name;
                 String targetDate = parts.size() >= 9 ? RecordStorage.decode(parts.get(8)) : "";
@@ -259,7 +264,7 @@ public class GroupList {
                 try {
                     String member = RecordStorage.decode(parts.get(2));
                     double amount = Double.parseDouble(parts.get(3));
-                    LocalDate date = parseDate(parts.get(4));
+                    LocalDate date = RecordStorage.parseDate(parts.get(4));
                     String note = RecordStorage.decode(parts.get(5));
                     long timestamp = parts.size() >= 7 ? Long.parseLong(parts.get(6).trim()) : 0L;
                     if (!g.hasMember(member)) {
@@ -269,20 +274,6 @@ public class GroupList {
                 } catch (Exception ignored) {
                 }
             }
-        }
-    }
-
-    private LocalDate parseDate(String s) {
-        if (s == null || s.length() < 10) {
-            return LocalDate.now();
-        }
-        try {
-            int y = Integer.parseInt(s.substring(0, 4));
-            int m = Integer.parseInt(s.substring(5, 7));
-            int d = Integer.parseInt(s.substring(8, 10));
-            return LocalDate.of(y, m, d);
-        } catch (Exception e) {
-            return LocalDate.now();
         }
     }
 }

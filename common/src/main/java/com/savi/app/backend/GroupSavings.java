@@ -42,8 +42,10 @@ public class GroupSavings extends Savings {
 
     public void setGroupName(String groupName) {
         if (groupName != null && !groupName.trim().isEmpty()) {
+            // savingsName is the same text as groupName, so they must change together
+            boolean linked = getSavingsName().isEmpty() || getSavingsName().equals(this.groupName);
             this.groupName = groupName.trim();
-            if (getSavingsName().isEmpty()) {
+            if (linked) {
                 setSavingsName(this.groupName);
             }
         }
@@ -120,7 +122,7 @@ public class GroupSavings extends Savings {
         LocalDate today = LocalDate.now();
         long days = 0;
         LocalDate cursor = createdDate;
-        while (cursor.isBefore(today)) {
+        while (cursor.toString().compareTo(today.toString()) < 0) {
             days++;
             cursor = cursor.plusDays(1);
         }
@@ -135,14 +137,38 @@ public class GroupSavings extends Savings {
         return Math.max(0, totalExpected - totalContributed);
     }
 
-    // --- Polymorphic Overrides ---
+    // --- Polymorphic Overrides (each one replaces an abstract method of Savings) ---
     @Override
-    public String getSummaryLabel() {
-        return groupName + " (" + members.size() + " members)";
+    public String getDisplayName() {
+        return groupName;
     }
 
     @Override
-    public void displayInfo() {
-        System.out.println("Group: " + groupName + " | Target: " + getTargetAmount() + " | Current: " + getCurrentAmount());
+    public String getTypeLabel() {
+        return "Group";
+    }
+
+    @Override
+    public boolean isOwnedBy(String username) {
+        return username != null && (getCreator().equalsIgnoreCase(username.trim()) || hasMember(username));
+    }
+
+    @Override
+    public List<String> getParticipants() {
+        return getMembers();
+    }
+
+    @Override
+    public void renameMember(String oldName, String newName) {
+        super.renameMember(oldName, newName);          // creator + contributions
+        if (oldName == null || newName == null || newName.trim().isEmpty()) {
+            return;
+        }
+        String clean = newName.trim();
+        for (int i = 0; i < members.size(); i++) {
+            if (members.get(i).equalsIgnoreCase(oldName.trim())) {
+                members.set(i, clean);
+            }
+        }
     }
 }

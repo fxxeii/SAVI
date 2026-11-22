@@ -1,7 +1,12 @@
 package com.savi.app.backend;
 
+import java.util.ArrayList;
+import java.util.List;
+
 // CHILD CLASS 2: PERSONAL SAVINGS (Inheritance + Polymorphism)
 public class PersonalSavings extends Savings {
+    /** The tag added to a personal savings in dropdowns (one copy for the whole app). */
+    public static final String TAG = " (Personal)";
 
     public PersonalSavings(String creator, double targetAmount, String savingsName) {
         this(creator, targetAmount, savingsName, 0, "");
@@ -20,12 +25,34 @@ public class PersonalSavings extends Savings {
     }
 
     @Override
-    public String getSummaryLabel() {
-        return getSavingsName() + " (Personal)";
+    public String getDisplayName() {
+        return getSavingsName();
     }
 
     @Override
-    public void displayInfo() {
-        System.out.println("Personal Goal: " + getSavingsName() + " | Target: " + getTargetAmount() + " | Current: " + getCurrentAmount());
+    public String getTypeLabel() {
+        return "Personal";
+    }
+
+    @Override
+    public boolean isOwnedBy(String username) {
+        return username != null && getCreator().equalsIgnoreCase(username.trim());
+    }
+
+    @Override
+    public List<String> getParticipants() {
+        List<String> only = new ArrayList<String>();
+        only.add(getCreator());
+        return only;
+    }
+
+    @Override
+    public String getChoiceLabel() {
+        return getSavingsName() + TAG;
+    }
+
+    @Override
+    public boolean isPersonal() {
+        return true;
     }
 }

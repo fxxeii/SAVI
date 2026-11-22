@@ -25,7 +25,7 @@ public class PersonalSummaryPage {
     // opens on the personal saving with this name (used by the picker)
     public void show(String name) {
         // only the personal savings of the logged-in user
-        personal = new PersonalSummary(SAVI.personalList.getForOwner(SAVI.user.getCurrentName()));
+        personal = new PersonalSummary(SAVI.personalList.getForUser(SAVI.user.getCurrentName()));
         if (name != null) {
             personal.select(name);
         }

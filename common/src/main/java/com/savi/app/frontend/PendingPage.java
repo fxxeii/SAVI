@@ -43,8 +43,8 @@ public class PendingPage {
         content.getAllStyles().setPaddingUnit(Style.UNIT_TYPE_DIPS);
         content.getAllStyles().setPadding(0.5f, 2f, 0, 0);
 
-        // Pull all groups dynamically from SAVI.groupList.getGroups()
-        ArrayList<GroupSavings> allGroups = SAVI.groupList.getGroups();
+        // Pull the groups of the logged-in user (not every user's groups) from SAVI.groupList
+        ArrayList<GroupSavings> allGroups = new ArrayList<>(SAVI.groupList.getForUser(SAVI.user.getCurrentName()));
         if (selectedGroupIndex >= allGroups.size()) {
             selectedGroupIndex = 0;
         }

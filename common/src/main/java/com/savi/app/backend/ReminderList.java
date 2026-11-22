@@ -75,7 +75,7 @@ public class ReminderList {
         Reminder curr = head;
         while (curr != null) {
             if (curr == target) {
-                curr.setCompleted(true);
+                curr.markCompleted();   // the only way to change the status (Reminder owns it)
                 saveAll();
                 return;
             }
@@ -139,19 +139,8 @@ public class ReminderList {
     }
 
     private void loadText(String text) {
-        if (text == null || text.isEmpty()) {
-            return;
-        }
-
-        int lineStart = 0;
-        for (int i = 0; i <= text.length(); i++) {
-            if (i == text.length() || text.charAt(i) == '\n') {
-                String line = text.substring(lineStart, i).trim();
-                lineStart = i + 1;
-                if (!line.isEmpty()) {
-                    parseLine(line);
-                }
-            }
+        for (String line : RecordStorage.lines(text)) {
+            parseLine(line);
         }
     }
 
@@ -163,26 +152,12 @@ public class ReminderList {
         try {
             String title = RecordStorage.decode(parts.get(0));
             String groupName = RecordStorage.decode(parts.get(1));
-            LocalDate date = parseDate(parts.get(2));
+            LocalDate date = RecordStorage.parseDate(parts.get(2));
             String time = RecordStorage.decode(parts.get(3));
             double amount = Double.parseDouble(parts.get(4));
             boolean completed = Boolean.parseBoolean(parts.get(5));
             appendNode(new Reminder(title, groupName, date, time, amount, completed));
         } catch (Exception ignored) {
-        }
-    }
-
-    private LocalDate parseDate(String s) {
-        if (s == null || s.length() < 10) {
-            return LocalDate.now();
-        }
-        try {
-            int y = Integer.parseInt(s.substring(0, 4));
-            int m = Integer.parseInt(s.substring(5, 7));
-            int d = Integer.parseInt(s.substring(8, 10));
-            return LocalDate.of(y, m, d);
-        } catch (Exception e) {
-            return LocalDate.now();
         }
     }
 }

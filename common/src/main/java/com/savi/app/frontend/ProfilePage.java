@@ -432,7 +432,11 @@ public class ProfilePage implements Profile.DataChangeListener {
 
         Button save = new Button("Save");
         save.addActionListener(e -> {
-            backend.updateProfileInfo(null, usernameField.getText(), null);
+            String result = backend.updateProfileInfo(null, usernameField.getText(), null);
+            if (!result.equals("success")) {
+                Dialog.show("Could Not Save", result, "OK", null);
+                return;
+            }
             dlg.dispose();
         });
 

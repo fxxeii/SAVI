@@ -1,28 +1,59 @@
 package com.savi.app.backend;
 //user infos, log in, sign up, sign out
 
-import com.codename1.io.Storage;
-import com.codename1.io.Util;
-import com.codename1.ui.Display;
+import java.util.ArrayList;
+import java.util.List;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-
-class Node {
-    String name;
-    String pass;
-    Node pntnext;
-
-    Node(String n, String p) {
-        name = n;
-        pass = p;
-        pntnext = null;
-    }
-}
 public class User {
-    Node head;
-    Node currentUser;
-    String fileRec = "Users_Records.txt";
+
+    // ENCAPSULATION: the linked-list node is private to User. Nobody else can touch the nodes or the head.
+    private static class Node {
+        private String name;
+        private String pass;
+        private Node pntnext;
+
+        private Node(String n, String p) {
+            name = n;
+            pass = p;
+            pntnext = null;
+        }
+    }
+
+    private Node head;
+    private Node currentUser;
+    private final String fileRec = "Users_Records.txt";
+
+    /** Every username, in order. Other classes read the accounts through this instead of walking the nodes. */
+    public List<String> getUsernames() {
+        List<String> names = new ArrayList<String>();
+        for (Node temp = head; temp != null; temp = temp.pntnext) {
+            names.add(temp.name);
+        }
+        return names;
+    }
+
+    public boolean isLoggedIn() {
+        return currentUser != null;
+    }
+
+    /** Changes a username everywhere in the user list + file. Returns "success" or the message to show. */
+    public String rename(String oldName, String newName) {
+        if (!validName(newName)) {
+            return "Username must be at least 3 characters.";
+        }
+        String clean = newName.trim();
+        if (!clean.equalsIgnoreCase(oldName) && exist(clean)) {
+            return "Username already exists.";
+        }
+        for (Node temp = head; temp != null; temp = temp.pntnext) {
+            if (temp.name.equalsIgnoreCase(oldName)) {
+                temp.name = clean;
+                saveAll();
+                return "success";
+            }
+        }
+        return "Username not found.";
+    }
 
     public String signup(String n, String p, String cp) {
         if (!fieldsComplete(n, p, cp)) { //is it empty
@@ -44,7 +75,7 @@ public class User {
             return "Username already exists.";
         }
 
-        Node newNode = new Node(n.trim(), p); //stores the new user's info
+        Node newNode = new Node(n, p); //stores the new user's info (n is already trimmed)
         //add node
         if (head == null) { //if empty new node becomes the first
             head = newNode;
@@ -72,7 +103,7 @@ public class User {
         Node temp = head; //search for the head
 
         while (temp != null) {
-            if (temp.name.equalsIgnoreCase(n) && temp.pass.equals(p)) { //compare pass and usn
+            if (temp.name.equalsIgnoreCase(n.trim()) && temp.pass.equals(p)) { //compare pass and usn
                 currentUser = temp; // if success it becomes the current user, remember which ac is logged in
                 return "success";
             }
@@ -117,7 +148,7 @@ public class User {
         Node temp = head;
 
         while (temp != null) {
-            if (temp.name.equalsIgnoreCase(n)) { //search through the ll if usn already existed
+            if (temp.name.equalsIgnoreCase(n.trim())) { //search through the ll if usn already existed
                 return true;
             }
             temp = temp.pntnext;
@@ -159,17 +190,16 @@ public class User {
     }
 
     // ---------------------------------------------------------------- FILE HANDLING (TXT)
-    // Codename One does not allow FileWriter/FileReader, so the TXT text is kept with Storage.
+    // All reading/writing/encoding goes through RecordStorage (the same code the other lists use).
     // File format, one account per line:  name,password
 
     /** Adds ONE new account to the end of the file (used by signup). */
     private void save(String name, String pass) {
         // Storage cannot append, so read the old text and write it back with the new line added
-        writeFile(readFile() + toLine(name, pass));
-        System.out.println("SAVED: " + name);
+        RecordStorage.writeLocal(fileRec, RecordStorage.readLocal(fileRec) + toLine(name, pass));
     }
 
-    /** Rewrites the whole file from the linked list (used after a delete or an update). */
+    /** Rewrites the whole file from the linked list (used after an update). */
     private void saveAll() {
         StringBuilder text = new StringBuilder();
         Node temp = head;
@@ -178,38 +208,22 @@ public class User {
             text.append(toLine(temp.name, temp.pass));
             temp = temp.pntnext;
         }
-        writeFile(text.toString());
+        RecordStorage.writeLocal(fileRec, text.toString());
     }
 
     public void load() {
         head = null;
         currentUser = null;
 
-        String local = readFile();
-        String shared = readRecords();
-
-        loadText(local);
-        loadText(shared);
+        loadText(RecordStorage.readLocal(fileRec));
+        loadText(RecordStorage.readResource(User.class, fileRec));   // accounts bundled with the app
     }
 
     private void loadText(String text) {
-        int start = 0;
-
-        while (start < text.length()) {
-            int end = text.indexOf('\n', start);
-            if (end == -1) {
-                end = text.length();
-            }
-            String line = text.substring(start, end);
-            start = end + 1;
-
-            if (line.endsWith("\r")) {
-                line = line.substring(0, line.length() - 1);
-            }
-
+        for (String line : RecordStorage.lines(text)) {
             Node node = toNode(line);
             if (node == null) {
-                continue;   // blank or damaged line: skip it
+                continue;   // damaged line: skip it
             }
             if (exist(node.name)) {
                 continue;   // already loaded (the same account is in both files)
@@ -229,7 +243,7 @@ public class User {
     }
 
     private String toLine(String name, String pass) {
-        return encode(name) + "," + encode(pass) + "\n";
+        return RecordStorage.encode(name) + "," + RecordStorage.encode(pass) + "\n";
     }
 
     private Node toNode(String line) {
@@ -240,98 +254,8 @@ public class User {
         }
 
         return new Node(
-                decode(line.substring(0, c1)),
-                decode(line.substring(c1 + 1))
+                RecordStorage.decode(line.substring(0, c1)),
+                RecordStorage.decode(line.substring(c1 + 1))
         );
-    }
-
-    // a comma or new line typed into a field would break the TXT, so those characters are
-    // stored as %2C / %0A / %0D (and "%" itself as %25), then turned back when loading
-    private String encode(String s) {
-        StringBuilder out = new StringBuilder();
-        for (int i = 0; i < s.length(); i++) {
-            char c = s.charAt(i);
-            if (c == '%') {
-                out.append("%25");
-            } else if (c == ',') {
-                out.append("%2C");
-            } else if (c == '\n') {
-                out.append("%0A");
-            } else if (c == '\r') {
-                out.append("%0D");
-            } else {
-                out.append(c);
-            }
-        }
-        return out.toString();
-    }
-
-    private String decode(String s) {
-        StringBuilder out = new StringBuilder();
-        int i = 0;
-        while (i < s.length()) {
-            char c = s.charAt(i);
-            if (c == '%' && i + 3 <= s.length()) {
-                String code = s.substring(i, i + 3);
-                if (code.equals("%25")) {
-                    out.append('%');
-                    i += 3;
-                    continue;
-                } else if (code.equals("%2C")) {
-                    out.append(',');
-                    i += 3;
-                    continue;
-                } else if (code.equals("%0A")) {
-                    out.append('\n');
-                    i += 3;
-                    continue;
-                } else if (code.equals("%0D")) {
-                    out.append('\r');
-                    i += 3;
-                    continue;
-                }
-            }
-            out.append(c);
-            i++;
-        }
-        return out.toString();
-    }
-
-    private String readFile() {
-        try {
-            if (!Storage.getInstance().exists(fileRec)) {
-                return "";      // first run: nothing saved yet
-            }
-            InputStream in = Storage.getInstance().createInputStream(fileRec);
-            String text = Util.readToString(in, "UTF-8");
-            return text == null ? "" : text;
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return "";
-        }
-    }
-
-    private String readRecords() {
-        try {
-            InputStream in = Display.getInstance().getResourceAsStream(User.class, "/" + fileRec);
-            if (in == null) {
-                return "";
-            }
-            String text = Util.readToString(in, "UTF-8");
-            return text == null ? "" : text;
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return "";
-        }
-    }
-
-    private void writeFile(String text) {
-        try {
-            OutputStream out = Storage.getInstance().createOutputStream(fileRec);
-            out.write(text.getBytes("UTF-8"));
-            out.close();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
     }
 }
