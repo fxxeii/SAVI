@@ -3,18 +3,24 @@ package com.savi.app.backend;
 
 import com.codename1.io.Storage;
 import com.codename1.io.Util;
-import com.codename1.ui.Display;
-
+import com.codename1.ui.Display; //tatanggalin pa
+import com.codename1.io.ConnectionRequest;
+import com.codename1.io.NetworkManager;
+import com.codename1.ui.Dialog; //tatanggalin pa
+import java.io.IOException;
+import java.util.Random;
 import java.io.InputStream;
 import java.io.OutputStream;
 
 class Node {
     String name;
     String pass;
+    String email;
     Node pntnext;
 
-    Node(String n, String p) {
+    Node(String n, String e, String p) {
         name = n;
+        email = e;
         pass = p;
         pntnext = null;
     }
@@ -24,15 +30,19 @@ public class User {
     Node currentUser;
     String fileRec = "Users_Records.txt";
 
-    public String signup(String n, String p, String cp) {
-        if (!fieldsComplete(n, p, cp)) { //is it empty
+    public String signup(String n, String e, String p, String cp) {
+        if (!fieldsComplete(n, e, p, cp)) { //is it empty
             return "Please fill in all fields.";
         }
 
         n = n.trim(); //remove spaces
+        e = e.trim();
 
         if (!validName(n)) {
             return "Username must be at least 3 characters.";
+        }
+        if (!validEmail(e)) {
+            return "Please enter a valid email address.";
         }
         if (!validPassword(p)) {
             return "Password must be at least 5 characters.";
@@ -40,11 +50,14 @@ public class User {
         if (!matchingPassword(p, cp)) {
             return "Passwords do not match.";
         }
+        if (emailExists(e)) {
+            return "Email already registered.";
+        }
         if (exist(n)) {
             return "Username already exists.";
         }
 
-        Node newNode = new Node(n.trim(), p); //stores the new user's info
+        Node newNode = new Node(n.trim(), e.trim(), p); //stores the new user's info
         //add node
         if (head == null) { //if empty new node becomes the first
             head = newNode;
@@ -57,7 +70,7 @@ public class User {
             temp.pntnext = newNode; //connects last node to new user
         }
 
-        save(n, p); //save
+        save(n, e, p); //save
         return "success";
     }
 
@@ -125,6 +138,18 @@ public class User {
         return false;
     }
 
+    private boolean emailExists(String e) {
+        Node temp = head;
+
+        while (temp != null) {
+            if (temp.email.equalsIgnoreCase(e)) { //search through the ll if email already existed
+                return true;
+            }
+            temp = temp.pntnext;
+        }
+        return false;
+    }
+
     public String getCurrentName() {
         if (currentUser == null) { //for the frontend to access the current logged-in user
             return null;
@@ -132,8 +157,27 @@ public class User {
         return currentUser.name;
     }
 
+
+    public String getCurrentEmail() {
+        if (currentUser == null) {
+           return null;
+       }
+        return currentUser.email;
+    }
+
     private boolean validName(String n) {
         return n != null && n.trim().length() >= 3; //cant be empty, must be 3 letter above
+    }
+
+    private boolean validEmail(String e) {
+        if (e == null) {
+            return false;
+        }
+
+        int at = e.indexOf('@'); //finds the index of @
+        int dot = e.lastIndexOf('.'); //finds the index of .
+        //@ must not be in beginning, the . must be at least 2 position after @, . cannot be last, no spaces
+        return at > 0 && dot > at + 1 && dot < e.length() - 1 && e.indexOf(' ') == -1;
     }
 
     private boolean validPassword(String p) {
@@ -144,8 +188,9 @@ public class User {
         return p != null && p.equals(cp);
     }
 
-    private boolean fieldsComplete(String n, String p, String cp) {
+    private boolean fieldsComplete(String n, String e, String p, String cp) {
         return n != null && !n.trim().isEmpty() //no space, not empty
+                && e != null && !e.trim().isEmpty()
                 && p != null && !p.isEmpty()
                 && cp != null && !cp.isEmpty();
     }
@@ -160,12 +205,12 @@ public class User {
 
     // ---------------------------------------------------------------- FILE HANDLING (TXT)
     // Codename One does not allow FileWriter/FileReader, so the TXT text is kept with Storage.
-    // File format, one account per line:  name,password
+    // File format, one account per line:  name, email, password
 
     /** Adds ONE new account to the end of the file (used by signup). */
-    private void save(String name, String pass) {
+    private void save(String name, String email, String pass) {
         // Storage cannot append, so read the old text and write it back with the new line added
-        writeFile(readFile() + toLine(name, pass));
+        writeFile(readFile() + toLine(name, email, pass));
         System.out.println("SAVED: " + name);
     }
 
@@ -175,7 +220,7 @@ public class User {
         Node temp = head;
 
         while (temp != null) {
-            text.append(toLine(temp.name, temp.pass));
+            text.append(toLine(temp.name, temp.email, temp.pass));
             temp = temp.pntnext;
         }
         writeFile(text.toString());
@@ -211,7 +256,7 @@ public class User {
             if (node == null) {
                 continue;   // blank or damaged line: skip it
             }
-            if (exist(node.name)) {
+            if (exist(node.name) || emailExists(node.email)) {
                 continue;   // already loaded (the same account is in both files)
             }
 
@@ -228,21 +273,21 @@ public class User {
         }
     }
 
-    private String toLine(String name, String pass) {
-        return encode(name) + "," + encode(pass) + "\n";
+    private String toLine(String name, String email, String pass){
+        return encode(name) + "," + encode(email) + "," + encode(pass) + "\n";
     }
 
     private Node toNode(String line) {
         int c1 = line.indexOf(',');
+        int c2 = line.indexOf(',', c1 + 1);
 
-        if (c1 < 0) {
+        if (c1 < 0 || c2 < 0) {
             return null;
         }
 
-        return new Node(
-                decode(line.substring(0, c1)),
-                decode(line.substring(c1 + 1))
-        );
+        return new Node(decode(line.substring(0, c1)),
+                decode(line.substring(c1 + 1, c2)),
+                decode(line.substring(c2 + 1)));
     }
 
     // a comma or new line typed into a field would break the TXT, so those characters are
@@ -333,5 +378,101 @@ public class User {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+    }
+}
+
+//EMAIL OTP
+
+class OtpManager {
+
+    private static final String BREVO_API_KEY = "BREVO_API_KEY";
+    private static final String SENDER_EMAIL = "hello.saviph@gmail.com";
+    private static final String SENDER_NAME = "SAVI";
+
+    private static String currentOtp;
+    private static long otpExpiryTime;
+    private static final long EXPIRY_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+
+    // 1. Generate and Send OTP
+    public static void sendOtp(String recipientEmail, Runnable onSuccess) {
+        // Generate a random 6-digit number
+        Random random = new Random();
+        int code = 100000 + random.nextInt(900000);
+        currentOtp = String.valueOf(code);
+        otpExpiryTime = System.currentTimeMillis() + EXPIRY_DURATION_MS;
+
+        ConnectionRequest req = new ConnectionRequest() {
+            @Override
+            protected void buildRequestBody(OutputStream os) throws IOException {
+
+                String message = "SAVI APP VERIFICATION\n"
+                        + "============================================================\n\n"
+                        + "Hi there,\n\n"
+                        + "Your One-Time Password (OTP) is:\n\n"
+                        + "        [ " + currentOtp + " ]\n\n"
+                        + "This code will expire in 5 minutes.\n"
+                        + "If you did not request this code, please ignore this email.\n\n"
+                        + "============================================================\n"
+                        + "Thank you,\n"
+                        + "Savi Team";
+
+                // Escape line breaks so Brevo's API reads them properly
+                String escapedMessage = message.replace("\n", "\\n");
+
+                String json = "{"
+                        + "\"sender\":{\"name\":\"" + SENDER_NAME + "\",\"email\":\"" + SENDER_EMAIL + "\"},"
+                        + "\"to\":[{\"email\":\"" + recipientEmail + "\"}],"
+                        + "\"subject\":\"Your Savi Verification Code\","
+                        +  "\"textContent\":\"" + escapedMessage + "\""
+                        + "}";
+                os.write(json.getBytes("UTF-8"));
+            }
+
+            @Override
+            protected void postResponse() {
+                if (getResponseCode() == 201 || getResponseCode() == 200) {
+                    if (onSuccess != null) {
+                        onSuccess.run();
+                    }
+                } else {
+                    // Read the exact error message sent back by Brevo
+                    String serverError = "No details provided";
+                    if (getResponseData() != null) {
+                        try {
+                            serverError = new String(getResponseData(), "UTF-8");
+                        } catch (Exception e) {
+                            serverError = new String(getResponseData());
+                        }
+                    }
+                    Dialog.show("Error (" + getResponseCode() + ")", serverError, "OK", null);
+                }
+            }
+        };
+
+        req.setUrl("https://api.brevo.com/v3/smtp/email");
+        req.setPost(true);
+        req.setContentType("application/json");
+        req.setReadResponseForErrors(true);
+        req.addRequestHeader("accept", "application/json");
+        req.addRequestHeader("api-key", BREVO_API_KEY);
+
+        // Send asynchronously so the UI doesn't freeze
+        NetworkManager.getInstance().addToQueue(req);
+    }
+
+    // 2. Verify the User's Input
+    public static boolean verifyOtp(String userInput) {
+        if (currentOtp == null || userInput == null) {
+            return false;
+        }
+        if (System.currentTimeMillis() > otpExpiryTime) {
+            currentOtp = null; // Expired
+            return false;
+        }
+        boolean isValid = currentOtp.equals(userInput.trim());
+        if (isValid) {
+            currentOtp = null; // Clear after successful use
+        }
+        return isValid;
     }
 }
