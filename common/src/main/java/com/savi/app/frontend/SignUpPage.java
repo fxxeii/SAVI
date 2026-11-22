@@ -72,21 +72,23 @@ public class SignUpPage {
         form.getAllStyles().setPadding(70, 5, 10, 10);
 
         Label usn = SAVI.text("Username", SAVI.regular(2f), SAVI.DEEP_SLATE);
+        Label eml = SAVI.text("Email", SAVI.regular(2f), SAVI.DEEP_SLATE);
         Label ps = SAVI.text("Password", SAVI.regular(2f), SAVI.DEEP_SLATE);
         Label cps = SAVI.text("Confirm Password", SAVI.regular(2f), SAVI.DEEP_SLATE);
 
         TextField usernamef = new TextField("","username");
+        TextField emailf = new TextField("", "example@mail.com");
         TextField passf = new TextField("", "password");
         TextField cpassf = new TextField("", "confirm password");
 
-        Label[] labels = {usn, ps, cps};
+        Label[] labels = {usn, eml, ps, cps};
 
         for (Label lbl : labels) {
             lbl.getAllStyles().setMargin(0, 0, 0, 0);
             lbl.getAllStyles().setPadding(0, 0, 9, 0);
         }
 
-        TextField[] fields = {usernamef, passf, cpassf};
+        TextField[] fields = {usernamef, emailf, passf, cpassf};
 
         for (TextField tf : fields) {
             tf.getAllStyles().setFont(SAVI.regular(2.5f));
@@ -184,6 +186,10 @@ public class SignUpPage {
         usnContainer.add(BorderLayout.NORTH, usn);
         usnContainer.add(BorderLayout.CENTER, usernamef);
 
+        Container emlContainer = new Container(new BorderLayout());
+        emlContainer.add(BorderLayout.NORTH, eml);
+        emlContainer.add(BorderLayout.CENTER, emailf);
+
         Container passContainer = new Container(new BorderLayout());
         passContainer.add(BorderLayout.NORTH, ps);
         passContainer.add(BorderLayout.CENTER, passf);
@@ -194,7 +200,7 @@ public class SignUpPage {
         cpassContainer.add(BorderLayout.CENTER, cpassf);
         cpassContainer.add(BorderLayout.EAST, showCpass);
 
-        form.add(usnContainer);
+        form.add(usnContainer).add(emlContainer);
         form.add(passContainer).add(cpassContainer);
 
         Button signupbtn = new Button("Sign Up");
@@ -236,10 +242,11 @@ public class SignUpPage {
         signupbtn.getAllStyles().setBorder(Border.createRoundBorder(140, SAVI.BORDER_COLOR));
         signupbtn.addActionListener(evt ->{
             String name = usernamef.getText().trim();
+            String email = emailf.getText().trim();
             String pass = passf.getText().trim();
             String cpass = cpassf.getText().trim();
 
-            String result = SAVI.user.signup(name, pass, cpass);
+            String result = SAVI.user.signup(name, email, pass, cpass);
 
             if (result.equals("success")) {
                 Dialog.show("Success", "Account created!", "OK", null);
