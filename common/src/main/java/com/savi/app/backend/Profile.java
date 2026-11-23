@@ -188,10 +188,10 @@ public class Profile {
         if (SAVI.personalList != null) SAVI.personalList.renameOwner(oldName, newName);
     }
 
-    public boolean updateGroup(String groupId, String name, String targetDate,
+    public boolean updateGroup(String groupId, String name,
                                double dailyTarget, double totalTarget) {
         if (SAVI.groupList == null) return false;
-        boolean updated = SAVI.groupList.updateGroup(groupId, name, targetDate, dailyTarget, totalTarget);
+        boolean updated = SAVI.groupList.updateGroup(groupId, name, dailyTarget, totalTarget);
         if (updated) notifyListeners();
         return updated;
     }
@@ -255,5 +255,4 @@ public class Profile {
         }
         setActive(chosen);
     }
-
 }

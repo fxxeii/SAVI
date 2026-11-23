@@ -275,13 +275,11 @@ public class QuickAddMenu {
             LocalDate date = toLocalDate(datePicker.getDate());
             String note = noteField.getText().trim();
 
-            // a personal savings has one member (its owner); a group needs the picked member
             String member = selected.isPersonal() ? currentUser : memberPicker.getSelectedString();
             if (member == null || member.trim().isEmpty()) {
                 Dialog.show("Missing Member", "Please select a member.", "OK", null);
                 return;
             }
-            // both lists are a SavingsStore, so the same call saves either kind
             SavingsStore store = selected.isPersonal() ? SAVI.personalList : SAVI.groupList;
             if (!store.addContribution(selected.getDisplayName(), member, amt, date, note)) {
                 Dialog.show("Could Not Save", "The contribution could not be saved.", "OK", null);
@@ -359,14 +357,11 @@ public class QuickAddMenu {
                 return;
             }
 
-            // Get the logged-in user (group creator)
             String me = activeUsername();
 
-            // Read the members entered by the user
             ArrayList<String> members = new ArrayList<>();
             String rawMembers = membersField.getText().trim();
 
-            // Check if the member field is empty
             if (rawMembers.isEmpty()) {
                 Dialog.show("Missing Members",
                         "Please enter at least one member before creating a group.",
@@ -374,19 +369,15 @@ public class QuickAddMenu {
                 return;
             }
 
-            // Split the input using commas
             String[] memberNames = rawMembers.split(",");
 
             for (String name : memberNames) {
                 String member = name.trim();
-
-                // Ignore empty entries
                 if (!member.isEmpty() && !members.contains(member)) {
                     members.add(member);
                 }
             }
 
-            // Make sure at least one valid member was entered
             if (members.isEmpty()) {
                 Dialog.show("Missing Members",
                         "A group must have at least one other member.",
@@ -394,13 +385,12 @@ public class QuickAddMenu {
                 return;
             }
 
-            // Add the creator to the group if not already included
             if (!members.contains(me)) {
                 members.add(me);
             }
 
             String res = SAVI.groupList.addGroup(me, target, grpName, expected, LocalDate.now(),
-                    members, savName, "");
+                    members, savName);
             if (!"success".equals(res)) {
                 Dialog.show("Error", res, "OK", null);
                 return;
@@ -454,7 +444,6 @@ public class QuickAddMenu {
             double target = parsePositiveAmount(targetField.getText());
             String owner = activeUsername();
 
-            // Parameter order: (creator, targetAmount, savingsName)
             String res = SAVI.personalList.addPersonalSavings(owner, target, goalName);
             if (!"success".equals(res)) {
                 Dialog.show("Error", res, "OK", null);

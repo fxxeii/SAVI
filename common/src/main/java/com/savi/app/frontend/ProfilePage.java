@@ -335,7 +335,6 @@ public class ProfilePage implements Profile.DataChangeListener {
 
         Container nameCont = new Container(BoxLayout.y());
         nameCont.add(SAVI.text(group.getGroupName(), SAVI.bold(2.1f), SAVI.DARK_KNIGHT));
-        nameCont.add(SAVI.text("Target: " + group.getTargetDate(), SAVI.regular(1.75f), SAVI.SLATE_GRAY));
         setMargins(nameCont, 0, 0, 1.5f, 1f);
 
         Container left = new Container(new BorderLayout());
@@ -461,12 +460,10 @@ public class ProfilePage implements Profile.DataChangeListener {
         setPadding(body, 1.5f, 1.5f, 2f, 2f);
 
         TextField nameField = new TextField(existing.getGroupName(), "Group Name", 24, TextField.ANY);
-        TextField dateField = new TextField(existing.getTargetDate(), "Target Date (e.g. 2026-12-10)", 20, TextField.ANY);
         TextField dailyField = new TextField(String.valueOf(existing.getExpectedPerMember()), "Daily Target (P)", 12, TextField.DECIMAL);
         TextField totalField = new TextField(String.valueOf(existing.getTargetAmount()), "Total Target (P)", 12, TextField.DECIMAL);
 
         body.add(SAVI.text("GROUP NAME", SAVI.bold(1.6f), SAVI.SLATE_GRAY)).add(nameField);
-        body.add(SAVI.text("TARGET DATE", SAVI.bold(1.6f), SAVI.SLATE_GRAY)).add(dateField);
         body.add(SAVI.text("DAILY TARGET (P)", SAVI.bold(1.6f), SAVI.SLATE_GRAY)).add(dailyField);
         body.add(SAVI.text("TOTAL TARGET (P)", SAVI.bold(1.6f), SAVI.SLATE_GRAY)).add(totalField);
 
@@ -497,11 +494,10 @@ public class ProfilePage implements Profile.DataChangeListener {
                 Dialog.show("Group Name", "Please enter a group name.", "OK", null);
                 return;
             }
-            String date = dateField.getText().trim();
             double daily = parseDoubleSafe(dailyField.getText(), 50.0);
             double total = parseDoubleSafe(totalField.getText(), 500.0);
 
-            boolean ok = backend.updateGroup(existing.getGroupName(), name, date, daily, total);
+            boolean ok = backend.updateGroup(existing.getGroupName(), name, daily, total);
             if (!ok) {
                 Dialog.show("Group Name", "A group with that name already exists.", "OK", null);
                 return;

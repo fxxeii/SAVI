@@ -9,12 +9,7 @@ public class PersonalSavings extends Savings {
     public static final String TAG = " (Personal)";
 
     public PersonalSavings(String creator, double targetAmount, String savingsName) {
-        this(creator, targetAmount, savingsName, "");
-    }
-
-    public PersonalSavings(String creator, double targetAmount, String savingsName,
-                           String targetDate) {
-        super(creator, targetAmount, savingsName, targetDate);
+        super(creator, targetAmount, savingsName);
         if (savingsName == null || savingsName.trim().isEmpty()) {
             throw new IllegalArgumentException("Savings name is required.");
         }

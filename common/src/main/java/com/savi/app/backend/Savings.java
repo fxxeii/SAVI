@@ -9,15 +9,14 @@ public abstract class Savings {
     private String creator;
     private double targetAmount;
     private String savingsName;
-    private String targetDate;
     private double weeklyTarget;
     private final ArrayList<Contribution> contributions = new ArrayList<>();
 
     public Savings(String creator, double targetAmount) {
-        this(creator, targetAmount, "", "");
+        this(creator, targetAmount, "");
     }
 
-    public Savings(String creator, double targetAmount, String savingsName, String targetDate) {
+    public Savings(String creator, double targetAmount, String savingsName) {
         if (creator == null || creator.trim().isEmpty()) {
             throw new IllegalArgumentException("Creator is required.");
         }
@@ -27,7 +26,6 @@ public abstract class Savings {
         this.creator = creator.trim();
         this.targetAmount = targetAmount;
         this.savingsName = savingsName != null ? savingsName.trim() : "";
-        this.targetDate = targetDate != null ? targetDate.trim() : "";
         this.weeklyTarget = Math.max(0, weeklyTarget);
     }
 
@@ -58,14 +56,6 @@ public abstract class Savings {
 
     public void setSavingsName(String savingsName) {
         this.savingsName = savingsName != null ? savingsName.trim() : "";
-    }
-
-    public String getTargetDate() {
-        return targetDate;
-    }
-
-    public void setTargetDate(String targetDate) {
-        this.targetDate = targetDate != null ? targetDate.trim() : "";
     }
 
     public double getWeeklyTarget() {

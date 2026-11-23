@@ -12,20 +12,19 @@ public class GroupSavings extends Savings {
     private final ArrayList<String> members = new ArrayList<>();
 
     public GroupSavings(String creator, double targetAmount, String groupName, double expectedPerMember) {
-        this(creator, targetAmount, groupName, expectedPerMember, LocalDate.now(), groupName, "");
+        this(creator, targetAmount, groupName, expectedPerMember, LocalDate.now(), groupName);
     }
 
     public GroupSavings(String creator, double targetAmount, String groupName,
                         double expectedPerMember, LocalDate createdDate) {
-        this(creator, targetAmount, groupName, expectedPerMember, createdDate, groupName, "");
+        this(creator, targetAmount, groupName, expectedPerMember, createdDate, groupName);
     }
 
     public GroupSavings(String creator, double targetAmount, String groupName,
                         double expectedPerMember, LocalDate createdDate,
-                        String savingsName, String targetDate) {
+                        String savingsName) {
         super(creator, targetAmount,
-                (savingsName == null || savingsName.trim().isEmpty()) ? groupName : savingsName,
-                targetDate);
+                (savingsName == null || savingsName.trim().isEmpty()) ? groupName : savingsName);
         if (groupName == null || groupName.trim().isEmpty()) {
             throw new IllegalArgumentException("Group name is required.");
         }
