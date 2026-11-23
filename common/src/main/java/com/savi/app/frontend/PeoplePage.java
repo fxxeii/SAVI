@@ -1,11 +1,6 @@
 package com.savi.app.frontend;
 
 import com.codename1.ui.*;
-import com.codename1.ui.Button;
-import com.codename1.ui.Component;
-import com.codename1.ui.Container;
-import com.codename1.ui.Graphics;
-import com.codename1.ui.Label;
 import com.codename1.ui.events.ActionEvent;
 import com.codename1.ui.events.ActionListener;
 import com.codename1.ui.geom.GeneralPath;
@@ -13,6 +8,8 @@ import com.codename1.ui.layouts.BorderLayout;
 import com.codename1.ui.layouts.BoxLayout;
 import com.codename1.ui.layouts.FlowLayout;
 import com.codename1.ui.layouts.GridLayout;
+import com.codename1.ui.plaf.Border;
+import com.codename1.ui.plaf.RoundBorder;
 import com.codename1.ui.plaf.RoundRectBorder;
 import com.codename1.ui.plaf.Style;
 import com.codename1.ui.spinner.Picker;
@@ -45,7 +42,7 @@ public class PeoplePage {
                 shadowSpread(1f).
                 shadowX(0.5f).
                 shadowY(0.3f).
-                shadowColor(SAVI.BRIGHT_VIOLET));
+                shadowColor(SAVI.SLATE_GRAY));
         setMargins(cont, 0.5f, 0.5f, 2, 2);
         setPadding(cont, paddingTB, paddingTB, paddingLR, paddingLR);
     }
@@ -111,108 +108,172 @@ public class PeoplePage {
         return p;
     }
 
-    static Container header(String title) {
-        Label l = SAVI.text(title, SAVI.bold(2.6f), SAVI.DARK_KNIGHT);
-        l.getAllStyles().setAlignment(Component.CENTER);
-
-        Container header = new Container(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER));
-        setMargins(header, 1.5f, 1f, 2, 2);
-        header.add(BorderLayout.CENTER, l);
-        return header;
+    // Small round white-bordered chevron matching SummaryPage & PendingPage
+    private static Label chevron(int iconColor) {
+        Label chev = new Label();
+        Style cs = chev.getAllStyles();
+        cs.setFgColor(iconColor);
+        cs.setBgTransparency(0);
+        cs.setBorder(RoundBorder.create().color(SAVI.WHITE));
+        cs.setPaddingUnit(Style.UNIT_TYPE_DIPS);
+        cs.setPadding(0.3f, 0.3f, 0.3f, 0.3f);
+        cs.setMargin(0, 0, 0, 0);
+        FontImage.setMaterialIcon(chev, FontImage.MATERIAL_KEYBOARD_ARROW_DOWN, 3f);
+        return chev;
     }
 
-    static Container groupBanner(String name, String pool, int contributors) {
-        final float radiusMM = 5f;
-        Container banner = new Container(BoxLayout.y()) {
-            @Override
-            public void paintBackground(Graphics g) {
-                super.paintBackground(g);
-                if (g.isShapeClipSupported()) {
-                    int r = Display.getInstance().convertToPixels(radiusMM);
-                    g.setAntiAliased(true);
-                    g.pushClip();
-                    g.setClip(roundRectPath(getX(), getY(), getWidth(), getHeight(), r));
-                    g.fillLinearGradient(SAVI.DARK_PURPLE, SAVI.DARK_DARK_PURPLE, getX(), getY(), getWidth(), getHeight(), true);
-                    g.popClip();
-                }
-            }
-        };
-        cardStyles(banner, SAVI.DARK_PURPLE, radiusMM, 2.5f, 2.5f);
-        setMargins(banner, 0.5f, 1, 2, 2);
+    // TOP DROPDOWN PILL: switches between Personal Savings and Group Savings (matches SummaryPage & PendingPage)
+    static Container peopleHeader(boolean personalMode) {
+        final String[] modes = {"Personal Savings", "Group Savings"};
+        String current = personalMode ? modes[0] : modes[1];
 
-        Label groupName = SAVI.text(name.toUpperCase(), SAVI.bold(3.5f), SAVI.WHITE);
+        Button back = new Button();
+        Style bs = back.getAllStyles();
+        bs.setFgColor(SAVI.DARK_PURPLE);
+        bs.setBgTransparency(0);
+        bs.setBorder(RoundBorder.create().color(SAVI.WHITE));
+        bs.setPaddingUnit(Style.UNIT_TYPE_DIPS);
+        bs.setPadding(0.6f, 0.6f, 0.6f, 0.6f);
+        bs.setMargin(0, 0, 0, 0);
+        FontImage.setMaterialIcon(back, FontImage.MATERIAL_CHEVRON_LEFT, 3.5f);
+        back.addActionListener(e -> new HomePage().show());
 
-        String[] rawGroups = PeopleBackend.getUserGroupNames();
-        final String[] options;
-        if (rawGroups == null || rawGroups.length == 0) {
-            options = new String[]{name.toUpperCase()};
-        } else {
-            options = new String[rawGroups.length];
-            for (int i = 0; i < rawGroups.length; i++) {
-                options[i] = rawGroups[i].toUpperCase();
-            }
-        }
+        final Picker modePicker = new Picker();
+        modePicker.setUIID("Label");
+        modePicker.setType(Display.PICKER_TYPE_STRINGS);
+        modePicker.setStrings(modes);
+        modePicker.setSelectedString(current);
+        Style st = modePicker.getAllStyles();
+        st.setFont(SAVI.bold(2.2f));
+        st.setFgColor(SAVI.WHITE);
+        st.setBgTransparency(0);
+        st.setBorder(Border.createEmpty());
+        st.setMargin(0, 0, 0, 0);
+        st.setPadding(0, 0, 0, 0);
+        st.setAlignment(Component.CENTER);
 
-        final Picker groupPicker = new Picker();
-        groupPicker.setType(Display.PICKER_TYPE_STRINGS);
-        groupPicker.setStrings(options);
-        groupPicker.setSelectedString(name.toUpperCase());
-        groupPicker.setUIID("Label");
-        groupPicker.setText("");
-        groupPicker.getAllStyles().setFgColor(SAVI.WHITE);
-        groupPicker.getAllStyles().setAlignment(Component.CENTER);
-        FontImage.setMaterialIcon(groupPicker, FontImage.MATERIAL_KEYBOARD_ARROW_DOWN, 3f);
-
-        groupPicker.addActionListener(e -> {
-            String picked = groupPicker.getSelectedString();
-            groupPicker.setText("");
-            if (picked != null && !picked.trim().isEmpty() && !picked.equalsIgnoreCase(name)) {
-                PeopleBackend.setSelectedGroup(picked.trim());
+        modePicker.addActionListener(e -> {
+            String chosen = modePicker.getSelectedString();
+            if (chosen != null && !chosen.equalsIgnoreCase(current)) {
+                PeopleBackend.setPersonalMode(chosen.equals(modes[0]));
                 new PeoplePage().show();
             }
         });
 
-        Container chevron = new Container(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER));
-        chevron.setPreferredW(Display.getInstance().convertToPixels(6f));
-        chevron.setPreferredH(Display.getInstance().convertToPixels(6f));
-        Style cs = chevron.getAllStyles();
-        cs.setBgColor(SAVI.BRIGHT_VIOLET);
-        cs.setBgTransparency(255);
-        cs.setBorder(RoundRectBorder.create().cornerRadius(3f));
-        chevron.add(BorderLayout.CENTER, groupPicker);
-        chevron.setLeadComponent(groupPicker);
+        Container titleArea = new Container(new BorderLayout());
+        titleArea.add(BorderLayout.CENTER, modePicker);
+        titleArea.add(BorderLayout.EAST, chevron(SAVI.DARK_PURPLE));
+        titleArea.setLeadComponent(modePicker);
 
-        Container titleRow = new Container(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER));
-        titleRow.add(BorderLayout.WEST, groupName);
-        titleRow.add(BorderLayout.EAST, chevron);
+        Container pill = new Container(new BorderLayout());
+        Style ps = pill.getAllStyles();
+        ps.setBgColor(SAVI.DARK_PURPLE);
+        ps.setBgTransparency(255);
+        ps.setBorder(RoundRectBorder.create().cornerRadius(4f).shadowOpacity(50).shadowBlur(10)
+                .shadowSpread(1f).shadowX(0.5f).shadowY(0.3f).shadowColor(SAVI.SLATE_GRAY));
+        ps.setPaddingUnit(Style.UNIT_TYPE_DIPS);
+        ps.setPadding(1.5f, 1.5f, 1.5f, 1.5f);
+        ps.setMarginUnit(Style.UNIT_TYPE_DIPS);
+        ps.setMargin(1f, 0.4f, 2f, 2f);
+        pill.add(BorderLayout.WEST, back);
+        pill.add(BorderLayout.CENTER, titleArea);
+
+        Container wrap = new Container(new BorderLayout());
+        wrap.add(BorderLayout.CENTER, pill);
+        return wrap;
+    }
+
+    // SECOND PURPLE CARD: matches SummaryPage & PendingPage (tracker Picker + Total Pool + Contributors/Target)
+    static Container trackerBanner(String name, String pool, int contributors, double targetAmount, boolean personalMode) {
+        Container banner = new Container(new BorderLayout());
+        cardStyles(banner, SAVI.DARK_PURPLE, 4f, 4f, 3f);
+        setMargins(banner, 0.5f, 0.5f, 2f, 2f);
+
+        String[] rawTrackers = PeopleBackend.getTrackerNames();
+        final String[] options;
+        if (rawTrackers == null || rawTrackers.length == 0) {
+            options = new String[]{name.toUpperCase()};
+        } else {
+            options = new String[rawTrackers.length];
+            for (int i = 0; i < rawTrackers.length; i++) {
+                options[i] = rawTrackers[i].toUpperCase();
+            }
+        }
+
+        final Picker trackerPicker = new Picker();
+        trackerPicker.setUIID("Label");
+        trackerPicker.setType(Display.PICKER_TYPE_STRINGS);
+        trackerPicker.setStrings(options);
+        trackerPicker.setSelectedString(name.toUpperCase());
+        Style pst = trackerPicker.getAllStyles();
+        pst.setFont(SAVI.bold(2.5f));
+        pst.setFgColor(SAVI.WHITE);
+        pst.setBgTransparency(0);
+        pst.setBorder(Border.createEmpty());
+        pst.setMargin(0, 0, 0, 0);
+        pst.setPadding(0, 0, 0, 0);
+
+        trackerPicker.addActionListener(e -> {
+            String picked = trackerPicker.getSelectedString();
+            if (picked != null && !picked.trim().isEmpty() && !picked.equalsIgnoreCase(name)) {
+                if (personalMode) {
+                    PeopleBackend.setSelectedPersonal(picked.trim());
+                } else {
+                    PeopleBackend.setSelectedGroup(picked.trim());
+                }
+                new PeoplePage().show();
+            }
+        });
+
+        Container topRow = new Container(new BorderLayout());
+        topRow.add(BorderLayout.WEST, trackerPicker);
+        topRow.add(BorderLayout.EAST, chevron(SAVI.DARK_PURPLE));
+        topRow.setLeadComponent(trackerPicker);
 
         Container poolCont = new Container(BoxLayout.y());
-        poolCont.add(SAVI.text("Total Pool", SAVI.regular(2f), SAVI.PASTEL_LAVENDER));
-        poolCont.add(SAVI.text(pool, SAVI.bold(4f), SAVI.WHITE));
+        Label poolLbl = SAVI.text("Total Pool", SAVI.regular(2f), SAVI.WHITE);
+        Label poolVal = SAVI.text(pool, SAVI.bold(2.6f), SAVI.WHITE);
+        poolLbl.getAllStyles().setMargin(0, 0, 0, 0);
+        poolVal.getAllStyles().setMargin(0, 0, 0, 0);
+        poolCont.add(poolLbl);
+        poolCont.add(poolVal);
 
-        Container memCont = new Container(BoxLayout.y());
-        Label memText = SAVI.text("Members", SAVI.regular(2f), SAVI.PASTEL_LAVENDER);
-        memText.getAllStyles().setAlignment(Component.RIGHT);
-        Container memPill = pill(SAVI.text(contributors + " Contributors", SAVI.semiBold(2f), SAVI.WHITE),
-                SAVI.BRIGHT_VIOLET, SAVI.BRIGHT_VIOLET);
-        memCont.add(memText);
-        memCont.add(memPill);
+        Container rightCont = new Container(BoxLayout.y());
+        if (personalMode) {
+            Label targetLbl = SAVI.text("Target Amount", SAVI.regular(2f), SAVI.WHITE);
+            targetLbl.getAllStyles().setAlignment(Component.RIGHT);
+            targetLbl.getAllStyles().setMargin(0, 0, 0, 0);
+            Label targetVal = SAVI.text(Home.pesoFormat(targetAmount), SAVI.bold(2.6f), SAVI.WHITE);
+            targetVal.getAllStyles().setMargin(0, 0, 0, 0);
+            rightCont.add(targetLbl);
+            rightCont.add(FlowLayout.encloseRight(targetVal));
+        } else {
+            Label memText = SAVI.text("Members", SAVI.regular(2f), SAVI.WHITE);
+            memText.getAllStyles().setAlignment(Component.RIGHT);
+            memText.getAllStyles().setMargin(0, 0, 0, 0);
+            Label countLbl = SAVI.text(contributors + (contributors == 1 ? " Contributor" : " Contributors"),
+                    SAVI.semiBold(2.3f), SAVI.WHITE);
+            countLbl.getAllStyles().setMargin(0, 0, 0, 0);
+            rightCont.add(memText);
+            rightCont.add(FlowLayout.encloseRight(countLbl));
+        }
 
-        Container infoRow = new Container(new BorderLayout());
-        infoRow.add(BorderLayout.WEST, poolCont);
-        infoRow.add(BorderLayout.EAST, memCont);
+        Container bottomRow = new Container(new BorderLayout());
+        setMargins(bottomRow, 1.5f, 0, 0, 0);
+        bottomRow.add(BorderLayout.WEST, poolCont);
+        bottomRow.add(BorderLayout.EAST, rightCont);
 
-        banner.add(titleRow);
-        banner.add(divider(SAVI.BRIGHT_VIOLET));
-        banner.add(infoRow);
+        banner.add(BorderLayout.NORTH, topRow);
+        banner.add(BorderLayout.SOUTH, bottomRow);
         return banner;
     }
 
-    static Container sectionHeader(boolean showUpdated) {
+    static Container sectionHeader(boolean showUpdated, boolean personalMode) {
         Container header = new Container(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER));
         setMargins(header, 1, 0.5f, 2, 2);
 
-        Label title = SAVI.text("MEMBER CONTRIBUTIONS", SAVI.bold(2f), SAVI.SLATE_GRAY);
+        Label title = SAVI.text(personalMode ? "PERSONAL CONTRIBUTIONS" : "MEMBER CONTRIBUTIONS",
+                SAVI.bold(2f), SAVI.SLATE_GRAY);
         header.add(BorderLayout.WEST, title);
 
         if (showUpdated) {
@@ -223,20 +284,25 @@ public class PeoplePage {
         return header;
     }
 
-    static Container emptyState() {
+    static Container emptyState(boolean personalMode) {
         Container card = new Container(BoxLayout.y());
         cardStyles(card, SAVI.WHITE, 4, 3.5f, 2.5f);
         setMargins(card, 1f, 1f, 2, 2);
 
-        Container icon = circleIcon(FontImage.MATERIAL_GROUP, 16f, 8f, SAVI.PALE_PURPLE, SAVI.BRIGHT_VIOLET, false);
+        Container icon = circleIcon(personalMode ? FontImage.MATERIAL_PERSON : FontImage.MATERIAL_GROUP,
+                16f, 8f, SAVI.PALE_PURPLE, SAVI.BRIGHT_VIOLET, false);
 
-        Label title = SAVI.text("No group contributions yet", SAVI.bold(2.6f), SAVI.DARK_KNIGHT);
+        Label title = SAVI.text(
+                personalMode ? "No personal savings yet" : "No group contributions yet",
+                SAVI.bold(2.6f), SAVI.DARK_KNIGHT);
         title.getAllStyles().setAlignment(Component.CENTER);
         setMargins(title, 2f, 0.5f, 0, 0);
 
         Label line1 = SAVI.text("Tap the + button below to add", SAVI.regular(2f), SAVI.SLATE_GRAY);
         line1.getAllStyles().setAlignment(Component.CENTER);
-        Label line2 = SAVI.text("a contribution. Your members will", SAVI.regular(2f), SAVI.SLATE_GRAY);
+        Label line2 = SAVI.text(
+                personalMode ? "a personal deposit. Your progress" : "a contribution. Your members will",
+                SAVI.regular(2f), SAVI.SLATE_GRAY);
         line2.getAllStyles().setAlignment(Component.CENTER);
         Label line3 = SAVI.text("show up right here.", SAVI.regular(2f), SAVI.SLATE_GRAY);
         line3.getAllStyles().setAlignment(Component.CENTER);
@@ -333,18 +399,20 @@ public class PeoplePage {
     }
 
     public void show() {
+        boolean personalMode = PeopleBackend.isPersonalMode();
+
         Form base = new Form("", new BorderLayout());
-        base.getContentPane().getAllStyles().setBgColor(SAVI.POWDER_WHITE);
+        base.getContentPane().getAllStyles().setBgColor(SAVI.PALE_PURPLE);
         base.getContentPane().getAllStyles().setBgTransparency(255);
-        base.getTitleArea().getAllStyles().setBgColor(SAVI.POWDER_WHITE);
+        base.getTitleArea().getAllStyles().setBgColor(SAVI.PALE_PURPLE);
         base.getTitleArea().getAllStyles().setBgTransparency(255);
 
         Container t = base.getTitleArea();
-        t.getAllStyles().setBgColor(SAVI.POWDER_WHITE);
+        t.getAllStyles().setBgColor(SAVI.PALE_PURPLE);
         t.getAllStyles().setBgTransparency(255);
         for (int i = 0; i < t.getComponentCount(); i++) {
             Style s = t.getComponentAt(i).getAllStyles();
-            s.setBgColor(SAVI.POWDER_WHITE);
+            s.setBgColor(SAVI.PALE_PURPLE);
             s.setBgTransparency(255);
         }
 
@@ -356,12 +424,19 @@ public class PeoplePage {
 
         Container mainContents = new Container(BoxLayout.y());
         mainContents.setScrollableY(true);
+        setPadding(mainContents, 0, 3f, 0, 0);
 
-        mainContents.add(groupBanner(PeopleBackend.getGroupName(), Home.pesoFormat(PeopleBackend.getGroupPool()), members.length));
-        mainContents.add(sectionHeader(hasMembers));
+        mainContents.add(trackerBanner(
+                PeopleBackend.getGroupName(),
+                Home.pesoFormat(PeopleBackend.getGroupPool()),
+                members.length,
+                PeopleBackend.getTargetAmount(),
+                personalMode
+        ));
+        mainContents.add(sectionHeader(hasMembers, personalMode));
 
         if (!hasMembers) {
-            mainContents.add(emptyState());
+            mainContents.add(emptyState(personalMode));
         } else {
             for (int i = 0; i < members.length; i++) {
                 final PeopleBackend.Member member = members[i];
@@ -369,7 +444,7 @@ public class PeoplePage {
             }
         }
 
-        base.add(BorderLayout.NORTH, header("Group Members"));
+        base.add(BorderLayout.NORTH, peopleHeader(personalMode));
         base.add(BorderLayout.CENTER, mainContents);
 
         base.add(BorderLayout.SOUTH, SAVI.bottomNav(SAVI.NAV_PEOPLE));

@@ -1,31 +1,45 @@
 package com.savi.app.frontend;
 
+import com.codename1.l10n.SimpleDateFormat;
 import com.codename1.ui.*;
 import com.codename1.ui.layouts.*;
 import com.codename1.ui.plaf.*;
 import com.codename1.ui.spinner.Picker;
+import com.codename1.util.SuccessCallback;
 import com.savi.app.SAVI;
-import java.time.LocalDate;
-import com.codename1.l10n.SimpleDateFormat;
-import java.util.Date;
 import com.savi.app.backend.GroupSavings;
 import com.savi.app.backend.Home;
+import com.savi.app.backend.PersonalSavings;
+import com.savi.app.backend.Profile;
+import com.savi.app.backend.Savings;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 // PENDING PAGE (frontend)
-// FLOW: open the page -> pick a group from SAVI.groupList -> ask GroupSavings how much each member missed ->
-// show a card for every member who still owes money -> "Remind People" creates one reminder
-// per pending member (saved by ReminderList) and opens the Reminder page.
+// Styled like SummaryPage:
+//   1. Top purple pill header switches between "Personal Savings Pending" and "Group Savings Pending"
+//   2. Second purple card has the tracker Picker + chevron on top, "Total Pending" on the left,
+//      and status ("Due Soon" / "All Settled") on the right
+//   3. Below that: member/user missed-contribution cards + "Remind People" / "Set reminder"
 public class PendingPage {
 
-    private int selectedGroupIndex = 0;
+    private boolean personalMode = false;
+    private int selectedIndex = 0;
 
     public void show() {
+        show(false, 0);
+    }
+
+    public void show(boolean isPersonalMode, int startIndex) {
+        this.personalMode = isPersonalMode;
+        this.selectedIndex = Math.max(0, startIndex);
 
         Form pendingForm = new Form("", new BorderLayout());
         pendingForm.getContentPane().getAllStyles().setBgColor(SAVI.PALE_PURPLE);
-        pendingForm.getAllStyles().setBgTransparency(255);
+        pendingForm.getContentPane().getAllStyles().setBgTransparency(255);
 
         Container t = pendingForm.getTitleArea();
         t.getAllStyles().setBgColor(SAVI.PALE_PURPLE);
@@ -36,183 +50,124 @@ public class PendingPage {
             s.setBgTransparency(255);
         }
 
+        String currentUser = activeUsername();
+
+        // Pull only the active mode's trackers for the logged-in user
+        final ArrayList<Savings> trackers = new ArrayList<>();
+        if (personalMode) {
+            trackers.addAll(SAVI.personalList.getForUser(currentUser));
+        } else {
+            trackers.addAll(SAVI.groupList.getForUser(currentUser));
+        }
+        if (selectedIndex >= trackers.size()) {
+            selectedIndex = 0;
+        }
+
+        // Compute pending items for the selected tracker
+        final ArrayList<String> pendingNames = new ArrayList<>();
+        final ArrayList<Double> pendingAmounts = new ArrayList<>();
+        double totalPending = 0;
+
+        Savings activeTracker = trackers.isEmpty() ? null : trackers.get(selectedIndex);
+        if (activeTracker instanceof GroupSavings) {
+            GroupSavings g = (GroupSavings) activeTracker;
+            for (String m : g.getMembers()) {
+                double missed = g.getTotalMissed(m);
+                if (missed > 0) {
+                    pendingNames.add(m);
+                    pendingAmounts.add(missed);
+                    totalPending += missed;
+                }
+            }
+        } else if (activeTracker instanceof PersonalSavings) {
+            PersonalSavings p = (PersonalSavings) activeTracker;
+            double missed = p.getTotalMissed();
+            if (missed > 0) {
+                pendingNames.add(currentUser);
+                pendingAmounts.add(missed);
+                totalPending += missed;
+            }
+        }
+
+        // --- 1. TOP PURPLE PILL SWITCHER (matches SummaryPage.summaryHeader) ---
+        Container topHeader = pendingHeader(personalMode);
+
+        // --- 2. SECOND PURPLE CARD (matches SummaryPage.poolCardFor) ---
+        String activeTitle = activeTracker == null
+                ? (personalMode ? "NO PERSONAL SAVINGS" : "NO GROUP YET")
+                : activeTracker.getDisplayName().toUpperCase();
+
+        String[] pickerChoices = pickerItems(trackers, activeTitle);
+
+        Label statusHeader = txt("Status", SAVI.regular(2f), SAVI.WHITE);
+        statusHeader.getAllStyles().setAlignment(Component.RIGHT);
+        Label statusValue = txt(totalPending > 0 ? "Due Soon" : "All Settled", SAVI.semiBold(2.3f), SAVI.WHITE);
+
+        Container rightCol = new Container(BoxLayout.y());
+        rightCol.add(statusHeader);
+        rightCol.add(FlowLayout.encloseRight(statusValue));
+
+        Container summaryCard = purplePendingCard(
+                activeTitle,
+                pickerChoices,
+                chosen -> {
+                    for (int i = 0; i < trackers.size(); i++) {
+                        if (trackers.get(i).getDisplayName().equalsIgnoreCase(chosen)) {
+                            new PendingPage().show(personalMode, i);
+                            return;
+                        }
+                    }
+                },
+                Home.pesoFormat(totalPending),
+                rightCol
+        );
+
+        // --- 3. MEMBER / PERSONAL PENDING CARDS ---
         Container content = new Container(BoxLayout.y());
         content.setScrollableY(true);
         content.getAllStyles().setBgColor(SAVI.PALE_PURPLE);
         content.getAllStyles().setBgTransparency(255);
         content.getAllStyles().setPaddingUnit(Style.UNIT_TYPE_DIPS);
-        content.getAllStyles().setPadding(0.5f, 2f, 0, 0);
+        content.getAllStyles().setPadding(0, 2f, 0, 0);
 
-        // Pull the groups of the logged-in user (not every user's groups) from SAVI.groupList
-        ArrayList<GroupSavings> allGroups = new ArrayList<>(SAVI.groupList.getForUser(SAVI.user.getCurrentName()));
-        if (selectedGroupIndex >= allGroups.size()) {
-            selectedGroupIndex = 0;
-        }
+        content.add(summaryCard);
 
-        ArrayList<String> pendingNames = new ArrayList<>();      // members who still owe money
-        ArrayList<Double> pendingAmounts = new ArrayList<>();    // how much each of them owes (same order)
-        String[] activeTitleHolder = new String[]{ allGroups.isEmpty() ? "" : allGroups.get(selectedGroupIndex).getGroupName() };
-
-        // --- STATIC TOP HEADER INSIDE SUMMARY CARD (same native Picker wheel + chevron as HomePage) ---
-        Label groupBullet = SAVI.text("● ", SAVI.bold(2.2f), SAVI.DARK_PURPLE);
-        Container groupHeader = new Container(new BorderLayout());
-        groupHeader.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
-        groupHeader.getAllStyles().setMargin(0, 1.2f, 0, 0);
-        groupHeader.add(BorderLayout.WEST, groupBullet);
-
-        Picker groupPicker = new Picker();
-        if (!allGroups.isEmpty()) {
-            String[] groupNames = new String[allGroups.size()];
-            for (int i = 0; i < allGroups.size(); i++) {
-                groupNames[i] = allGroups.get(i).getGroupName();
-            }
-            groupPicker.setType(Display.PICKER_TYPE_STRINGS);
-            groupPicker.setStrings(groupNames);
-            groupPicker.setSelectedString(groupNames[selectedGroupIndex]);
-
-            Style gps = groupPicker.getAllStyles();
-            gps.setFont(SAVI.bold(2.4f));
-            gps.setFgColor(SAVI.DARK_KNIGHT);
-            gps.setBgTransparency(0);
-            gps.setBorder(Border.createEmpty());
-            gps.setPaddingUnit(Style.UNIT_TYPE_DIPS);
-            gps.setPadding(0.6f, 0.6f, 0, 0);
-            gps.setMargin(0, 0, 0, 0);
-            gps.setAlignment(Component.LEFT);
-
-            Label arrow = new Label();
-            arrow.getAllStyles().setFgColor(SAVI.DARK_KNIGHT);
-            arrow.getAllStyles().setPaddingUnit(Style.UNIT_TYPE_DIPS);
-            arrow.getAllStyles().setPadding(0.6f, 0.6f, 1f, 0.5f);
-            arrow.getAllStyles().setMargin(0, 0, 0, 0);
-            FontImage.setMaterialIcon(arrow, FontImage.MATERIAL_KEYBOARD_ARROW_DOWN, 4f);
-
-            groupHeader.add(BorderLayout.CENTER, groupPicker);
-            groupHeader.add(BorderLayout.EAST, arrow);
-
-            // Makes the entire top bar (text, empty space, AND the chevron arrow) trigger the Picker wheel
-            groupHeader.setLeadComponent(groupPicker);
+        if (trackers.isEmpty()) {
+            Label empty = SAVI.text(
+                    personalMode ? "No personal savings created yet." : "No group savings created yet.",
+                    SAVI.semiBold(2.1f), SAVI.SLATE_GRAY);
+            empty.getAllStyles().setAlignment(Component.CENTER);
+            empty.getAllStyles().setPaddingUnit(Style.UNIT_TYPE_DIPS);
+            empty.getAllStyles().setPadding(4f, 4f, 2f, 2f);
+            content.add(empty);
+        } else if (pendingNames.isEmpty()) {
+            Label allPaid = SAVI.text(
+                    personalMode ? "You are up to date on your personal savings!"
+                            : "Everyone is up to date on contributions!",
+                    SAVI.semiBold(2.1f), SAVI.SLATE_GRAY);
+            allPaid.getAllStyles().setAlignment(Component.CENTER);
+            allPaid.getAllStyles().setPaddingUnit(Style.UNIT_TYPE_DIPS);
+            allPaid.getAllStyles().setPadding(4f, 4f, 2f, 2f);
+            content.add(allPaid);
         } else {
-            Label emptyTitle = SAVI.text("No Active Groups", SAVI.bold(2.5f), SAVI.SLATE_GRAY);
-            groupHeader.add(BorderLayout.CENTER, emptyTitle);
+            int rows = (pendingNames.size() + 1) / 2;
+            Container memberGrid = new Container(new GridLayout(rows, 2));
+            memberGrid.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
+            memberGrid.getAllStyles().setMargin(0.6f, 1f, 1.2f, 1.2f);
+
+            for (int i = 0; i < pendingNames.size(); i++) {
+                String member = pendingNames.get(i);
+                String displayName = personalMode ? "You" : member;
+                String handle = "@" + member.toLowerCase();
+                String missedStr = Home.pesoFormat(pendingAmounts.get(i));
+                memberGrid.add(createMemberCard(displayName, handle, missedStr));
+            }
+            content.add(memberGrid);
         }
 
-        // Dynamic containers below the picker so the Picker itself is never removed/re-added
-        Container amountHolder = new Container(new BorderLayout());
-        Container pendingCard = new Container(BoxLayout.y());
-        pendingCard.add(groupHeader);
-        pendingCard.add(amountHolder);
-        HomePage.boxStyles(pendingCard, SAVI.WHITE, 2f, 2f);
-        pendingCard.getAllStyles().setMarginBottom(1.2f);
-
-        Container memberSection = new Container(BoxLayout.y());
-
-        Runnable refreshGroup = () -> {
-            amountHolder.removeAll();
-            memberSection.removeAll();
-            pendingNames.clear();
-            pendingAmounts.clear();
-
-            GroupSavings activeGroup = allGroups.isEmpty() ? null : allGroups.get(selectedGroupIndex);
-            activeTitleHolder[0] = activeGroup != null ? activeGroup.getGroupName() : "";
-            double totalPending = 0;
-
-            // BACKEND CALCULATION: for every member, ask GroupSavings how much they missed.
-            // Only members with a missed amount above 0 are kept, and the amounts are added up.
-            if (activeGroup != null) {
-                for (String m : activeGroup.getMembers()) {
-                    double missed = activeGroup.getTotalMissed(m);
-                    if (missed > 0) {
-                        pendingNames.add(m);
-                        pendingAmounts.add(missed);
-                        totalPending += missed;
-                    }
-                }
-            }
-
-            Label amountTitle = SAVI.text("TOTAL PENDING AMOUNT", SAVI.bold(1.7f), SAVI.AMBER);
-            Label pendingAmount = SAVI.text(Home.pesoFormat(totalPending), SAVI.bold(3.2f), SAVI.AMBER);
-            Container amountBox = BoxLayout.encloseY(amountTitle, pendingAmount);
-
-            // the tag and colors change depending on whether anyone still owes money
-            Label status = SAVI.text(totalPending > 0 ? "Due Soon" : "All Settled", SAVI.bold(1.7f), totalPending > 0 ? SAVI.AMBER : SAVI.GREEN);
-            Style ss = status.getAllStyles();
-            ss.setBgColor(totalPending > 0 ? SAVI.YELLOW_TAG : SAVI.PALE_GREEN);
-            ss.setBgTransparency(255);
-            ss.setPaddingUnit(Style.UNIT_TYPE_DIPS);
-            ss.setPadding(0.6f, 0.6f, 1.5f, 1.5f);
-            ss.setBorder(RoundRectBorder.create().cornerRadius(2f));
-
-            Container tagBox = new Container(new BorderLayout());
-            tagBox.add(BorderLayout.NORTH, status);
-
-            Container amountSection = new Container(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER));
-            amountSection.add(BorderLayout.WEST, amountBox);
-            amountSection.add(BorderLayout.EAST, tagBox);
-            Style as = amountSection.getAllStyles();
-            as.setBgColor(totalPending > 0 ? SAVI.PALE_YELLOW : SAVI.PALE_GREEN);
-            as.setBgTransparency(255);
-            as.setPaddingUnit(Style.UNIT_TYPE_DIPS);
-            as.setPadding(1.5f, 1.5f, 2f, 2f);
-            as.setBorder(RoundRectBorder.create().cornerRadius(3f).strokeColor(totalPending > 0 ? SAVI.PASTEL_YELLOW : SAVI.PALE_GREEN).strokeOpacity(255).stroke(0.2f, true));
-
-            amountHolder.add(BorderLayout.CENTER, amountSection);
-
-            // MEMBER CARDS (2 PER ROW)
-            if (allGroups.isEmpty()) {
-                Label noGroups = SAVI.text("No group savings created yet.", SAVI.semiBold(2.1f), SAVI.SLATE_GRAY);
-                noGroups.getAllStyles().setAlignment(Component.CENTER);
-                noGroups.getAllStyles().setPaddingUnit(Style.UNIT_TYPE_DIPS);
-                noGroups.getAllStyles().setPadding(4f, 4f, 2f, 2f);
-                memberSection.add(noGroups);
-            } else if (pendingNames.isEmpty()) {
-                // nobody owes anything
-                Label allPaid = SAVI.text("Everyone is up to date on contributions!", SAVI.semiBold(2.1f), SAVI.SLATE_GRAY);
-                allPaid.getAllStyles().setAlignment(Component.CENTER);
-                allPaid.getAllStyles().setPaddingUnit(Style.UNIT_TYPE_DIPS);
-                allPaid.getAllStyles().setPadding(4f, 4f, 2f, 2f);
-                memberSection.add(allPaid);
-            } else {
-                int rows = (pendingNames.size() + 1) / 2;   // 2 cards per row, so round the row count up
-                Container memberGrid = new Container(new GridLayout(rows, 2));
-                memberGrid.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
-                memberGrid.getAllStyles().setMargin(0, 1f, 1.2f, 1.2f);
-
-                for (int i = 0; i < pendingNames.size(); i++) {
-                    String member = pendingNames.get(i);
-                    String handle = "@" + member.toLowerCase();
-                    String missedStr = Home.pesoFormat(pendingAmounts.get(i));
-                    memberGrid.add(createMemberCard(member, handle, missedStr));
-                }
-                memberSection.add(memberGrid);
-            }
-
-            pendingCard.revalidate();
-            memberSection.revalidate();
-            content.revalidate();
-        };
-
-        if (!allGroups.isEmpty()) {
-            groupPicker.addActionListener(e -> {
-                String picked = groupPicker.getSelectedString();
-                if (picked != null) {
-                    for (int i = 0; i < allGroups.size(); i++) {
-                        if (allGroups.get(i).getGroupName().equalsIgnoreCase(picked)) {
-                            selectedGroupIndex = i;
-                            break;
-                        }
-                    }
-                    refreshGroup.run();
-                }
-            });
-        }
-
-        refreshGroup.run();
-        content.add(pendingCard);
-        content.add(memberSection);
-
-        // BOTTOM: REMIND PEOPLE + SET REMINDER
-        Button remindButton = new Button("Remind People");
+        // --- 4. BOTTOM: REMIND PEOPLE + SET REMINDER ---
+        final Savings finalTracker = activeTracker;
+        Button remindButton = new Button(personalMode ? "Remind Me" : "Remind People");
         Style rs = remindButton.getAllStyles();
         rs.setFgColor(SAVI.WHITE);
         rs.setBgColor(SAVI.DARK_PURPLE);
@@ -225,28 +180,27 @@ public class PendingPage {
         rs.setMargin(0, 0.8f, 2f, 2f);
         rs.setBorder(RoundRectBorder.create().cornerRadius(4f).shadowOpacity(50).shadowBlur(10).shadowSpread(1f).shadowX(0.5f).shadowY(0.3f).shadowColor(SAVI.BRIGHT_VIOLET));
 
-        // REMIND PEOPLE: this is where the Pending page connects to the Reminder page
         remindButton.addActionListener(e -> {
-            if (pendingNames.isEmpty()) {
-                Dialog.show("All Clear", "No pending members to remind.", "OK", null);
+            if (pendingNames.isEmpty() || finalTracker == null) {
+                Dialog.show("All Clear", "No pending contributions to remind.", "OK", null);
                 return;
             }
 
             LocalDate today = LocalDate.now();
             String nowTime = new SimpleDateFormat("hh:mm a").format(new Date());
-            String chosenGroup = activeTitleHolder[0];
+            String trackerLabel = "[" + finalTracker.getTypeLabel() + "] " + finalTracker.getDisplayName();
 
-            // Gumawa ng automatic reminder entry sa SAVI.reminders (at automatic na mase-save sa Reminders_Records.csv)
-            // (one reminder per pending member; addReminder links a new node in the list and saves the CSV)
             for (int i = 0; i < pendingNames.size(); i++) {
                 String member = pendingNames.get(i);
                 double missedAmt = pendingAmounts.get(i);
-                String reminderTitle = "Follow up: " + member + " (missed contribution)";
-                SAVI.reminders.addReminder(reminderTitle, chosenGroup, today, nowTime, missedAmt);
+                String reminderTitle = personalMode
+                        ? "Personal deposit: " + finalTracker.getDisplayName() + " (missed target)"
+                        : "Follow up: " + member + " (missed contribution)";
+                SAVI.reminders.addReminder(currentUser, reminderTitle, trackerLabel, today, nowTime, missedAmt);
             }
 
             Dialog.show("Reminder Added",
-                    "Added " + pendingNames.size() + " pending reminder(s) for " + chosenGroup + " to your Reminders.",
+                    "Added " + pendingNames.size() + " pending reminder(s) for " + finalTracker.getDisplayName() + " to your Reminders.",
                     "OK", null);
             new ReminderPage().show();
         });
@@ -260,8 +214,6 @@ public class PendingPage {
         srs.setAlignment(Component.CENTER);
         srs.setPaddingUnit(Style.UNIT_TYPE_DIPS);
         srs.setPadding(0.5f, 0.5f, 1f, 1f);
-
-        // "Set reminder" just opens the Reminder page so the user can add one manually
         setReminder.addActionListener(e -> new ReminderPage().show());
 
         Container bottomBar = new Container(BoxLayout.y());
@@ -272,11 +224,159 @@ public class PendingPage {
         bottomBar.add(remindButton);
         bottomBar.add(setReminder);
 
-        // FORM LAYOUT: shared header on top, content in the middle, buttons at the bottom
-        pendingForm.add(BorderLayout.NORTH, SAVI.buildHeader("Pending", () -> new HomePage().show()));
+        pendingForm.add(BorderLayout.NORTH, topHeader);
         pendingForm.add(BorderLayout.CENTER, content);
         pendingForm.add(BorderLayout.SOUTH, bottomBar);
         pendingForm.show();
+    }
+
+    // TOP DROPDOWN PILL: switches between Personal Savings Pending and Group Savings Pending
+    private Container pendingHeader(boolean isPersonal) {
+        final String[] modes = {"Personal Savings Pending", "Group Savings Pending"};
+        String current = isPersonal ? modes[0] : modes[1];
+
+        Button back = new Button();
+        Style bs = back.getAllStyles();
+        bs.setFgColor(SAVI.DARK_PURPLE);
+        bs.setBgTransparency(0);
+        bs.setBorder(RoundBorder.create().color(SAVI.WHITE));
+        bs.setPaddingUnit(Style.UNIT_TYPE_DIPS);
+        bs.setPadding(0.6f, 0.6f, 0.6f, 0.6f);
+        bs.setMargin(0, 0, 0, 0);
+        FontImage.setMaterialIcon(back, FontImage.MATERIAL_CHEVRON_LEFT, 3.5f);
+        back.addActionListener(e -> new HomePage().show());
+
+        Picker modePicker = titlePicker(modes, current, SAVI.bold(2.2f), chosen -> {
+            new PendingPage().show(chosen.equals(modes[0]), 0);
+        });
+        modePicker.getAllStyles().setAlignment(Component.CENTER);
+
+        Container titleArea = new Container(new BorderLayout());
+        titleArea.add(BorderLayout.CENTER, modePicker);
+        titleArea.add(BorderLayout.EAST, chevron(SAVI.DARK_PURPLE));
+        titleArea.setLeadComponent(modePicker);
+
+        Container pill = new Container(new BorderLayout());
+        Style ps = pill.getAllStyles();
+        ps.setBgColor(SAVI.DARK_PURPLE);
+        ps.setBgTransparency(255);
+        ps.setBorder(RoundRectBorder.create().cornerRadius(4f).shadowOpacity(50).shadowBlur(10)
+                .shadowSpread(1f).shadowX(0.5f).shadowY(0.3f).shadowColor(SAVI.SLATE_GRAY));
+        ps.setPaddingUnit(Style.UNIT_TYPE_DIPS);
+        ps.setPadding(1.5f, 1.5f, 1.5f, 1.5f);
+        ps.setMarginUnit(Style.UNIT_TYPE_DIPS);
+        ps.setMargin(1f, 0.4f, 2f, 2f);
+        pill.add(BorderLayout.WEST, back);
+        pill.add(BorderLayout.CENTER, titleArea);
+
+        Container wrap = new Container(new BorderLayout());
+        wrap.add(BorderLayout.CENTER, pill);
+        return wrap;
+    }
+
+    // SECOND PURPLE CARD: matches SummaryPage.poolCardFor
+    private Container purplePendingCard(String title, String[] items, SuccessCallback<String> onPick,
+                                        String totalPendingText, Component right) {
+        Container card = new Container(new BorderLayout());
+        Style contS = card.getAllStyles();
+        contS.setBgTransparency(255);
+        contS.setBgColor(SAVI.DARK_PURPLE);
+        contS.setBorder(RoundRectBorder.create()
+                .cornerRadius(4)
+                .shadowOpacity(50)
+                .shadowBlur(10)
+                .shadowSpread(1f)
+                .shadowX(0.5f)
+                .shadowY(0.3f)
+                .shadowColor(SAVI.SLATE_GRAY));
+        contS.setPaddingUnit(Style.UNIT_TYPE_DIPS);
+        contS.setPadding(4f, 4f, 3f, 3f);
+        contS.setMarginUnit(Style.UNIT_TYPE_DIPS);
+        contS.setMargin(0.5f, 0.5f, 2f, 2f);
+
+        Picker namePicker = titlePicker(items, title, SAVI.bold(2.5f), onPick);
+
+        Container topRow = new Container(new BorderLayout());
+        topRow.add(BorderLayout.WEST, namePicker);
+        topRow.add(BorderLayout.EAST, chevron(SAVI.DARK_PURPLE));
+        topRow.setLeadComponent(namePicker);
+
+        Container total = new Container(BoxLayout.y());
+        total.add(txt("Total Pending", SAVI.regular(2f), SAVI.WHITE));
+        total.add(txt(totalPendingText, SAVI.bold(2.6f), SAVI.WHITE));
+
+        Container bottomRow = new Container(new BorderLayout());
+        bottomRow.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
+        bottomRow.getAllStyles().setMargin(1.5f, 0, 0, 0);
+        bottomRow.add(BorderLayout.WEST, total);
+        bottomRow.add(BorderLayout.EAST, right);
+
+        card.add(BorderLayout.NORTH, topRow);
+        card.add(BorderLayout.SOUTH, bottomRow);
+        return card;
+    }
+
+    private Label chevron(int iconColor) {
+        Label chev = new Label();
+        Style cs = chev.getAllStyles();
+        cs.setFgColor(iconColor);
+        cs.setBgTransparency(0);
+        cs.setBorder(RoundBorder.create().color(SAVI.WHITE));
+        cs.setPaddingUnit(Style.UNIT_TYPE_DIPS);
+        cs.setPadding(0.3f, 0.3f, 0.3f, 0.3f);
+        cs.setMargin(0, 0, 0, 0);
+        FontImage.setMaterialIcon(chev, FontImage.MATERIAL_KEYBOARD_ARROW_DOWN, 3f);
+        return chev;
+    }
+
+    private Picker titlePicker(String[] items, final String current, Font font,
+                               final SuccessCallback<String> onPick) {
+        final Picker p = new Picker();
+        p.setUIID("Label");
+        p.setType(Display.PICKER_TYPE_STRINGS);
+        p.setStrings(items);
+        p.setSelectedString(current);
+        Style st = p.getAllStyles();
+        st.setFont(font);
+        st.setFgColor(SAVI.WHITE);
+        st.setBgTransparency(0);
+        st.setBorder(Border.createEmpty());
+        st.setMargin(0, 0, 0, 0);
+        st.setPadding(0, 0, 0, 0);
+        p.addActionListener(e -> {
+            String chosen = p.getSelectedString();
+            if (chosen != null && !chosen.equalsIgnoreCase(current)) {
+                onPick.onSucess(chosen);
+            }
+        });
+        return p;
+    }
+
+    private String[] pickerItems(List<Savings> trackers, String fallbackTitle) {
+        if (trackers.isEmpty()) {
+            return new String[]{fallbackTitle};
+        }
+        String[] items = new String[trackers.size()];
+        for (int i = 0; i < items.length; i++) {
+            items[i] = trackers.get(i).getDisplayName().toUpperCase();
+        }
+        return items;
+    }
+
+    private Label txt(String s, Font f, int color) {
+        Label l = SAVI.text(s, f, color);
+        Style st = l.getAllStyles();
+        st.setMargin(0, 0, 0, 0);
+        st.setPadding(0, 0, 0, 0);
+        return l;
+    }
+
+    private static String activeUsername() {
+        if (SAVI.user != null && SAVI.user.getCurrentName() != null
+                && !SAVI.user.getCurrentName().trim().isEmpty()) {
+            return SAVI.user.getCurrentName().trim();
+        }
+        return Profile.getInstance().getMemberName();
     }
 
     // MEMBER CARD METHOD: builds one card (avatar, name, @handle, missed amount) for one member

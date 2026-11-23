@@ -158,7 +158,7 @@ public class SummaryPage {
 
     // TOP DROPDOWN: switches between the Personal and the Group savings summary
     Container summaryHeader(boolean personalMode) {
-        final String[] modes = {"Personal Savings GroupSummary", "Group Savings GroupSummary"};
+        final String[] modes = {"Personal Savings Summary", "Group Savings Summary"};
         String current = personalMode ? modes[0] : modes[1];
 
         com.codename1.ui.Button back = new com.codename1.ui.Button();
