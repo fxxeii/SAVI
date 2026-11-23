@@ -331,7 +331,8 @@ public class SignUpPage {
             Style[] styles = {
                     btn.getUnselectedStyle(),
                     btn.getSelectedStyle(),
-                    btn.getPressedStyle()
+                    btn.getPressedStyle(),
+                    btn.getDisabledStyle()
             };
 
             for (Style s : styles) {
@@ -409,6 +410,11 @@ public class SignUpPage {
             String email = emailf.getText().trim();
             String pass = passf.getText().trim();
             String cpass = cpassf.getText().trim();
+
+            if (verifiedEmail == null || !verifiedEmail.equals(email)) {
+                Dialog.show("Email Not Verified", "Please verify your email address before creating an account.", "OK", null);
+                return;
+            }
 
             String result = SAVI.user.signup(name, email, pass, cpass);
 
