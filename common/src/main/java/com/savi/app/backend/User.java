@@ -189,11 +189,43 @@ public class User {
     }
 
 
-    public String getCurrentEmail() {
-        if (currentUser == null) {
+    public String getUsernameByEmail(String e) {
+        if (e == null) {
             return null;
         }
-        return currentUser.email;
+        Node temp = head;
+        while (temp != null) {
+            if (temp.email != null && temp.email.equalsIgnoreCase(e.trim())) {
+                return temp.name;
+            }
+            temp = temp.pntnext;
+        }
+        return null;
+    }
+
+    public String resetPassByEmail(String e, String p, String cp) {
+        if (e == null || e.trim().isEmpty()
+                || p == null || p.isEmpty()
+                || cp == null || cp.isEmpty()) {
+            return "Please fill in all fields.";
+        }
+        if (!validPassword(p)) {
+            return "Password must be at least 5 characters.";
+        }
+        if (!matchingPassword(p, cp)) {
+            return "Passwords do not match.";
+        }
+
+        Node temp = head;
+        while (temp != null) {
+            if (temp.email != null && temp.email.equalsIgnoreCase(e.trim())) {
+                temp.pass = p;
+                saveAll();
+                return "success";
+            }
+            temp = temp.pntnext;
+        }
+        return "Email not found.";
     }
 
     private boolean validName(String n) {
