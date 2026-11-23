@@ -190,15 +190,33 @@ public class ProfilePage implements Profile.DataChangeListener {
         }
     }
 
-    static Container greetingBanner(UserProfile profile) {
+    Container greetingBanner(UserProfile profile) {
         Rounded badge = new Rounded(new FlowLayout(Component.CENTER, Component.CENTER), SAVI.WHITE, 35, 3.5f)
                 .stroke(SAVI.WHITE, 90, 1);
-        setPadding(badge, 1.6f, 1.6f, 4.5f, 4.5f);
+        setPadding(badge, 1.6f, 1.6f, 3.5f, 3.5f);
         setMargins(badge, 0.5f, 0.5f, 0, 0);
 
-        Label helloLabel = SAVI.text("Hello, Saver!", SAVI.bold(GREETING_SIZE), SAVI.WHITE);
-        helloLabel.getAllStyles().setAlignment(Component.CENTER);
-        badge.add(helloLabel);
+        Button greetingBtn = new Button("Hello, " + profile.getUsername() + "!");
+        greetingBtn.setUIID("Label");
+        greetingBtn.getAllStyles().setFont(SAVI.bold(GREETING_SIZE));
+        greetingBtn.getAllStyles().setFgColor(SAVI.WHITE);
+        setPadding(greetingBtn, 0, 0, 0, 0);
+        setMargins(greetingBtn, 0, 0, 0, 0);
+        greetingBtn.addActionListener(e -> showEditProfileDialog());
+
+        Label editIcon = new Label();
+        editIcon.getAllStyles().setFgColor(SAVI.WHITE);
+        setPadding(editIcon, 0, 0.4f, 0.8f, 0);
+        setMargins(editIcon, 0, 0, 0, 0);
+        FontImage.setMaterialIcon(editIcon, FontImage.MATERIAL_EDIT, GREETING_SIZE * 0.65f);
+
+        Container row = BoxLayout.encloseX(
+                BoxLayout.encloseYCenter(greetingBtn),
+                BoxLayout.encloseYCenter(editIcon)
+        );
+
+        badge.add(row);
+        badge.setLeadComponent(greetingBtn);
 
         return FlowLayout.encloseCenter(badge);
     }
@@ -208,32 +226,21 @@ public class ProfilePage implements Profile.DataChangeListener {
         setPadding(header, 1f, bottomPaddingMM, 2f, 2f);
         setMargins(header, 0, 1f, 0, 0);
 
-        Label title = SAVI.text("PROFILE", SAVI.bold(2.3f), SAVI.WHITE);
+        Label title = SAVI.text("SAVER PROFILE", SAVI.bold(2.3f), SAVI.WHITE);
         title.getAllStyles().setAlignment(Component.CENTER);
 
         Container topRow = new Container(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER));
         topRow.add(BorderLayout.CENTER, title);
         setPadding(topRow, 1.2f, 1.2f, 0, 0);
-        setMargins(topRow, 0, 2f, 0, 0);
-
-        Button nameBtn = new Button(profile.getUsername());
-        nameBtn.setUIID("Label");
-        nameBtn.getAllStyles().setFont(SAVI.bold(GREETING_SIZE));   // same size as "Hello, Saver!"
-        nameBtn.getAllStyles().setFgColor(SAVI.WHITE);
-        nameBtn.setTextPosition(Component.LEFT);
-        nameBtn.getAllStyles().setAlignment(Component.CENTER);
-        FontImage.setMaterialIcon(nameBtn, FontImage.MATERIAL_EDIT, GREETING_SIZE * 0.7f);
-        nameBtn.addActionListener(e -> showEditProfileDialog());
-        setMargins(nameBtn, 1.5f, 0, 0, 0);
+        setMargins(topRow, 0, 1.8f, 0, 0);
 
         header.add(topRow);
         header.add(greetingBanner(profile));
-        header.add(FlowLayout.encloseCenter(nameBtn));
         return header;
     }
 
     Container topSection(UserProfile profile) {
-        return profileHeader(2.5f, profile);
+        return profileHeader(3.2f, profile);
     }
 
     static Container sectionHeader(String title, Component right) {
@@ -392,10 +399,19 @@ public class ProfilePage implements Profile.DataChangeListener {
         body.add(SAVI.text("USERNAME", SAVI.bold(1.6f), SAVI.SLATE_GRAY));
         body.add(usernameField);
 
+        Container actions = new Container(new GridLayout(1, 2));
+        setPadding(actions, 0.5f, 1f, 0.8f, 0.8f);
+
         Button cancel = new Button("Cancel");
+        cancel.getAllStyles().setFont(SAVI.semiBold(1.6f));
+        setPadding(cancel, 1f, 1f, 0.3f, 0.3f);
+        setMargins(cancel, 0.3f, 0.3f, 0.3f, 0.3f);
         cancel.addActionListener(e -> dlg.dispose());
 
         Button save = new Button("Save");
+        save.getAllStyles().setFont(SAVI.semiBold(1.6f));
+        setPadding(save, 1f, 1f, 0.3f, 0.3f);
+        setMargins(save, 0.3f, 0.3f, 0.3f, 0.3f);
         save.addActionListener(e -> {
             String result = backend.updateProfileInfo(null, usernameField.getText(), null);
             if (!result.equals("success")) {
@@ -405,7 +421,6 @@ public class ProfilePage implements Profile.DataChangeListener {
             dlg.dispose();
         });
 
-        Container actions = new Container(new GridLayout(1, 2));
         actions.add(cancel).add(save);
 
         dlg.add(BorderLayout.CENTER, body);
@@ -434,13 +449,20 @@ public class ProfilePage implements Profile.DataChangeListener {
         body.add(SAVI.text("TOTAL TARGET (P)", SAVI.bold(1.6f), SAVI.SLATE_GRAY)).add(totalField);
 
         Container actions = new Container(new GridLayout(1, 3));
+        setPadding(actions, 0.5f, 1f, 0.8f, 0.8f);
 
         Button cancel = new Button("Cancel");
+        cancel.getAllStyles().setFont(SAVI.semiBold(1.6f));
+        setPadding(cancel, 1f, 1f, 0.3f, 0.3f);
+        setMargins(cancel, 0.3f, 0.3f, 0.3f, 0.3f);
         cancel.addActionListener(e -> dlg.dispose());
         actions.add(cancel);
 
         Button delete = new Button("Delete");
+        delete.getAllStyles().setFont(SAVI.semiBold(1.6f));
         delete.getAllStyles().setFgColor(0xD32F2F);
+        setPadding(delete, 1f, 1f, 0.3f, 0.3f);
+        setMargins(delete, 0.3f, 0.3f, 0.3f, 0.3f);
         delete.addActionListener(e -> {
             boolean sure = Dialog.show("Delete Group",
                     "Delete \"" + existing.getGroupName() + "\" and all its members and contributions?",
@@ -454,6 +476,9 @@ public class ProfilePage implements Profile.DataChangeListener {
         actions.add(delete);
 
         Button save = new Button("Save");
+        save.getAllStyles().setFont(SAVI.semiBold(1.6f));
+        setPadding(save, 1f, 1f, 0.3f, 0.3f);
+        setMargins(save, 0.3f, 0.3f, 0.3f, 0.3f);
         save.addActionListener(e -> {
             String name = nameField.getText().trim();
             if (name.isEmpty()) {
@@ -498,13 +523,20 @@ public class ProfilePage implements Profile.DataChangeListener {
         body.add(SAVI.text("TOTAL TARGET (P)", SAVI.bold(1.6f), SAVI.SLATE_GRAY)).add(totalField);
 
         Container actions = new Container(new GridLayout(1, 3));
+        setPadding(actions, 0.5f, 1f, 0.8f, 0.8f);
 
         Button cancel = new Button("Cancel");
+        cancel.getAllStyles().setFont(SAVI.regular(1.8f));
+        setPadding(cancel, 1f, 1f, 0, 0);
+        setMargins(cancel, 0.3f, 0.3f, 0.3f, 0.3f);
         cancel.addActionListener(e -> dlg.dispose());
         actions.add(cancel);
 
         Button delete = new Button("Delete");
+        delete.getAllStyles().setFont(SAVI.regular(1.8f));
         delete.getAllStyles().setFgColor(0xD32F2F);
+        setPadding(delete, 1f, 1f, 0, 0);
+        setMargins(delete, 0.3f, 0.3f, 0.3f, 0.3f);
         delete.addActionListener(e -> {
             boolean sure = Dialog.show("Delete Personal Savings",
                     "Delete \"" + existing.getSavingsName() + "\" and all its contributions?",
@@ -518,6 +550,9 @@ public class ProfilePage implements Profile.DataChangeListener {
         actions.add(delete);
 
         Button save = new Button("Save");
+        save.getAllStyles().setFont(SAVI.regular(1.8f));
+        setPadding(save, 1f, 1f, 0, 0);
+        setMargins(save, 0.3f, 0.3f, 0.3f, 0.3f);
         save.addActionListener(e -> {
             String name = nameField.getText().trim();
             if (name.isEmpty()) {
