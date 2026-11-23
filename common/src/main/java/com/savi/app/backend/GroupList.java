@@ -6,7 +6,7 @@ import java.util.List;
 
 // GROUP LIST (manages all GroupSavings + saves to Groups_Records.txt via Codename One Storage)
 // File format (3 record types):
-//   G,creator,targetAmount,groupName,expectedPerMember,createdDate,savingsName
+//   G,creator,targetAmount,groupName,expectedPerMember,createdDate,savingsName[,createdTimestamp]
 //   M,groupName,memberName
 //   C,groupName,memberName,amount,date,note[,timestamp]
 public class GroupList implements SavingsStore {
@@ -43,7 +43,7 @@ public class GroupList implements SavingsStore {
         }
 
         GroupSavings g = new GroupSavings(creator.trim(), targetAmount, groupName.trim(),
-                expectedPerMember, createdDate, savingsName);
+                expectedPerMember, createdDate, savingsName, System.currentTimeMillis());
 
         if (initialMembers != null) {
             for (String m : initialMembers) {
@@ -191,7 +191,8 @@ public class GroupList implements SavingsStore {
                     .append(RecordStorage.encode(g.getGroupName())).append(",")
                     .append(g.getExpectedPerMember()).append(",")
                     .append(g.getCreatedDate()).append(",")
-                    .append(RecordStorage.encode(g.getSavingsName())).append("\n");
+                    .append(RecordStorage.encode(g.getSavingsName())).append(",")
+                    .append(g.getCreatedTimestamp()).append("\n");
 
             for (String m : g.getMembers()) {
                 sb.append("M,").append(RecordStorage.encode(g.getGroupName())).append(",")
@@ -237,8 +238,16 @@ public class GroupList implements SavingsStore {
                 LocalDate created = RecordStorage.parseDate(parts.get(5));
                 String savingsName = (parts.size() >= 7 && !RecordStorage.decode(parts.get(6)).trim().isEmpty())
                         ? RecordStorage.decode(parts.get(6)) : name;
+                long createdTimestamp = 0L;
+                if (parts.size() >= 8) {
+                    try {
+                        createdTimestamp = Long.parseLong(parts.get(7).trim());
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
                 if (findByName(name) == null) {
-                    groups.add(new GroupSavings(creator, target, name, expected, created, savingsName));
+                    groups.add(new GroupSavings(creator, target, name, expected, created,
+                            savingsName, createdTimestamp));
                 }
             } catch (Exception ignored) {
             }

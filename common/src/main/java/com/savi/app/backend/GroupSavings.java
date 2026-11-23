@@ -9,20 +9,27 @@ public class GroupSavings extends Savings {
     private String groupName;
     private double expectedPerMember;
     private LocalDate createdDate;
+    private long createdTimestamp;
     private final ArrayList<String> members = new ArrayList<>();
 
     public GroupSavings(String creator, double targetAmount, String groupName, double expectedPerMember) {
-        this(creator, targetAmount, groupName, expectedPerMember, LocalDate.now(), groupName);
+        this(creator, targetAmount, groupName, expectedPerMember, LocalDate.now(), groupName, System.currentTimeMillis());
     }
 
     public GroupSavings(String creator, double targetAmount, String groupName,
                         double expectedPerMember, LocalDate createdDate) {
-        this(creator, targetAmount, groupName, expectedPerMember, createdDate, groupName);
+        this(creator, targetAmount, groupName, expectedPerMember, createdDate, groupName, System.currentTimeMillis());
     }
 
     public GroupSavings(String creator, double targetAmount, String groupName,
                         double expectedPerMember, LocalDate createdDate,
                         String savingsName) {
+        this(creator, targetAmount, groupName, expectedPerMember, createdDate, savingsName, System.currentTimeMillis());
+    }
+
+    public GroupSavings(String creator, double targetAmount, String groupName,
+                        double expectedPerMember, LocalDate createdDate,
+                        String savingsName, long createdTimestamp) {
         super(creator, targetAmount,
                 (savingsName == null || savingsName.trim().isEmpty()) ? groupName : savingsName);
         if (groupName == null || groupName.trim().isEmpty()) {
@@ -31,6 +38,7 @@ public class GroupSavings extends Savings {
         this.groupName = groupName.trim();
         this.expectedPerMember = Math.max(0, expectedPerMember);
         this.createdDate = createdDate != null ? createdDate : LocalDate.now();
+        this.createdTimestamp = createdTimestamp > 0 ? createdTimestamp : System.currentTimeMillis();
         addMember(creator.trim());
     }
 
@@ -62,6 +70,10 @@ public class GroupSavings extends Savings {
 
     public LocalDate getCreatedDate() {
         return createdDate;
+    }
+
+    public long getCreatedTimestamp() {
+        return createdTimestamp;
     }
 
     // --- Member Management ---

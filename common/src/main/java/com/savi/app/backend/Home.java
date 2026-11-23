@@ -229,23 +229,32 @@ public class Home {
         return personals;
     }
 
-    /** The group shown on the home card: the one with the newest contribution. */
+    /** The group shown on the home card: the one with the newest contribution or creation. */
     public GroupSavings getFeaturedGroup() {
         GroupSavings featured = null;
-        LocalDate newest = null;
+        String newestDate = "";
+        long newestTime = -1;
         List<GroupSavings> groups = getGroups();
 
         for (GroupSavings g : groups) {
+            String d = g.getCreatedDate() != null ? g.getCreatedDate().toString() : "";
+            long t = g.getCreatedTimestamp();
             for (Contribution c : g.getContributions()) {
-                if (newest == null || isAfter(c.getDate(), newest)) {
-                    newest = c.getDate();
-                    featured = g;
+                String cd = c.getDate().toString();
+                int cmp = cd.compareTo(d);
+                if (cmp > 0) {
+                    d = cd;
+                    t = c.getTimestamp();
+                } else if (cmp == 0 && c.getTimestamp() > t) {
+                    t = c.getTimestamp();
                 }
             }
-        }
-
-        if (featured == null && !groups.isEmpty()) {
-            featured = groups.get(0);   // no contributions yet
+            int cmpGroup = d.compareTo(newestDate);
+            if (featured == null || cmpGroup > 0 || (cmpGroup == 0 && t >= newestTime)) {
+                newestDate = d;
+                newestTime = t;
+                featured = g;
+            }
         }
         return featured;   // null when the user has no groups: HomePage must handle this
     }
@@ -268,11 +277,12 @@ public class Home {
         return getGroups().size() + getPersonals().size();
     }
 
-    /** At most MAX_OVERVIEWS savings (groups or personal): the ones that received the latest contributions. */
+    /** At most MAX_OVERVIEWS savings (groups or personal): newest contributions or newly created savings first. */
     public List<OverviewItem> getOverviews() {
         List<OverviewItem> items = new ArrayList<OverviewItem>();
-        for (Savings s : getVisibleSavings()) {
-            items.add(new OverviewItem(s));
+        List<Savings> visible = getVisibleSavings();
+        for (int i = 0; i < visible.size(); i++) {
+            items.add(new OverviewItem(visible.get(i), i));
         }
 
         Collections.sort(items, (a, b) -> {
@@ -280,7 +290,10 @@ public class Home {
             if (byDate != 0) {
                 return byDate;
             }
-            return a.latestTime < b.latestTime ? 1 : (a.latestTime > b.latestTime ? -1 : 0);
+            if (a.latestTime != b.latestTime) {
+                return a.latestTime < b.latestTime ? 1 : -1;
+            }
+            return Integer.compare(b.order, a.order);
         });
 
         if (items.size() > MAX_OVERVIEWS) {
@@ -293,12 +306,28 @@ public class Home {
         private final Savings savings;
         private final String latest;
         private final long latestTime;
+        private final int order;
 
-        private OverviewItem(Savings savings) {
+        private OverviewItem(Savings savings, int order) {
             this.savings = savings;
+            this.order = order;
 
             String newest = "";
             long newestTime = 0;
+            if (savings instanceof GroupSavings) {
+                GroupSavings gs = (GroupSavings) savings;
+                if (gs.getCreatedDate() != null) {
+                    newest = gs.getCreatedDate().toString();
+                }
+                newestTime = gs.getCreatedTimestamp();
+            } else if (savings instanceof PersonalSavings) {
+                PersonalSavings ps = (PersonalSavings) savings;
+                if (ps.getCreatedDate() != null) {
+                    newest = ps.getCreatedDate().toString();
+                }
+                newestTime = ps.getCreatedTimestamp();
+            }
+
             for (Contribution c : savings.getContributions()) {
                 String d = c.getDate().toString();
                 int cmp = d.compareTo(newest);

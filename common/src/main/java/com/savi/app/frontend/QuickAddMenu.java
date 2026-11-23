@@ -396,6 +396,7 @@ public class QuickAddMenu {
                 return;
             }
             dlg.dispose();
+            Dialog.show("Success", "Savings successfully created", "OK", null);
             new HomePage().show();
         }));
         dlg.show();
@@ -451,6 +452,7 @@ public class QuickAddMenu {
             }
 
             dlg.dispose();
+            Dialog.show("Success", "Savings successfully created", "OK", null);
             new HomePage().show();
         }));
         dlg.show();
