@@ -6,8 +6,7 @@ import java.util.List;
 
 // PERSONAL LIST (manages PersonalSavings + saves to Personal_Records.txt via Codename One Storage)
 // File format:
-//   P,creator,targetAmount,savingsName[,dailyTarget,createdDate]
-//   P,creator,targetAmount,savingsName[,createdDate,createdTimestamp]
+//   P,creator,targetAmount,savingsName[,dailyTarget,createdDate,createdTimestamp]
 //   C,creator,savingsName,amount,date,note[,timestamp]
 public class PersonalList implements SavingsStore {
 
@@ -38,9 +37,7 @@ public class PersonalList implements SavingsStore {
         }
 
         list.add(new PersonalSavings(creator.trim(), targetAmount, savingsName.trim(),
-                dailyTarget, createdDate));
-        list.add(new PersonalSavings(creator.trim(), targetAmount, savingsName.trim(),
-                LocalDate.now(), System.currentTimeMillis()));
+                dailyTarget, createdDate, System.currentTimeMillis()));
         if (!saveAll()) {
             return "Could not save personal savings.";
         }
@@ -124,9 +121,7 @@ public class PersonalList implements SavingsStore {
                     .append(p.getTargetAmount()).append(",")
                     .append(RecordStorage.encode(p.getSavingsName())).append(",")
                     .append(p.getDailyTarget()).append(",")
-                    .append(p.getCreatedDate().toString()).append("\n");
-                    .append(RecordStorage.encode(p.getSavingsName())).append(",")
-                    .append(p.getCreatedDate() != null ? p.getCreatedDate().toString() : "").append(",")
+                    .append(p.getCreatedDate() != null ? p.getCreatedDate().toString() : LocalDate.now().toString()).append(",")
                     .append(p.getCreatedTimestamp()).append("\n");
 
             for (Contribution c : p.getContributions()) {
@@ -165,21 +160,18 @@ public class PersonalList implements SavingsStore {
                 double target = Double.parseDouble(parts.get(2));
                 String name = RecordStorage.decode(parts.get(3));
                 double dailyTarget = parts.size() >= 5 ? Double.parseDouble(parts.get(4)) : 0.0;
-                LocalDate createdDate = parts.size() >= 6
+                LocalDate createdDate = (parts.size() >= 6 && !parts.get(5).trim().isEmpty())
                         ? RecordStorage.parseDate(parts.get(5))
                         : LocalDate.now();
-                LocalDate created = (parts.size() >= 5 && !parts.get(4).trim().isEmpty())
-                        ? RecordStorage.parseDate(parts.get(4)) : null;
                 long createdTimestamp = 0L;
-                if (parts.size() >= 6) {
+                if (parts.size() >= 7) {
                     try {
-                        createdTimestamp = Long.parseLong(parts.get(5).trim());
+                        createdTimestamp = Long.parseLong(parts.get(6).trim());
                     } catch (NumberFormatException ignored) {
                     }
                 }
                 if (findByCreatorAndName(creator, name) == null) {
-                    list.add(new PersonalSavings(creator, target, name, dailyTarget, createdDate));
-                    list.add(new PersonalSavings(creator, target, name, created, createdTimestamp));
+                    list.add(new PersonalSavings(creator, target, name, dailyTarget, createdDate, createdTimestamp));
                 }
             } catch (Exception ignored) {
             }

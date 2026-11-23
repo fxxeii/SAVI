@@ -121,10 +121,6 @@ public class GroupSavings extends Savings {
         return new ArrayList<>(members);
     }
 
-    public int getMemberCount() {
-        return members.size();
-    }
-
     // --- Missed / Pending Calculations ---
     public double getTotalMissed(String member) {
         if (member == null || !hasMember(member) || expectedPerMember <= 0) {

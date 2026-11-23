@@ -14,29 +14,34 @@ public class PersonalSavings extends Savings {
     private long createdTimestamp;
 
     public PersonalSavings(String creator, double targetAmount, String savingsName) {
-        this(creator, targetAmount, savingsName, 0, LocalDate.now());
-    }
-
-    public PersonalSavings(String creator, double targetAmount, String savingsName,
-                           double dailyTarget, LocalDate createdDate) {
-        this(creator, targetAmount, savingsName, LocalDate.now(), System.currentTimeMillis());
+        this(creator, targetAmount, savingsName, 0.0, LocalDate.now(), System.currentTimeMillis());
     }
 
     public PersonalSavings(String creator, double targetAmount, String savingsName, LocalDate createdDate) {
-        this(creator, targetAmount, savingsName, createdDate, System.currentTimeMillis());
+        this(creator, targetAmount, savingsName, 0.0, createdDate, System.currentTimeMillis());
     }
 
     public PersonalSavings(String creator, double targetAmount, String savingsName,
                            LocalDate createdDate, long createdTimestamp) {
+        this(creator, targetAmount, savingsName, 0.0, createdDate, createdTimestamp);
+    }
+
+    public PersonalSavings(String creator, double targetAmount, String savingsName,
+                           double dailyTarget, LocalDate createdDate) {
+        this(creator, targetAmount, savingsName, dailyTarget, createdDate, System.currentTimeMillis());
+    }
+
+    public PersonalSavings(String creator, double targetAmount, String savingsName,
+                           double dailyTarget, LocalDate createdDate, long createdTimestamp) {
         super(creator, targetAmount, savingsName);
         if (savingsName == null || savingsName.trim().isEmpty()) {
             throw new IllegalArgumentException("Savings name is required.");
         }
-        this.dailyTarget = Math.max(0, dailyTarget);
+        this.dailyTarget = Math.max(0.0, dailyTarget);
         this.createdDate = createdDate != null ? createdDate : LocalDate.now();
+        this.createdTimestamp = Math.max(0L, createdTimestamp);
     }
 
-    // --- Getters & Setters ---
     public double getDailyTarget() {
         return dailyTarget;
     }
@@ -55,27 +60,6 @@ public class PersonalSavings extends Savings {
         if (createdDate != null) {
             this.createdDate = createdDate;
         }
-    }
-
-    public double getTotalMissed() {
-        if (dailyTarget <= 0) {
-            return 0;
-        }
-        LocalDate today = LocalDate.now();
-        long days = 0;
-        LocalDate cursor = createdDate;
-        while (cursor.toString().compareTo(today.toString()) < 0) {
-            days++;
-            cursor = cursor.plusDays(1);
-        }
-        double totalExpected = (days + 1) * dailyTarget;
-        return Math.max(0, totalExpected - getCurrentAmount());
-        this.createdDate = createdDate;
-        this.createdTimestamp = Math.max(0L, createdTimestamp);
-    }
-
-    public LocalDate getCreatedDate() {
-        return createdDate;
     }
 
     public long getCreatedTimestamp() {
