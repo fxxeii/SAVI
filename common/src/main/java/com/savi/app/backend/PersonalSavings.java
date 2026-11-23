@@ -9,10 +9,16 @@ public class PersonalSavings extends Savings {
     /** The tag added to a personal savings in dropdowns (one copy for the whole app). */
     public static final String TAG = " (Personal)";
 
+    private double dailyTarget;
     private LocalDate createdDate;
     private long createdTimestamp;
 
     public PersonalSavings(String creator, double targetAmount, String savingsName) {
+        this(creator, targetAmount, savingsName, 0, LocalDate.now());
+    }
+
+    public PersonalSavings(String creator, double targetAmount, String savingsName,
+                           double dailyTarget, LocalDate createdDate) {
         this(creator, targetAmount, savingsName, LocalDate.now(), System.currentTimeMillis());
     }
 
@@ -26,6 +32,44 @@ public class PersonalSavings extends Savings {
         if (savingsName == null || savingsName.trim().isEmpty()) {
             throw new IllegalArgumentException("Savings name is required.");
         }
+        this.dailyTarget = Math.max(0, dailyTarget);
+        this.createdDate = createdDate != null ? createdDate : LocalDate.now();
+    }
+
+    // --- Getters & Setters ---
+    public double getDailyTarget() {
+        return dailyTarget;
+    }
+
+    public void setDailyTarget(double dailyTarget) {
+        if (dailyTarget >= 0) {
+            this.dailyTarget = dailyTarget;
+        }
+    }
+
+    public LocalDate getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(LocalDate createdDate) {
+        if (createdDate != null) {
+            this.createdDate = createdDate;
+        }
+    }
+
+    public double getTotalMissed() {
+        if (dailyTarget <= 0) {
+            return 0;
+        }
+        LocalDate today = LocalDate.now();
+        long days = 0;
+        LocalDate cursor = createdDate;
+        while (cursor.toString().compareTo(today.toString()) < 0) {
+            days++;
+            cursor = cursor.plusDays(1);
+        }
+        double totalExpected = (days + 1) * dailyTarget;
+        return Math.max(0, totalExpected - getCurrentAmount());
         this.createdDate = createdDate;
         this.createdTimestamp = Math.max(0L, createdTimestamp);
     }

@@ -167,10 +167,13 @@ public class User {
     }
 
     public boolean emailExists(String e) {
+        if (e == null) {
+            return false;
+        }
         Node temp = head;
 
         while (temp != null) {
-            if (temp.email.equalsIgnoreCase(e)) { //search through the ll if email already existed
+            if (temp.email != null && temp.email.equalsIgnoreCase(e.trim())) { //search through the ll if email already existed
                 return true;
             }
             temp = temp.pntnext;
