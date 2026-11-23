@@ -13,7 +13,6 @@ import com.codename1.ui.layouts.BorderLayout;
 import com.codename1.ui.layouts.BoxLayout;
 import com.codename1.ui.layouts.FlowLayout;
 import com.codename1.ui.layouts.GridLayout;
-import com.codename1.ui.layouts.LayeredLayout;
 import com.codename1.ui.layouts.Layout;
 import com.codename1.ui.plaf.Border;
 import com.codename1.ui.plaf.Style;
@@ -31,7 +30,6 @@ public class ViewAllTransacPage {
     private Container listContainer;
     private Chip[] chips = new Chip[3];
     private int selectedChip = 0;
-    private String query = "";
 
     // data comes from the backend (PeopleBackend), for the member picked on the People page
     private final PeopleBackend.Member member;
@@ -199,52 +197,10 @@ public class ViewAllTransacPage {
         return p;
     }
 
-    // progress bar with a translucent track
-    static Component progressBar(float progress, int trackColor, int trackAlpha, int fillColor, float heightMM) {
-        final float p = Math.max(0f, Math.min(1f, progress));
-
-        return new Component() {
-            @Override
-            protected Dimension calcPreferredSize() {
-                return new Dimension(mm(30f), mm(heightMM));
-            }
-
-            @Override
-            public void paint(Graphics g) {
-                int x = getX(), y = getY(), w = getWidth(), h = getHeight();
-                g.setAntiAliased(true);
-
-                g.setAlpha(trackAlpha);
-                g.setColor(trackColor);
-                g.fillRoundRect(x, y, w, h, h, h);
-
-                g.setAlpha(255);
-                int fw = (int) (w * p);
-                if (fw > 0) {
-                    g.setColor(fillColor);
-                    g.fillRoundRect(x, y, Math.max(fw, h), h, h, h);
-                }
-            }
-        };
-    }
-
     // ---------- top bar ----------
 
-    // back button + title only (the 3-dot menu button was removed)
     static Container topBar() {
-        Container bar = new Container(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER));
-        setMargins(bar, 1, 1, 2, 2);
-
-        Container back = circleButton(FontImage.MATERIAL_ARROW_BACK_IOS, 6.5f, 2.6f, SAVI.WHITE, SAVI.DEEP_SLATE,
-                e -> new PeoplePage().show());
-
-        Label title = SAVI.text("TRANSACTIONS FOR:", SAVI.bold(1.8f), SAVI.BRIGHT_VIOLET);
-        Rounded titlePill = pill(title, SAVI.PALE_PURPLE, 255);
-        setPadding(titlePill, 0.9f, 0.9f, 2.2f, 2.2f);
-
-        bar.add(BorderLayout.WEST, back);
-        bar.add(BorderLayout.CENTER, titlePill);
-        return bar;
+        return SAVI.buildHeader("TRANSACTIONS FOR:", () -> new PeoplePage().show());
     }
 
     // ---------- member summary card ----------
@@ -260,7 +216,7 @@ public class ViewAllTransacPage {
     }
 
     static Container memberCard(String name, String role, String handle, String group,
-                                double totalPaid, double missed, double goal) {
+                                double totalPaid, double missed) {
         Rounded card = new Rounded(BoxLayout.y(), SAVI.BRIGHT_VIOLET, 255, 4.5f);
         setPadding(card, 2.5f, 2.5f, 2.5f, 2.5f);
         setMargins(card, 0.5f, 1f, 2, 2);
@@ -305,64 +261,13 @@ public class ViewAllTransacPage {
         stats.add(statBox("Total Paid", Home.pesoFormat(totalPaid)));
         stats.add(statBox("Missed / Unsettled", Home.pesoFormat(missed)));
 
-        // progress to goal
-        float pct = (float) (totalPaid / goal);
-        Container progressRow = new Container(new BorderLayout());
-        progressRow.add(BorderLayout.WEST, SAVI.text("Progress to Goal (" + Home.pesoFormat(goal) + ")",
-                SAVI.regular(1.7f), SAVI.WHITE));
-        progressRow.add(BorderLayout.EAST, SAVI.text((int) (pct * 100) + "%", SAVI.bold(1.7f), SAVI.WHITE));
-        setMargins(progressRow, 2f, 0.8f, 0, 0);
-
-        Component bar = progressBar(pct, SAVI.WHITE, 60, SAVI.WHITE, 1f);
-
         card.add(topRow);
         card.add(divider(SAVI.DARK_PURPLE, 2f, 0));
         card.add(stats);
-        card.add(progressRow);
-        card.add(bar);
         return card;
     }
 
-    // ---------- search + filter chips ----------
-
-    Container searchBar() {
-        Label searchIcon = new Label();
-        searchIcon.getAllStyles().setFgColor(SAVI.BLUE_GRAY);
-        FontImage.setMaterialIcon(searchIcon, FontImage.MATERIAL_SEARCH, 3.2f);
-
-        Label filterIcon = new Label();
-        filterIcon.getAllStyles().setFgColor(SAVI.BLUE_GRAY);
-        FontImage.setMaterialIcon(filterIcon, FontImage.MATERIAL_FILTER_LIST, 3.2f);
-
-        TextField search = new TextField();
-        // own placeholder label (the built in hint ignores the page's font)
-        final Label hint = SAVI.text("Search date...", SAVI.regular(1.9f), SAVI.BLUE_GRAY);
-        setMargins(hint, 0, 0, 1f, 0);
-        Style ts = search.getAllStyles();
-        ts.setBorder(Border.createEmpty());
-        ts.setBgTransparency(0);
-        ts.setFgColor(SAVI.DARK_KNIGHT);
-        ts.setFont(SAVI.regular(1.9f));
-        setPadding(search, 0, 0, 1f, 0);
-        search.addDataChangedListener((type, index) -> {
-            query = search.getText().trim().toLowerCase();
-            hint.setVisible(search.getText().length() == 0);
-            buildList();
-        });
-
-        Container field = new Container(new LayeredLayout());
-        field.add(BoxLayout.encloseYCenter(hint));
-        field.add(search);
-
-        Rounded bar = new Rounded(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER), SAVI.WHITE, 255, 0)
-                .stroke(SAVI.BORDER_COLOR, 255, 1);
-        setPadding(bar, 0.8f, 0.8f, 2.2f, 2.2f);
-        setMargins(bar, 1f, 0.8f, 2, 2);
-        bar.add(BorderLayout.WEST, searchIcon);
-        bar.add(BorderLayout.CENTER, field);
-        bar.add(BorderLayout.EAST, filterIcon);
-        return bar;
-    }
+    // ---------- filter chips ----------
 
     int countFor(String type) {
         int n = 0;
@@ -518,17 +423,10 @@ public class ViewAllTransacPage {
 
     boolean matches(PeopleBackend.Txn t) {
         String type = CHIP_TYPES[selectedChip];
-        if (type != null && !t.type.equals(type)) {
-            return false;
-        }
-        if (query.length() == 0) {
-            return true;
-        }
-        return t.date.toLowerCase().contains(query) || t.month.toLowerCase().contains(query)
-                || t.title.toLowerCase().contains(query);
+        return type == null || t.type.equals(type);
     }
 
-    // rebuilds the month sections from DATA using the current chip + search text
+    // rebuilds the month sections from DATA using the current chip
     void buildList() {
         listContainer.removeAll();
 
@@ -592,8 +490,7 @@ public class ViewAllTransacPage {
         mainContents.setScrollVisible(false); // hides the dark bar on the right edge
 
         mainContents.add(memberCard(member.name, member.role, "@" + member.handle, member.group,
-                member.totalPaid, member.missed, member.goal));
-        mainContents.add(searchBar());
+                member.totalPaid, member.missed));
         mainContents.add(chipsRow());
         mainContents.add(listContainer);
         buildList();
