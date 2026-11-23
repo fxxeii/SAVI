@@ -1,7 +1,7 @@
 package com.savi.app.backend;
 
 // CALENDAR LOGIC - the backend of the Calendar page.
-// ABSTRACTION: the page only asks questions ("what is the day text?", "which groups saved on this date?")
+// ABSTRACTION: the page only asks questions ("what is the day text?", "which trackers saved on this date?")
 // and this class does the thinking. It has no screen code and no file code.
 
 import com.codename1.l10n.SimpleDateFormat;
@@ -38,36 +38,41 @@ public class CalendarLogic {
         }
     }
 
-    // groups that have at least one contribution in this date
-    // getContributionsOn(...) is inherited from Savings (INHERITANCE)
-    public ArrayList<GroupSavings> getGroupsWithRecords(List<GroupSavings> groups, LocalDate date) {
-        ArrayList<GroupSavings> result = new ArrayList<>();
-        if (groups == null || date == null) {
+    // trackers (both GroupSavings and PersonalSavings) that have at least one contribution on this date
+    // getContributionsOn(...) is inherited from Savings (INHERITANCE & POLYMORPHISM)
+    public ArrayList<Savings> getTrackersWithRecords(List<? extends Savings> trackers, LocalDate date) {
+        ArrayList<Savings> result = new ArrayList<>();
+        if (trackers == null || date == null) {
             return result;
         }
-        for (GroupSavings g : groups) {
-            if (!g.getContributionsOn(date).isEmpty()) {
-                result.add(g);
+        for (Savings s : trackers) {
+            if (!s.getContributionsOn(date).isEmpty()) {
+                result.add(s);
             }
         }
         return result;
     }
 
     // "Saved" if something was contributed on this date, otherwise "Pending"
-    public String getStatus(GroupSavings group, LocalDate date) {
-        if (group.getTotalOn(date) > 0) {
+    public String getStatus(Savings tracker, LocalDate date) {
+        if (tracker.getTotalOn(date) > 0) {
             return "Saved";
         }
         return "Pending";
     }
 
-    // the note shown at the bottom of the card (first note found on that date)
-    public String getNoteOn(GroupSavings group, LocalDate date) {
-        for (Contribution c : group.getContributionsOn(date)) {
-            if (c.getNote() != null && !c.getNote().isEmpty()) {
-                return c.getNote();
+    // all notes found on that date (each contributor's note on its own line)
+    public ArrayList<String> getNotesOn(Savings tracker, LocalDate date) {
+        ArrayList<String> notes = new ArrayList<>();
+        for (Contribution c : tracker.getContributionsOn(date)) {
+            if (c.getNote() != null && !c.getNote().trim().isEmpty()) {
+                if (tracker.isPersonal()) {
+                    notes.add(c.getNote().trim());
+                } else {
+                    notes.add(c.getMember() + ": " + c.getNote().trim());
+                }
             }
         }
-        return "";
+        return notes;
     }
 }

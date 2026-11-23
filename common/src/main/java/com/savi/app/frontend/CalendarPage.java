@@ -12,13 +12,13 @@ import java.util.List;
 
 // CALENDAR PAGE (frontend)
 // FLOW: open the page -> show today's records -> the user taps a date -> the page asks the backend
-// (CalendarLogic + the groups) -> the cards for that date are rebuilt.
+// (CalendarLogic + the trackers) -> the cards for that date are rebuilt.
 // This page only READS data. It never changes or saves anything.
 public class CalendarPage {
 
     public void show() {
 
-        CalendarLogic logic = new CalendarLogic(); //backend: the page asks it questions about dates and groups
+        CalendarLogic logic = new CalendarLogic(); //backend: the page asks it questions about dates and trackers
 
         Form calendarForm = new Form("", new BorderLayout());
         calendarForm.getContentPane().getAllStyles().setBgColor(SAVI.PALE_PURPLE);
@@ -97,33 +97,39 @@ public class CalendarPage {
     private void showRecords(Container recordsContainer, Label emptyMessage, LocalDate date, CalendarLogic logic) {
         recordsContainer.removeAll();
 
-        // ask the backend: which groups have contributions on this date?
-        ArrayList<GroupSavings> found = logic.getGroupsWithRecords(SAVI.groupList.getForUser(SAVI.user.getCurrentName()), date);
+        String currentUser = activeUsername();
+        ArrayList<Savings> allUserTrackers = new ArrayList<>();
+        allUserTrackers.addAll(SAVI.groupList.getForUser(currentUser));
+        allUserTrackers.addAll(SAVI.personalList.getForUser(currentUser));
+
+        // ask the backend: which group or personal trackers have contributions on this date?
+        ArrayList<Savings> found = logic.getTrackersWithRecords(allUserTrackers, date);
 
         if (found.isEmpty()) {
             recordsContainer.add(emptyMessage);
         } else {
-            for (GroupSavings g : found) {
-                recordsContainer.add(createTrackerCard(g, date, logic));   // one card per group
+            for (Savings s : found) {
+                recordsContainer.add(createTrackerCard(s, date, logic));   // one card per tracker
             }
         }
         recordsContainer.revalidate();
     }
 
-    // one card per group (same design as before, but with real data)
-    private Container createTrackerCard(GroupSavings g, LocalDate date, CalendarLogic logic) {
-        List<Contribution> list = g.getContributionsOn(date);   // inherited from Savings
+    // one card per tracker (works polymorphically for both GroupSavings and PersonalSavings)
+    private Container createTrackerCard(Savings s, LocalDate date, CalendarLogic logic) {
+        List<Contribution> list = s.getContributionsOn(date);   // inherited from Savings
         int count = list.size();
 
         Container trackerCard = new Container(BoxLayout.y());
         HomePage.boxStyles(trackerCard, SAVI.WHITE, 2f, 2f);
 
-        // HEADER: group name on the left, status on the right
+        // HEADER: tracker name (+ type tag) on the left, status on the right
         Container trackerHeader = new Container(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER));
-        Label groupName = SAVI.text(g.getGroupName(), SAVI.bold(2.3f), SAVI.DARK_KNIGHT);
+        String title = "[" + s.getTypeLabel() + "] " + s.getDisplayName();
+        Label trackerName = SAVI.text(title, SAVI.bold(2.3f), SAVI.DARK_KNIGHT);
 
         // status badge: green for "Saved", yellow for anything else
-        String statusStr = logic.getStatus(g, date);
+        String statusStr = logic.getStatus(s, date);
         boolean isSaved = "Saved".equalsIgnoreCase(statusStr);
         Label status = SAVI.text(statusStr, SAVI.bold(1.7f), isSaved ? SAVI.GREEN : SAVI.AMBER);
         Style ss = status.getAllStyles();
@@ -133,11 +139,11 @@ public class CalendarPage {
         ss.setPadding(0.6f, 0.6f, 1.5f, 1.5f);
         ss.setBorder(RoundRectBorder.create().cornerRadius(2f));
 
-        trackerHeader.add(BorderLayout.WEST, groupName);
+        trackerHeader.add(BorderLayout.WEST, trackerName);
         trackerHeader.add(BorderLayout.EAST, status);
 
         // AMOUNT SAVED: the total of this date's contributions (getTotalOn is from Savings)
-        Label amountSaved = SAVI.text("Amount Saved: " + Home.pesoFormat(g.getTotalOn(date)), SAVI.bold(2.2f), SAVI.GREEN);
+        Label amountSaved = SAVI.text("Amount Saved: " + Home.pesoFormat(s.getTotalOn(date)), SAVI.bold(2.2f), SAVI.GREEN);
         amountSaved.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
         amountSaved.getAllStyles().setMargin(0.8f, 1f, 0, 0);
 
@@ -156,7 +162,8 @@ public class CalendarPage {
         // CONTRIBUTIONS LIST: one row per contribution (hidden until the button is tapped)
         Container contributionsList = new Container(BoxLayout.y());
         for (Contribution c : list) {
-            contributionsList.add(createContributionRow(c.getMember(), "+" + Home.pesoFormat(c.getAmount())));
+            String amountPrefix = c.getAmount() >= 0 ? "+" : "";
+            contributionsList.add(createContributionRow(c.getMember(), amountPrefix + Home.pesoFormat(c.getAmount())));
         }
         contributionsList.setHidden(true);
 
@@ -181,15 +188,20 @@ public class CalendarPage {
         trackerCard.add(viewContributions);
         trackerCard.add(contributionsList);
 
-        // NOTE SECTION (only if there is a note)
-        String note = logic.getNoteOn(g, date);
-        if (!note.isEmpty()) {
-            Label noteTitle = SAVI.text("Note", SAVI.semiBold(1.7f), SAVI.SLATE_GRAY);
+        // NOTES SECTION (lists every contributor's note on this date)
+        ArrayList<String> notes = logic.getNotesOn(s, date);
+        if (!notes.isEmpty()) {
+            Label noteTitle = SAVI.text(notes.size() > 1 ? "Notes" : "Note", SAVI.semiBold(1.7f), SAVI.SLATE_GRAY);
             noteTitle.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
-            noteTitle.getAllStyles().setMargin(1f, 0, 0, 0);
-            Label noteText = SAVI.text(note, SAVI.regular(1.8f), SAVI.SLATE_GRAY);
+            noteTitle.getAllStyles().setMargin(1f, 0.3f, 0, 0);
             trackerCard.add(noteTitle);
-            trackerCard.add(noteText);
+
+            for (String noteEntry : notes) {
+                Label noteText = SAVI.text("• " + noteEntry, SAVI.regular(1.8f), SAVI.SLATE_GRAY);
+                noteText.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
+                noteText.getAllStyles().setMargin(0.2f, 0.2f, 0, 0);
+                trackerCard.add(noteText);
+            }
         }
 
         return trackerCard;
@@ -206,5 +218,13 @@ public class CalendarPage {
         row.getAllStyles().setPaddingUnit(Style.UNIT_TYPE_DIPS);
         row.getAllStyles().setPadding(0.8f, 0.8f, 1.5f, 1.5f);
         return row;
+    }
+
+    private static String activeUsername() {
+        if (SAVI.user != null && SAVI.user.getCurrentName() != null
+                && !SAVI.user.getCurrentName().trim().isEmpty()) {
+            return SAVI.user.getCurrentName().trim();
+        }
+        return Profile.getInstance().getMemberName();
     }
 }
