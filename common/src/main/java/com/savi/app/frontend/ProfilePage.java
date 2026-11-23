@@ -399,10 +399,19 @@ public class ProfilePage implements Profile.DataChangeListener {
         body.add(SAVI.text("USERNAME", SAVI.bold(1.6f), SAVI.SLATE_GRAY));
         body.add(usernameField);
 
+        Container actions = new Container(new GridLayout(1, 2));
+        setPadding(actions, 0.5f, 1f, 0.8f, 0.8f);
+
         Button cancel = new Button("Cancel");
+        cancel.getAllStyles().setFont(SAVI.semiBold(1.6f));
+        setPadding(cancel, 1f, 1f, 0.3f, 0.3f);
+        setMargins(cancel, 0.3f, 0.3f, 0.3f, 0.3f);
         cancel.addActionListener(e -> dlg.dispose());
 
         Button save = new Button("Save");
+        save.getAllStyles().setFont(SAVI.semiBold(1.6f));
+        setPadding(save, 1f, 1f, 0.3f, 0.3f);
+        setMargins(save, 0.3f, 0.3f, 0.3f, 0.3f);
         save.addActionListener(e -> {
             String result = backend.updateProfileInfo(null, usernameField.getText(), null);
             if (!result.equals("success")) {
@@ -412,7 +421,6 @@ public class ProfilePage implements Profile.DataChangeListener {
             dlg.dispose();
         });
 
-        Container actions = new Container(new GridLayout(1, 2));
         actions.add(cancel).add(save);
 
         dlg.add(BorderLayout.CENTER, body);
@@ -441,13 +449,20 @@ public class ProfilePage implements Profile.DataChangeListener {
         body.add(SAVI.text("TOTAL TARGET (P)", SAVI.bold(1.6f), SAVI.SLATE_GRAY)).add(totalField);
 
         Container actions = new Container(new GridLayout(1, 3));
+        setPadding(actions, 0.5f, 1f, 0.8f, 0.8f);
 
         Button cancel = new Button("Cancel");
+        cancel.getAllStyles().setFont(SAVI.semiBold(1.6f));
+        setPadding(cancel, 1f, 1f, 0.3f, 0.3f);
+        setMargins(cancel, 0.3f, 0.3f, 0.3f, 0.3f);
         cancel.addActionListener(e -> dlg.dispose());
         actions.add(cancel);
 
         Button delete = new Button("Delete");
+        delete.getAllStyles().setFont(SAVI.semiBold(1.6f));
         delete.getAllStyles().setFgColor(0xD32F2F);
+        setPadding(delete, 1f, 1f, 0.3f, 0.3f);
+        setMargins(delete, 0.3f, 0.3f, 0.3f, 0.3f);
         delete.addActionListener(e -> {
             boolean sure = Dialog.show("Delete Group",
                     "Delete \"" + existing.getGroupName() + "\" and all its members and contributions?",
@@ -461,6 +476,9 @@ public class ProfilePage implements Profile.DataChangeListener {
         actions.add(delete);
 
         Button save = new Button("Save");
+        save.getAllStyles().setFont(SAVI.semiBold(1.6f));
+        setPadding(save, 1f, 1f, 0.3f, 0.3f);
+        setMargins(save, 0.3f, 0.3f, 0.3f, 0.3f);
         save.addActionListener(e -> {
             String name = nameField.getText().trim();
             if (name.isEmpty()) {
@@ -505,13 +523,20 @@ public class ProfilePage implements Profile.DataChangeListener {
         body.add(SAVI.text("TOTAL TARGET (P)", SAVI.bold(1.6f), SAVI.SLATE_GRAY)).add(totalField);
 
         Container actions = new Container(new GridLayout(1, 3));
+        setPadding(actions, 0.5f, 1f, 0.8f, 0.8f);
 
         Button cancel = new Button("Cancel");
+        cancel.getAllStyles().setFont(SAVI.regular(1.8f));
+        setPadding(cancel, 1f, 1f, 0, 0);
+        setMargins(cancel, 0.3f, 0.3f, 0.3f, 0.3f);
         cancel.addActionListener(e -> dlg.dispose());
         actions.add(cancel);
 
         Button delete = new Button("Delete");
+        delete.getAllStyles().setFont(SAVI.regular(1.8f));
         delete.getAllStyles().setFgColor(0xD32F2F);
+        setPadding(delete, 1f, 1f, 0, 0);
+        setMargins(delete, 0.3f, 0.3f, 0.3f, 0.3f);
         delete.addActionListener(e -> {
             boolean sure = Dialog.show("Delete Personal Savings",
                     "Delete \"" + existing.getSavingsName() + "\" and all its contributions?",
@@ -525,6 +550,9 @@ public class ProfilePage implements Profile.DataChangeListener {
         actions.add(delete);
 
         Button save = new Button("Save");
+        save.getAllStyles().setFont(SAVI.regular(1.8f));
+        setPadding(save, 1f, 1f, 0, 0);
+        setMargins(save, 0.3f, 0.3f, 0.3f, 0.3f);
         save.addActionListener(e -> {
             String name = nameField.getText().trim();
             if (name.isEmpty()) {
