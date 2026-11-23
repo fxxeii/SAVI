@@ -33,12 +33,8 @@ public class PersonalSummary implements ChartData {
     private PersonalSavings current;
     private int chartMode = GroupSummary.MONTH;
 
-    public PersonalSummary(List<? extends Savings> allSavings) {
-        for (Savings s : allSavings) {
-            if (s instanceof PersonalSavings) {
-                all.add((PersonalSavings) s);
-            }
-        }
+    public PersonalSummary(List<PersonalSavings> personalSavings) {
+        all.addAll(personalSavings);
         if (!all.isEmpty()) {
             current = all.get(0);
         }

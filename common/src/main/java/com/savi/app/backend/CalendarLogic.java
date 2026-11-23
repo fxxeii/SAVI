@@ -8,6 +8,7 @@ import com.codename1.l10n.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class CalendarLogic {
 
@@ -39,8 +40,11 @@ public class CalendarLogic {
 
     // groups that have at least one contribution in this date
     // getContributionsOn(...) is inherited from Savings (INHERITANCE)
-    public ArrayList<GroupSavings> getGroupsWithRecords(ArrayList<GroupSavings> groups, LocalDate date) {
+    public ArrayList<GroupSavings> getGroupsWithRecords(List<GroupSavings> groups, LocalDate date) {
         ArrayList<GroupSavings> result = new ArrayList<>();
+        if (groups == null || date == null) {
+            return result;
+        }
         for (GroupSavings g : groups) {
             if (!g.getContributionsOn(date).isEmpty()) {
                 result.add(g);

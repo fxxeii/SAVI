@@ -11,6 +11,7 @@ import com.codename1.ui.plaf.RoundRectBorder;
 import com.codename1.ui.plaf.Style;
 import com.codename1.ui.spinner.Picker;
 import com.savi.app.SAVI;
+import com.savi.app.backend.Home;
 import com.savi.app.backend.Transfer;
 
 public class TransferPage {
@@ -206,7 +207,7 @@ public class TransferPage {
         }
 
         // BACKEND: every savings of the logged-in user (groups AND personal), members of the chosen one
-        Transfer transfer = new Transfer(SAVI.user, SAVI.groupList.getGroups());
+        Transfer transfer = new Transfer(SAVI.user, Home.allSavings());
         String[] groups = toArray(transfer.getSavingsNames());
         String[] noMembers = new String[0];     // filled in once a group is chosen
 

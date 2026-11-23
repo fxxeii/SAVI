@@ -8,6 +8,7 @@ import com.savi.app.SAVI;
 import com.savi.app.backend.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.List;
 
 // CALENDAR PAGE (frontend)
 // FLOW: open the page -> show today's records -> the user taps a date -> the page asks the backend
@@ -97,7 +98,7 @@ public class CalendarPage {
         recordsContainer.removeAll();
 
         // ask the backend: which groups have contributions on this date?
-        ArrayList<GroupSavings> found = logic.getGroupsWithRecords(SAVI.groupList.getGroups(), date);
+        ArrayList<GroupSavings> found = logic.getGroupsWithRecords(SAVI.groupList.getForUser(SAVI.user.getCurrentName()), date);
 
         if (found.isEmpty()) {
             recordsContainer.add(emptyMessage);
@@ -111,7 +112,7 @@ public class CalendarPage {
 
     // one card per group (same design as before, but with real data)
     private Container createTrackerCard(GroupSavings g, LocalDate date, CalendarLogic logic) {
-        ArrayList<Contribution> list = g.getContributionsOn(date);   // inherited from Savings
+        List<Contribution> list = g.getContributionsOn(date);   // inherited from Savings
         int count = list.size();
 
         Container trackerCard = new Container(BoxLayout.y());

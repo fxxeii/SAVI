@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Backend of SummaryPage (Group Savings GroupSummary).
+ * Backend of SummaryPage (Group Savings Summary).
  *
  *  SummaryPage part                         -> GroupSummary method
  *  ---------------------------------------------------------------------------
@@ -14,7 +14,7 @@ import java.util.List;
  *  purple card: Total Pool, Contributors    -> getTotalPoolText(), getContributorsText()
  *  donut chart + legend                     -> hasShares(), getShareValues(), getMembers(),
  *                                              getGoalLabel(), getGoalPercent(), getStatusText()
- *  Member GroupSummary table                     -> getMembers()  (name, amount, share, "Paid Dec 12")
+ *  Member Summary table                     -> getMembers()  (name, amount, share, "Paid Dec 12")
  *  monthly chart (W / M / Y)                -> setChartMode(), getChartTitle(), getChartSubtitle(),
  *                                              getChartLabels(), getChartValues(), getChartTip()
  *  chart footer                             -> isTargetAchieved(), getFooterText()
@@ -36,28 +36,24 @@ public class GroupSummary implements ChartData {
 
     // ---------------------------------------------------------------- ENCAPSULATION
     private User user;
-    private Home home;                 // gives us the groups of the logged-in user
     private GroupSavings group;        // the group being shown (null if there are no groups)
-    private List<GroupSavings> allGroups = new ArrayList<GroupSavings>();   // every group, for the popup
+    private List<GroupSavings> allGroups = new ArrayList<GroupSavings>();   // user-scoped groups, for the popup
     private int chartMode = MONTH;
 
-    /** Starts on the group with the newest contribution. */
-    public GroupSummary(User user, List<? extends Savings> allSavings) {
+    public GroupSummary(User user, List<GroupSavings> allGroups) {
         this.user = user;
-        this.home = new Home(user, allSavings);
-
-        // the popup lists EVERY group, not only the ones the logged-in user is a member of
-        for (Savings s : allSavings) {
-            if (s instanceof GroupSavings) {
-                allGroups.add((GroupSavings) s);
+        this.allGroups = new ArrayList<GroupSavings>();
+        if (allGroups != null) {
+            String currentUsername = (user != null) ? user.getCurrentName() : "";
+            for (GroupSavings g : allGroups) {
+                if (g != null && (currentUsername.isEmpty()
+                        || g.getCreator().equalsIgnoreCase(currentUsername)
+                        || g.hasMember(currentUsername))) {
+                    this.allGroups.add(g);
+                }
             }
         }
-
-        // start on the user's group with the newest contribution, else on the first group
-        this.group = home.getFeaturedGroup();
-        if (this.group == null && !allGroups.isEmpty()) {
-            this.group = allGroups.get(0);
-        }
+        this.group = findNewestGroup(this.allGroups);
     }
 
     // ---------------------------------------------------------------- GROUP SELECTION
@@ -113,7 +109,7 @@ public class GroupSummary implements ChartData {
 
     // ---------------------------------------------------------------- DONUT + MEMBER SUMMARY
 
-    /** One row of the legend / Member GroupSummary table. Biggest share first. */
+    /** One row of the legend / Member Summary table. Biggest share first. */
     public List<MemberShare> getMembers() {
         List<MemberShare> rows = new ArrayList<MemberShare>();
         if (group == null) {
@@ -191,12 +187,13 @@ public class GroupSummary implements ChartData {
         return Math.max(0, Math.min(100, p));
     }
 
-    /** "On Schedule" when every member has put money in, else "Behind Schedule".
-     *  (Temporary rule: GroupSavings.getMissed() now takes 2 arguments, so it is not used here.) */
+    /** "On Schedule" when no member has missed contributions, else "Member/s Behind Schedule". */
     public String getStatusText() {
-        List<MemberShare> rows = getMembers();
-        for (MemberShare m : rows) {
-            if (m.amount <= 0) {
+        if (group == null) {
+            return "On Schedule";
+        }
+        for (String member : group.getMembers()) {
+            if (group.getTotalMissed(member) > 0) {
                 return "Member/s Behind Schedule";
             }
         }
@@ -303,6 +300,23 @@ public class GroupSummary implements ChartData {
 
     // ---------------------------------------------------------------- helpers
 
+    private static GroupSavings findNewestGroup(List<GroupSavings> groups) {
+        if (groups == null || groups.isEmpty()) {
+            return null;
+        }
+        GroupSavings newest = groups.get(0);
+        long newestTs = -1;
+        for (GroupSavings g : groups) {
+            for (Contribution c : g.getContributions()) {
+                if (c.getTimestamp() > newestTs) {
+                    newestTs = c.getTimestamp();
+                    newest = g;
+                }
+            }
+        }
+        return newest;
+    }
+
     /** Pool total at the end of each of the last POINTS periods (money only ever adds up). */
     private double[] cumulative() {
         double[] totals = new double[POINTS];
@@ -360,9 +374,6 @@ public class GroupSummary implements ChartData {
         }
         return s + suffix;
     }
-
-    // Codename One's java.time has only a few methods, so dates are read from their ISO text
-    // ("2026-11-18") and the calendar math is done here.
 
     private static int compareDates(LocalDate a, LocalDate b) {
         return a.toString().compareTo(b.toString());

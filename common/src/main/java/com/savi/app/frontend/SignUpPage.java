@@ -6,11 +6,137 @@ import com.codename1.io.Log;
 import com.codename1.ui.plaf.*;
 import com.codename1.ui.plaf.RoundRectBorder;
 import com.savi.app.SAVI;
+import com.savi.app.backend.OTPManager;
 
 import java.io.IOException;
 
 
 public class SignUpPage {
+
+    private String verifiedEmail = null;
+
+    private void showCustomOtpDialog(String email, TextField emailf, Button verifyBtn) {
+        Dialog otpDialog = new Dialog();
+        otpDialog.setLayout(new BorderLayout());
+        otpDialog.setDisposeWhenPointerOutOfBounds(false);
+
+        Style dlgStyle = otpDialog.getDialogStyle();
+        dlgStyle.setBgColor(SAVI.WHITE);
+        dlgStyle.setBgTransparency(255);
+        dlgStyle.setBorder(RoundRectBorder.create()
+                .cornerRadius(4f)
+                .shadowOpacity(35)
+                .shadowBlur(3)
+                .shadowColor(SAVI.DARK_PURPLE)
+        );
+        dlgStyle.setPadding(0, 15, 0, 0);
+
+        Container headerBox = new Container(BoxLayout.y());
+        Style hdrStyle = headerBox.getAllStyles();
+        hdrStyle.setBgTransparency(255);
+        hdrStyle.setBgColor(SAVI.DARK_PURPLE);
+        hdrStyle.setPadding(43, 2, 5, 5);
+        hdrStyle.setBorder(RoundRectBorder.create()
+                .cornerRadius(3f)
+                .shadowOpacity(35)
+                .shadowBlur(3)
+                .shadowColor(SAVI.DARK_PURPLE)
+        );
+
+        Label titleLbl = SAVI.text("Email Verification", SAVI.bold(2.8f), SAVI.WHITE);
+        titleLbl.setAlignment(Component.CENTER);
+        headerBox.add(titleLbl);
+
+        Container bodyBox = new Container(BoxLayout.y());
+        bodyBox.getAllStyles().setPadding(15, 5, 20, 20);
+
+        com.codename1.components.SpanLabel sentMsg = new com.codename1.components.SpanLabel(
+                "A verification code was sent to " + email + ", please check your email."
+        );
+        sentMsg.getTextAllStyles().setFont(SAVI.regular(2f));
+        sentMsg.getTextAllStyles().setFgColor(SAVI.DEEP_SLATE);
+        sentMsg.getTextAllStyles().setAlignment(Component.CENTER);
+        sentMsg.getAllStyles().setMargin(0, 12, 0, 0);
+
+        Label promptLbl = SAVI.text("Input verification code:", SAVI.bold(2.1f), SAVI.DARK_PURPLE);
+        promptLbl.getAllStyles().setMargin(5, 4, 2, 0);
+
+        TextField otpField = new TextField("", "Enter 6-digit code", 6, TextField.NUMERIC);
+        otpField.getAllStyles().setFont(SAVI.bold(2.5f));
+        otpField.getAllStyles().setFgColor(SAVI.BLACK);
+        otpField.getAllStyles().setPadding(1, 1, 2, 2);
+        otpField.getHintLabel().getAllStyles().setPadding(1, 1, 2, 2);
+        otpField.getHintLabel().getAllStyles().setFont(SAVI.italic(1.9f));
+        otpField.getHintLabel().getAllStyles().setFgColor(SAVI.GRANITE_GRAY);
+        otpField.setSingleLineTextArea(true);
+
+        Style[] tfStyles = {otpField.getUnselectedStyle(), otpField.getSelectedStyle(), otpField.getPressedStyle()};
+        for (Style s : tfStyles) {
+            s.setBgColor(SAVI.PALE_PURPLE);
+            s.setBgTransparency(255);
+            s.setBorder(RoundRectBorder.create().cornerRadius(1f));
+        }
+
+        bodyBox.add(sentMsg).add(promptLbl).add(otpField);
+
+        Button confirmBtn = new Button("Verify Code");
+        confirmBtn.getAllStyles().setFont(SAVI.bold(2.2f));
+        confirmBtn.getAllStyles().setPadding(1, 1, 1, 1);
+        confirmBtn.getAllStyles().setMargin(2, 2, 3, 3);
+        confirmBtn.getAllStyles().setBorder(Border.createRoundBorder(80, SAVI.BORDER_COLOR));
+
+        Style[] cStyles = {confirmBtn.getUnselectedStyle(), confirmBtn.getSelectedStyle(), confirmBtn.getPressedStyle()};
+        for (Style s : cStyles) {
+            s.setBgTransparency(255);
+            s.setBgColor(SAVI.DARK_PURPLE);
+            s.setFgColor(SAVI.WHITE);
+        }
+
+        Button cancelBtn = new Button("Cancel");
+        cancelBtn.getAllStyles().setFont(SAVI.regular(2f));
+        cancelBtn.getAllStyles().setPadding(1, 1, 1, 1);
+        cancelBtn.getAllStyles().setMargin(2, 2, 3, 3);
+        cancelBtn.getAllStyles().setBorder(Border.createRoundBorder(80, SAVI.BORDER_COLOR));
+
+        Style[] xStyles = {cancelBtn.getUnselectedStyle(), cancelBtn.getSelectedStyle(), cancelBtn.getPressedStyle()};
+        for (Style s : xStyles) {
+            s.setBgTransparency(255);
+            s.setBgColor(SAVI.PALE_PURPLE);
+            s.setFgColor(SAVI.DEEP_SLATE);
+        }
+
+        confirmBtn.addActionListener(ev -> {
+            String enteredCode = otpField.getText().trim();
+            if (OTPManager.verifyOtp(enteredCode)) {
+                verifiedEmail = email;
+                emailf.setEditable(false);
+                verifyBtn.setText("Verified");
+                verifyBtn.setEnabled(false);
+                verifyBtn.getParent().revalidate();
+                otpDialog.dispose();
+                Dialog.show("Success", "Your email has been verified!", "OK", null);
+            } else {
+                Dialog.show("Invalid Code", "The code you entered is incorrect or expired.", "OK", null);
+            }
+        });
+
+        cancelBtn.addActionListener(ev -> otpDialog.dispose());
+
+        Container buttonRow = new Container(new GridLayout(1, 2));
+        buttonRow.getAllStyles().setPadding(5, 5, 15, 15);
+        buttonRow.add(cancelBtn).add(confirmBtn);
+
+        otpDialog.add(BorderLayout.NORTH, headerBox);
+        otpDialog.add(BorderLayout.CENTER, bodyBox);
+        otpDialog.add(BorderLayout.SOUTH, buttonRow);
+
+        int width = Display.getInstance().getDisplayWidth();
+        int height = Display.getInstance().getDisplayHeight();
+        int sideMargin = (int) (width * 0.08f);
+        int topBottomMargin = (int) (height * 0.31f);
+
+        otpDialog.show(topBottomMargin, topBottomMargin, sideMargin, sideMargin);
+    }
 
     public void show() {
 
@@ -72,21 +198,23 @@ public class SignUpPage {
         form.getAllStyles().setPadding(70, 5, 10, 10);
 
         Label usn = SAVI.text("Username", SAVI.regular(2f), SAVI.DEEP_SLATE);
+        Label eml = SAVI.text("Email", SAVI.regular(2f), SAVI.DEEP_SLATE);
         Label ps = SAVI.text("Password", SAVI.regular(2f), SAVI.DEEP_SLATE);
         Label cps = SAVI.text("Confirm Password", SAVI.regular(2f), SAVI.DEEP_SLATE);
 
         TextField usernamef = new TextField("","username");
+        TextField emailf = new TextField("", "example@mail.com");
         TextField passf = new TextField("", "password");
         TextField cpassf = new TextField("", "confirm password");
 
-        Label[] labels = {usn, ps, cps};
+        Label[] labels = {usn, eml, ps, cps};
 
         for (Label lbl : labels) {
             lbl.getAllStyles().setMargin(0, 0, 0, 0);
             lbl.getAllStyles().setPadding(0, 0, 9, 0);
         }
 
-        TextField[] fields = {usernamef, passf, cpassf};
+        TextField[] fields = {usernamef, emailf, passf, cpassf};
 
         for (TextField tf : fields) {
             tf.getAllStyles().setFont(SAVI.regular(2.5f));
@@ -125,6 +253,8 @@ public class SignUpPage {
             }
         }
 
+        emailf.getAllStyles().setPadding(2, 1.5f, 3, 3);
+        emailf.getAllStyles().setMargin(1, 2, 9, 1);
         passf.getAllStyles().setPadding(2, 1.5f, 3, 3);
         passf.getAllStyles().setMargin(1, 2, 9, 1);
         cpassf.getAllStyles().setPadding(2, 1.5f, 3, 3);
@@ -133,8 +263,43 @@ public class SignUpPage {
         passf.setConstraint(TextField.PASSWORD);
         cpassf.setConstraint(TextField.PASSWORD);
 
+        Button verify = new Button("Verify");
         Button showPass = new Button("Show");
         Button showCpass = new Button("Show");
+
+        verify.addActionListener(e -> {
+            String email = emailf.getText().trim();
+
+            if (email.isEmpty()) {
+                Dialog.show("Missing Email", "Please enter your email address first.", "OK", null);
+                return;
+            }
+            if (!SAVI.user.validEmail(email)) {
+                Dialog.show("Invalid Email", "Please enter a valid email address.", "OK", null);
+                return;
+            }
+            if (SAVI.user.emailExists(email)) {
+                Dialog.show("Email Already Used", "This email is already registered. Please log in or use another email.", "OK", null);
+                return;
+            }
+
+            verify.setEnabled(false);
+            verify.setText("Sending...");
+
+            OTPManager.sendOtp(
+                    email,
+                    () -> Display.getInstance().callSerially(() -> {
+                        verify.setEnabled(true);
+                        verify.setText("Verify");
+                        showCustomOtpDialog(email, emailf, verify);
+                    }),
+                    errorMsg -> Display.getInstance().callSerially(() -> {
+                        verify.setEnabled(true);
+                        verify.setText("Verify");
+                        Dialog.show("Failed to Send Code", errorMsg, "OK", null);
+                    })
+            );
+        });
 
         showPass.addActionListener(e -> {
             if (passf.getConstraint() == TextField.PASSWORD) {
@@ -160,7 +325,7 @@ public class SignUpPage {
             cpassf.getParent().revalidate();
         });
 
-        Button[] showButtons = {showPass, showCpass};
+        Button[] showButtons = {verify, showPass, showCpass};
 
         for (Button btn : showButtons) {
             Style[] styles = {
@@ -184,6 +349,11 @@ public class SignUpPage {
         usnContainer.add(BorderLayout.NORTH, usn);
         usnContainer.add(BorderLayout.CENTER, usernamef);
 
+        Container emlContainer = new Container(new BorderLayout());
+        emlContainer.add(BorderLayout.NORTH, eml);
+        emlContainer.add(BorderLayout.CENTER, emailf);
+        emlContainer.add(BorderLayout.EAST, verify);
+
         Container passContainer = new Container(new BorderLayout());
         passContainer.add(BorderLayout.NORTH, ps);
         passContainer.add(BorderLayout.CENTER, passf);
@@ -194,7 +364,7 @@ public class SignUpPage {
         cpassContainer.add(BorderLayout.CENTER, cpassf);
         cpassContainer.add(BorderLayout.EAST, showCpass);
 
-        form.add(usnContainer);
+        form.add(usnContainer).add(emlContainer);
         form.add(passContainer).add(cpassContainer);
 
         Button signupbtn = new Button("Sign Up");
@@ -236,10 +406,11 @@ public class SignUpPage {
         signupbtn.getAllStyles().setBorder(Border.createRoundBorder(140, SAVI.BORDER_COLOR));
         signupbtn.addActionListener(evt ->{
             String name = usernamef.getText().trim();
+            String email = emailf.getText().trim();
             String pass = passf.getText().trim();
             String cpass = cpassf.getText().trim();
 
-            String result = SAVI.user.signup(name, pass, cpass);
+            String result = SAVI.user.signup(name, email, pass, cpass);
 
             if (result.equals("success")) {
                 Dialog.show("Success", "Account created!", "OK", null);

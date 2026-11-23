@@ -8,7 +8,7 @@ import com.savi.app.SAVI;
 import com.savi.app.backend.Savings;
 import com.savi.app.backend.GroupSavings;
 import com.savi.app.backend.PersonalSavings;
-import org.w3c.dom.Text;
+import com.savi.app.backend.SavingsStore;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -147,11 +147,11 @@ public class QuickAddMenu {
         ArrayList<Savings> targets = new ArrayList<>();
         ArrayList<String> labels = new ArrayList<>();
 
-        for (GroupSavings g : SAVI.groupList.getGroups()) {
+        for (GroupSavings g : SAVI.groupList.getForUser(currentUser)) {
             targets.add(g);
             labels.add("[Group] " + g.getGroupName());
         }
-        for (PersonalSavings p : SAVI.personalList.getForOwner(currentUser)) {
+        for (PersonalSavings p : SAVI.personalList.getForUser(currentUser)) {
             targets.add(p);
             labels.add("[Personal] " + p.getSavingsName());
         }
@@ -193,9 +193,8 @@ public class QuickAddMenu {
             if (idx < 0 || idx >= targets.size()) return;
             Savings selected = targets.get(idx);
 
-            if (selected instanceof GroupSavings) {
-                GroupSavings gs = (GroupSavings) selected;
-                ArrayList<String> mems = gs.getMembers();
+            if (!selected.isPersonal()) {
+                ArrayList<String> mems = new ArrayList<>(selected.getParticipants());
                 if (mems.isEmpty() && currentUser != null) {
                     mems.add(currentUser);
                 }
@@ -266,17 +265,17 @@ public class QuickAddMenu {
             LocalDate date = toLocalDate(datePicker.getDate());
             String note = noteField.getText().trim();
 
-            if (selected instanceof GroupSavings) {
-                GroupSavings gs = (GroupSavings) selected;
-                String member = memberPicker.getSelectedString();
-                if (member == null || member.trim().isEmpty()) {
-                    Dialog.show("Missing Member", "Please select a member.", "OK", null);
-                    return;
-                }
-                SAVI.groupList.addContribution(gs.getGroupName(), member, amt, date, note);
-            } else if (selected instanceof PersonalSavings) {
-                PersonalSavings ps = (PersonalSavings) selected;
-                SAVI.personalList.addContribution(ps.getSavingsName(), currentUser, amt, date, note);
+            // a personal savings has one member (its owner); a group needs the picked member
+            String member = selected.isPersonal() ? currentUser : memberPicker.getSelectedString();
+            if (member == null || member.trim().isEmpty()) {
+                Dialog.show("Missing Member", "Please select a member.", "OK", null);
+                return;
+            }
+            // both lists are a SavingsStore, so the same call saves either kind
+            SavingsStore store = selected.isPersonal() ? SAVI.personalList : SAVI.groupList;
+            if (!store.addContribution(selected.getDisplayName(), member, amt, date, note)) {
+                Dialog.show("Could Not Save", "The contribution could not be saved.", "OK", null);
+                return;
             }
 
             dlg.dispose();
@@ -301,12 +300,15 @@ public class QuickAddMenu {
 
         Label gp = SAVI.text("GROUP NAME", SAVI.bold(textSize), SAVI.DEEP_SLATE);
         Label sgd = SAVI.text("SAVING GOAL DESCRIPTION", SAVI.bold(textSize), SAVI.DEEP_SLATE);
+        Label wta = SAVI.text("WEEKLY TARGET AMOUNT (P)", SAVI.bold(textSize), SAVI.DEEP_SLATE);
         Label tta = SAVI.text("TOTAL TARGET AMOUNT (P)", SAVI.bold(textSize), SAVI.DEEP_SLATE);
         Label exp = SAVI.text("DAILY TARGET AMOUNT (P)", SAVI.bold(textSize), SAVI.DEEP_SLATE);
         Label mm = SAVI.text("OTHER MEMBERS (comma-separated)", SAVI.bold(textSize), SAVI.DEEP_SLATE);
 
         TextField groupNameField = styledField("e.g. Vacation");
         TextField goalNameField = styledField("e.g. Travel & Hotel Fund");
+        TextField weeklyTargetField = styledField("P0.00");
+        weeklyTargetField.setConstraint(TextArea.DECIMAL);
         TextField targetField = styledField("P 0.00");
         targetField.setConstraint(TextArea.DECIMAL);
 
@@ -315,13 +317,13 @@ public class QuickAddMenu {
 
         TextField membersField = styledField("person1, person2, person3, ...");
 
-        Label[] lb = {gp, sgd, tta, exp, mm};
+        Label[] lb = {gp, sgd, wta, tta, exp, mm};
 
         for (Label l : lb) {
             l.getAllStyles().setPadding(1,1.5f,0,0);
         }
 
-        TextField[] txt = {groupNameField, goalNameField, targetField, expectedField, membersField};
+        TextField[] txt = {groupNameField, goalNameField, weeklyTargetField, targetField, expectedField, membersField};
 
         for (TextField tf : txt) {
             tf.getAllStyles().setFont(SAVI.regular(2.5f));
@@ -332,6 +334,7 @@ public class QuickAddMenu {
 
         fields.add(gp).add(groupNameField);
         fields.add(sgd).add(goalNameField);
+        fields.add(wta).add(weeklyTargetField);
         fields.add(tta).add(targetField);
         fields.add(exp).add(expectedField);
         fields.add(mm).add(membersField);
@@ -342,6 +345,7 @@ public class QuickAddMenu {
             String savName = goalNameField.getText().trim();
             double target = parsePositiveAmount(targetField.getText());
             double expected = parseNonNegativeAmount(expectedField.getText());
+            double weekly = parseNonNegativeAmount(weeklyTargetField.getText());   // blank = no weekly target
 
             if (grpName.isEmpty() || savName.isEmpty() || target <= 0 || expected < 0) {
                 Dialog.show("Missing Info",
@@ -350,35 +354,52 @@ public class QuickAddMenu {
                 return;
             }
 
-            String res = SAVI.groupList.addGroup(savName, target, grpName, expected);
+            // Get the logged-in user (group creator)
+            String me = SAVI.user.getCurrentName();
+
+            // Read the members entered by the user
+            ArrayList<String> members = new ArrayList<>();
+            String rawMembers = membersField.getText().trim();
+
+            // Check if the member field is empty
+            if (rawMembers.isEmpty()) {
+                Dialog.show("Missing Members",
+                        "Please enter at least one member before creating a group.",
+                        "OK", null);
+                return;
+            }
+
+            // Split the input using commas
+            String[] memberNames = rawMembers.split(",");
+
+            for (String name : memberNames) {
+                String member = name.trim();
+
+                // Ignore empty entries
+                if (!member.isEmpty() && !members.contains(member)) {
+                    members.add(member);
+                }
+            }
+
+            // Make sure at least one valid member was entered
+            if (members.isEmpty()) {
+                Dialog.show("Missing Members",
+                        "A group must have at least one other member.",
+                        "OK", null);
+                return;
+            }
+
+            // Add the creator to the group if not already included
+            if (!members.contains(me)) {
+                members.add(me);
+            }
+
+            String res = SAVI.groupList.addGroup(me, target, grpName, expected, LocalDate.now(),
+                    members, weekly, savName, "");
             if (!"success".equals(res)) {
                 Dialog.show("Error", res, "OK", null);
                 return;
             }
-
-            // Automatically include the logged-in user so the group appears on their Home & Transfer pages
-            String me = SAVI.user.getCurrentName();
-            if (me != null && !me.trim().isEmpty()) {
-                SAVI.groupList.addMember(grpName, me.trim());
-            }
-
-            // Add comma-separated members
-            String rawMembers = membersField.getText().trim();
-            if (!rawMembers.isEmpty()) {
-                int start = 0;
-                while (start <= rawMembers.length()) {
-                    int comma = rawMembers.indexOf(',', start);
-                    String part = (comma == -1)
-                            ? rawMembers.substring(start).trim()
-                            : rawMembers.substring(start, comma).trim();
-                    if (!part.isEmpty()) {
-                        SAVI.groupList.addMember(grpName, part);
-                    }
-                    if (comma == -1) break;
-                    start = comma + 1;
-                }
-            }
-
             dlg.dispose();
             new HomePage().show();
         }));
@@ -398,19 +419,22 @@ public class QuickAddMenu {
         fields.getAllStyles().setPadding(1f, 1f, 1.5f, 1.5f);
 
         Label gn = SAVI.text("GOAL NAME", SAVI.bold(textSize), SAVI.DEEP_SLATE);
+        Label wta = SAVI.text("WEEKLY TARGET AMOUNT", SAVI.bold(textSize), SAVI.DEEP_SLATE);
         Label tta = SAVI.text("TOTAL TARGET AMOUNT (P)", SAVI.bold(textSize), SAVI.DEEP_SLATE);
 
         TextField nameField = styledField("e.g. Emergency Fund");
+        TextField weeklyTargetField = styledField("P0.00");
+        weeklyTargetField.setConstraint(TextArea.DECIMAL);
         TextField targetField = styledField("P 0.00");
         targetField.setConstraint(TextArea.DECIMAL);
 
-        Label[] lb = {gn, tta};
+        Label[] lb = {gn, wta, tta};
 
         for (Label l : lb) {
             l.getAllStyles().setPadding(1,1.5f,0,0);
         }
 
-        TextField[] txt = {nameField, targetField};
+        TextField[] txt = {nameField, weeklyTargetField, targetField};
 
         for (TextField tf : txt) {
             tf.getAllStyles().setFont(SAVI.regular(2.5f));
@@ -420,15 +444,17 @@ public class QuickAddMenu {
         }
 
         fields.add(gn).add(nameField);
+        fields.add(wta).add(weeklyTargetField);
         fields.add(tta).add(targetField);
 
         dlg.add(BorderLayout.CENTER, fields);
         dlg.add(BorderLayout.SOUTH, dialogButtons(dlg, () -> {
             String goalName = nameField.getText().trim();
             double target = parsePositiveAmount(targetField.getText());
+            double weekly = parseNonNegativeAmount(weeklyTargetField.getText());   // blank = no weekly target
             String owner = SAVI.user.getCurrentName();
 
-            String res = SAVI.personalList.addPersonalSavings(goalName, target, owner);
+            String res = SAVI.personalList.addPersonalSavings(goalName, target, owner, weekly);
             if (!"success".equals(res)) {
                 Dialog.show("Error", res, "OK", null);
                 return;

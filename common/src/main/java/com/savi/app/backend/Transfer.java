@@ -20,9 +20,6 @@ import com.savi.app.SAVI;
 public class Transfer {
     public static final String SUCCESS = "success";
 
-    private static final String GROUP_TAG = " (Group)";
-    private static final String PERSONAL_TAG = " (Personal)";
-
     // ---------------------------------------------------------------- ENCAPSULATION
     private User user;
     private Home home;                    // gives us the groups of the logged-in user
@@ -34,7 +31,7 @@ public class Transfer {
 
     public Transfer(User user, List<? extends Savings> allSavings) {
         this.user = user;
-        // Home does the "which groups is the logged-in user in" work, so it is reused here
+        // Home does the "which savings can the logged-in user use" work, so it is reused here
         this.home = new Home(user, allSavings);
     }
 
@@ -42,37 +39,29 @@ public class Transfer {
     // The page only talks about "savings"; this small class hides which kind it is, so
     // validate() and confirm() have almost no group/personal special cases.
     private static class Account {
-        private final GroupSavings group;          // set when it is a group savings
-        private final PersonalSavings personal;    // set when it is a personal savings
+        private final Savings savings;     // group OR personal: both are just a Savings (POLYMORPHISM)
 
-        Account(GroupSavings group, PersonalSavings personal) {
-            this.group = group;
-            this.personal = personal;
+        Account(Savings savings) {
+            this.savings = savings;
         }
 
         boolean isPersonal() {
-            return personal != null;
+            return savings.isPersonal();
         }
 
         /** "Gala sa December" */
         String name() {
-            return group != null ? group.getGroupName() : personal.getSavingsName();
+            return savings.getDisplayName();
         }
 
         /** "Gala sa December (Group)" / "Emergency Fund (Personal)" */
         String label() {
-            return name() + (group != null ? GROUP_TAG : PERSONAL_TAG);
+            return name() + " (" + savings.getTypeLabel() + ")";
         }
 
         /** Group: its members. Personal: only the owner. */
         List<String> members() {
-            List<String> names = new ArrayList<String>();
-            if (group != null) {
-                names.addAll(group.getMembers());
-            } else {
-                names.add(personal.getOwner());
-            }
-            return names;
+            return savings.getParticipants();
         }
 
         /** The member's name exactly as stored, or null if not a member of this savings. */
@@ -88,8 +77,7 @@ public class Transfer {
         /** What this member has put in (transfers included), never below 0. */
         double balance(String member) {
             double total = 0;
-            List<Contribution> all = group != null ? group.getContributions() : personal.getContributions();
-            for (Contribution c : all) {
+            for (Contribution c : savings.getContributions()) {
                 if (c.getMember().equalsIgnoreCase(member)) {
                     total += c.getAmount();
                 }
@@ -97,33 +85,24 @@ public class Transfer {
             return Math.max(0, total);
         }
 
-        /** Records the contribution AND saves it to the TXT. */
+        /** Records the contribution AND saves it to the TXT (through the right list). */
         boolean add(String member, double amount, LocalDate date, String note) {
-            if (group != null) {
-                return SAVI.groupList.addContribution(group.getGroupName(), member, amount, date, note);
-            }
-            return SAVI.personalList.addContribution(personal.getSavingsName(), personal.getOwner(),
-                    amount, date, note);
+            SavingsStore store = savings.isPersonal() ? SAVI.personalList : SAVI.groupList;
+            return store.addContribution(name(), member, amount, date, note);
         }
 
         boolean sameAs(Account other) {
-            return group != null ? group == other.group : personal == other.personal;
+            return savings == other.savings;
         }
     }
 
     // ---------------------------------------------------------------- FINDING SAVINGS
 
-    /** Every savings the logged-in user can use: their groups, then their personal savings. */
+    /** Every savings the logged-in user can use. */
     private List<Account> allAccounts() {
         List<Account> list = new ArrayList<Account>();
-        for (GroupSavings g : home.getGroups()) {
-            list.add(new Account(g, null));
-        }
-        String me = user == null ? null : user.getCurrentName();
-        if (me != null) {
-            for (PersonalSavings p : SAVI.personalList.getForOwner(me)) {
-                list.add(new Account(null, p));
-            }
+        for (Savings s : home.getVisibleSavings()) {
+            list.add(new Account(s));
         }
         return list;
     }
