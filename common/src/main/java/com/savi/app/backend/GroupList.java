@@ -6,7 +6,7 @@ import java.util.List;
 
 // GROUP LIST (manages all GroupSavings + saves to Groups_Records.txt via Codename One Storage)
 // File format (3 record types):
-//   G,creator,targetAmount,groupName,expectedPerMember,createdDate,weeklyTarget,savingsName,targetDate
+//   G,creator,targetAmount,groupName,expectedPerMember,createdDate,savingsName,targetDate
 //   M,groupName,memberName
 //   C,groupName,memberName,amount,date,note[,timestamp]
 public class GroupList implements SavingsStore {
@@ -18,19 +18,13 @@ public class GroupList implements SavingsStore {
     public String addGroup(String creator, double targetAmount, String groupName,
                            double expectedPerMember, LocalDate createdDate,
                            ArrayList<String> initialMembers) {
-        return addGroup(creator, targetAmount, groupName, expectedPerMember, createdDate, initialMembers, 0);
-    }
-
-    public String addGroup(String creator, double targetAmount, String groupName,
-                           double expectedPerMember, LocalDate createdDate,
-                           ArrayList<String> initialMembers, double weeklyTarget) {
         return addGroup(creator, targetAmount, groupName, expectedPerMember, createdDate,
-                initialMembers, weeklyTarget, groupName, "");
+                initialMembers, groupName, "");
     }
 
     public String addGroup(String creator, double targetAmount, String groupName,
                            double expectedPerMember, LocalDate createdDate,
-                           ArrayList<String> initialMembers, double weeklyTarget,
+                           ArrayList<String> initialMembers,
                            String savingsName, String targetDate) {
         if (creator == null || creator.trim().isEmpty()) {
             return "Creator name is required.";
@@ -49,7 +43,7 @@ public class GroupList implements SavingsStore {
         }
 
         GroupSavings g = new GroupSavings(creator.trim(), targetAmount, groupName.trim(),
-                expectedPerMember, createdDate, weeklyTarget, savingsName, targetDate);
+                expectedPerMember, createdDate, savingsName, targetDate);
 
         if (initialMembers != null) {
             for (String m : initialMembers) {
@@ -198,7 +192,6 @@ public class GroupList implements SavingsStore {
                     .append(RecordStorage.encode(g.getGroupName())).append(",")
                     .append(g.getExpectedPerMember()).append(",")
                     .append(g.getCreatedDate()).append(",")
-                    .append(g.getWeeklyTarget()).append(",")
                     .append(RecordStorage.encode(g.getSavingsName())).append(",")
                     .append(RecordStorage.encode(g.getTargetDate())).append("\n");
 
@@ -244,12 +237,12 @@ public class GroupList implements SavingsStore {
                 String name = RecordStorage.decode(parts.get(3));
                 double expected = Double.parseDouble(parts.get(4));
                 LocalDate created = RecordStorage.parseDate(parts.get(5));
-                double weeklyTarget = parts.size() >= 7 ? Double.parseDouble(parts.get(6)) : 0;
-                String savingsName = parts.size() >= 8 ? RecordStorage.decode(parts.get(7)) : name;
-                String targetDate = parts.size() >= 9 ? RecordStorage.decode(parts.get(8)) : "";
+                String savingsName = (parts.size() >= 7 && !RecordStorage.decode(parts.get(6)).trim().isEmpty())
+                        ? RecordStorage.decode(parts.get(6)) : name;
+                String targetDate = parts.size() >= 8 ? RecordStorage.decode(parts.get(7)) : "";
                 if (findByName(name) == null) {
                     groups.add(new GroupSavings(creator, target, name, expected, created,
-                            weeklyTarget, savingsName, targetDate));
+                            savingsName, targetDate));
                 }
             } catch (Exception ignored) {
             }

@@ -5,13 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Backend of PersonalSummaryPage (Personal Savings GroupSummary).
- *
- *  PersonalSummaryPage part                 -> PersonalSummary method
- *  ---------------------------------------------------------------------------
- *  purple card: name + arrow                -> getTitle(), getNames(), select()
- *  purple card: Total Pool, Target Amount   -> getTotalPoolText(), getTargetText()
- *  monthly chart (W / M / Y) + footer       -> the ChartData methods
+ * Backend of PersonalSummaryPage (Personal Savings Summary).
  */
 public class PersonalSummary implements ChartData {
     public static final String NO_SAVINGS_MESSAGE = "Nothing has been saved here yet.";
@@ -20,24 +14,55 @@ public class PersonalSummary implements ChartData {
     private static final String[] MONTHS = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
-    // ------------------------------------------------------------ ADAPT
-    // The ONLY 4 lines that touch your personal savings class. If PersonalSavings uses other
-    // method names, change them here and nothing else needs to change.
     private static String nameOf(PersonalSavings p) { return p.getSavingsName(); }
     private static double savedOf(PersonalSavings p) { return p.getCurrentAmount(); }
     private static double targetOf(PersonalSavings p) { return p.getTargetAmount(); }
     private static Iterable<Contribution> contributionsOf(PersonalSavings p) { return p.getContributions(); }
-    // -----------------------------------------------------------------
 
     private final List<PersonalSavings> all = new ArrayList<PersonalSavings>();
     private PersonalSavings current;
     private int chartMode = GroupSummary.MONTH;
 
     public PersonalSummary(List<PersonalSavings> personalSavings) {
-        all.addAll(personalSavings);
-        if (!all.isEmpty()) {
-            current = all.get(0);
+        refresh(personalSavings);
+    }
+
+    public PersonalSummary(User user, List<PersonalSavings> personalSavings) {
+        refresh(user, personalSavings);
+    }
+
+    /** Reloads the list without losing the currently selected personal saving if it still exists. */
+    public void refresh(List<PersonalSavings> personalSavings) {
+        String previousName = current != null ? nameOf(current) : null;
+        all.clear();
+        current = null;
+        if (personalSavings != null) {
+            for (PersonalSavings p : personalSavings) {
+                if (p != null) {
+                    all.add(p);
+                }
+            }
         }
+        if (!all.isEmpty()) {
+            if (previousName == null || !select(previousName)) {
+                current = all.get(all.size() - 1);
+            }
+        }
+    }
+
+    public void refresh(User user, List<PersonalSavings> personalSavings) {
+        List<PersonalSavings> scoped = new ArrayList<PersonalSavings>();
+        String username = (user != null && user.getCurrentName() != null)
+                ? user.getCurrentName().trim()
+                : Profile.getInstance().getMemberName();
+        if (personalSavings != null) {
+            for (PersonalSavings p : personalSavings) {
+                if (p != null && (username == null || username.isEmpty() || p.isOwnedBy(username))) {
+                    scoped.add(p);
+                }
+            }
+        }
+        refresh(scoped);
     }
 
     // ---------------------------------------------------------------- SELECTION
@@ -66,17 +91,14 @@ public class PersonalSummary implements ChartData {
 
     // ---------------------------------------------------------------- PURPLE CARD
 
-    /** "LAPTOP" */
     public String getTitle() {
         return current == null ? "NO SAVINGS YET" : nameOf(current).toUpperCase();
     }
 
-    /** "P12,450.00" */
     public String getTotalPoolText() {
         return Home.pesoFormat(current == null ? 0 : savedOf(current));
     }
 
-    /** "P15,450.00" */
     public String getTargetText() {
         return Home.pesoFormat(current == null ? 0 : targetOf(current));
     }
@@ -123,13 +145,11 @@ public class PersonalSummary implements ChartData {
         return labels;
     }
 
-    /** True when something has been saved. False -> the page draws the chart in gray. */
     @Override
     public boolean hasShares() {
         return current != null && savedOf(current) > 0;
     }
 
-    /** Height of each chart point, 0.0 to 1.0 (the biggest total is 1.0). All 0 when empty. */
     @Override
     public float[] getChartValues() {
         float[] values = new float[POINTS];
@@ -152,7 +172,6 @@ public class PersonalSummary implements ChartData {
         return values;
     }
 
-    /** "P12.45k" for the bubble above the last point. */
     @Override
     public String getChartTip() {
         double v = current == null ? 0 : savedOf(current);
@@ -177,7 +196,6 @@ public class PersonalSummary implements ChartData {
         return current != null && targetOf(current) > 0 && savedOf(current) >= targetOf(current);
     }
 
-    /** "Laptop Target Achieved" or "P40 of P5,000 saved". */
     @Override
     public String getFooterText() {
         if (current == null) {
@@ -190,7 +208,6 @@ public class PersonalSummary implements ChartData {
     }
 
     // ---------------------------------------------------------------- helpers
-    // (same date math as GroupSummary: Codename One's java.time is small, so dates are read from text)
 
     private double[] cumulative() {
         double[] totals = new double[POINTS];
@@ -217,7 +234,7 @@ public class PersonalSummary implements ChartData {
         if (chartMode == GroupSummary.MONTH) {
             return ymd[0] * 12L + (ymd[1] - 1);
         }
-        return (epochDay(date) + 4) / 7;      // weeks start on Sunday
+        return (epochDay(date) + 4) / 7;
     }
 
     private String periodLabel(long period) {

@@ -14,10 +14,10 @@ public abstract class Savings {
     private final ArrayList<Contribution> contributions = new ArrayList<>();
 
     public Savings(String creator, double targetAmount) {
-        this(creator, targetAmount, "", "", 0);
+        this(creator, targetAmount, "", "");
     }
 
-    public Savings(String creator, double targetAmount, String savingsName, String targetDate, double weeklyTarget) {
+    public Savings(String creator, double targetAmount, String savingsName, String targetDate) {
         if (creator == null || creator.trim().isEmpty()) {
             throw new IllegalArgumentException("Creator is required.");
         }
