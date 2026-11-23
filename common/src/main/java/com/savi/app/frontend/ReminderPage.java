@@ -8,19 +8,21 @@ import com.codename1.ui.spinner.Picker;
 import com.savi.app.SAVI;
 import com.savi.app.backend.Home;
 import com.savi.app.backend.GroupSavings;
+import com.savi.app.backend.PersonalSavings;
+import com.savi.app.backend.Profile;
 import com.savi.app.backend.Reminder;
+import com.savi.app.backend.Savings;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Calendar;
 import java.util.Date;
 
 // REMINDER PAGE (frontend)
-// FLOW: open the page -> read the reminders from SAVI.reminders (the linked list in ReminderList) ->
-// show them in two tabs (Upcomings / Completed), grouped by savings group ->
-// tapping the check circle marks a reminder as completed -> "+ Add New Reminder" opens a form
-// that adds a new one. Every change is saved to the CSV by ReminderList, not by this page.
+// FLOW: open the page -> read the logged-in user's reminders from SAVI.reminders (the linked list in ReminderList) ->
+// show them in two tabs (Upcomings / Completed), grouped by savings tracker (Group or Personal) ->
+// tapping the check circle toggles a reminder between Upcoming and Completed -> "+ Add New Reminder" opens a form
+// that adds a new one. Every change is saved to the TXT file by ReminderList, not by this page.
 public class ReminderPage {
 
     private boolean showCompleted = false;   // which tab is open: false = Upcomings, true = Completed
@@ -67,15 +69,17 @@ public class ReminderPage {
         Container listContainer = new Container(BoxLayout.y());
 
         // refreshUI redraws the tab bar and the list. It runs when the page opens and again after
-        // every change (switching tabs, completing a reminder, adding a reminder).
+        // every change (switching tabs, completing/unchecking a reminder, adding a reminder).
         // "this.run()" inside it means the code calls itself to redraw.
         Runnable refreshUI = new Runnable() {
             @Override
             public void run() {
+                String currentUser = activeUsername();
+
                 tabWrapper.removeAll();
-                // the numbers in the badges come from the linked list
-                int upCount = SAVI.reminders.countUpcoming();
-                int doneCount = SAVI.reminders.countCompleted();
+                // the numbers in the badges come from the linked list for the logged-in user
+                int upCount = SAVI.reminders.countUpcoming(currentUser);
+                int doneCount = SAVI.reminders.countCompleted(currentUser);
 
                 tabWrapper.add(buildTab("Upcomings", upCount, !showCompleted, () -> {
                     showCompleted = false;
@@ -87,10 +91,10 @@ public class ReminderPage {
                 }));
 
                 listContainer.removeAll();
-                // ask the backend for the reminders of the open tab
+                // ask the backend for the logged-in user's reminders of the open tab
                 ArrayList<Reminder> items = showCompleted
-                        ? SAVI.reminders.getCompleted()
-                        : SAVI.reminders.getUpcoming();
+                        ? SAVI.reminders.getCompleted(currentUser)
+                        : SAVI.reminders.getUpcoming(currentUser);
 
                 if (items.isEmpty()) {
                     Label empty = SAVI.text(
@@ -101,8 +105,8 @@ public class ReminderPage {
                     empty.getAllStyles().setPadding(4f, 4f, 2f, 2f);
                     listContainer.add(empty);
                 } else {
-                    // GROUPING: for each reminder, if its group has no header yet, add the header
-                    // and then every reminder of that group under it
+                    // GROUPING: for each reminder, if its tracker has no header yet, add the header
+                    // and then every reminder of that tracker under it
                     ArrayList<String> shownGroups = new ArrayList<>();
                     for (Reminder r : items) {
                         String grp = (r.getGroupName() == null || r.getGroupName().trim().isEmpty())
@@ -202,7 +206,7 @@ public class ReminderPage {
         return pill;
     }
 
-    // the "● December Vacation" bar that starts each group of reminders
+    // the "● [Group] December Vacation" bar that starts each group of reminders
     private Container buildGroupHeader(String groupTitle) {
         Label dot = SAVI.text("● ", SAVI.bold(1.8f), SAVI.DARK_PURPLE);
         Label name = SAVI.text(groupTitle, SAVI.semiBold(1.9f), SAVI.DARK_PURPLE);
@@ -226,14 +230,14 @@ public class ReminderPage {
         return bar;
     }
 
-    // One reminder card: [check circle] [title + date/time] [amount tag].
-    // "onToggle" is refreshUI, so the page redraws after the reminder is completed.
+    // One reminder card: [check circle] [title + date/time] [status tag].
+    // "onToggle" is refreshUI, so the page redraws after the reminder is checked or unchecked.
     private Container buildReminderCard(Reminder r, Runnable onToggle) {
         Container card = new Container(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER));
         HomePage.boxStyles(card, SAVI.WHITE, 1.6f, 1.8f);
         card.getAllStyles().setMarginBottom(0.8f);
 
-        // Left: Circular check icon button (tap to mark completed)
+        // Left: Circular check icon button (tap to check or uncheck)
         Button checkBtn = new Button();
         checkBtn.setUIID("Label");
         Style cbs = checkBtn.getAllStyles();
@@ -242,10 +246,8 @@ public class ReminderPage {
         FontImage.setMaterialIcon(checkBtn,
                 r.isCompleted() ? FontImage.MATERIAL_CHECK : FontImage.MATERIAL_RADIO_BUTTON_UNCHECKED, 3.2f);
         checkBtn.addActionListener(e -> {
-            if (!r.isCompleted()) {
-                SAVI.reminders.markCompleted(r);   // backend: find the node, set it completed, save the CSV
-                onToggle.run();                    // redraw the page
-            }
+            SAVI.reminders.toggleCompleted(r);   // backend: find the node, toggle completed, save the file
+            onToggle.run();                      // redraw the page
         });
 
         Container circle = new Container(new BorderLayout(BorderLayout.CENTER_BEHAVIOR_CENTER));
@@ -270,8 +272,8 @@ public class ReminderPage {
 
         Container infoBox = BoxLayout.encloseY(titleLbl, subLbl);
 
-        // Right: Amount status pill ("Due P..." vs "Paid P...")
-        String tagText = (r.isCompleted() ? "Paid " : "Due ") + Home.pesoFormat(r.getAmount());
+        // Right: Status pill ("Due P..." vs "Done")
+        String tagText = r.isCompleted() ? "Done" : ("Due " + Home.pesoFormat(r.getAmount()));
         Label amountTag = SAVI.text(tagText, SAVI.bold(1.7f), r.isCompleted() ? SAVI.GREEN : SAVI.AMBER);
         Style ats = amountTag.getAllStyles();
         ats.setBgColor(r.isCompleted() ? SAVI.PALE_GREEN : SAVI.YELLOW_TAG);
@@ -289,50 +291,51 @@ public class ReminderPage {
     // The "New Reminder" form. When Save is tapped it validates the input, calls
     // SAVI.reminders.addReminder(...), closes the form, and runs onAdded (= refreshUI).
     private void showAddReminderDialog(Runnable onAdded) {
+        // Collect both Group and Personal savings trackers of the logged-in user
+        String currentUser = activeUsername();
+        ArrayList<Savings> targets = new ArrayList<>();
+        ArrayList<String> labels = new ArrayList<>();
+
+        for (GroupSavings g : SAVI.groupList.getForUser(currentUser)) {
+            targets.add(g);
+            labels.add("[Group] " + g.getGroupName());
+        }
+        for (PersonalSavings p : SAVI.personalList.getForUser(currentUser)) {
+            targets.add(p);
+            labels.add("[Personal] " + p.getSavingsName());
+        }
+
+        if (targets.isEmpty()) {
+            Dialog.show("No Savings Trackers",
+                    "Create a Group Savings or Personal Savings tracker first before adding a reminder.",
+                    "OK", null);
+            return;
+        }
+
         Dialog dlg = new Dialog("New Reminder", new BorderLayout());
         dlg.getContentPane().getAllStyles().setBgColor(SAVI.WHITE);
         dlg.getContentPane().getAllStyles().setBgTransparency(255);
 
         Container fields = new Container(BoxLayout.y());
+        fields.setScrollableY(true);
         fields.getAllStyles().setPaddingUnit(Style.UNIT_TYPE_DIPS);
         fields.getAllStyles().setPadding(1f, 1f, 1.5f, 1.5f);
 
         Label rmd = SAVI.text("TITLE", SAVI.bold(1.6f), SAVI.DEEP_SLATE);
-        Label sv = SAVI.text("SAVINGS GROUP", SAVI.bold(1.6f), SAVI.DEEP_SLATE);
+        Label sv = SAVI.text("SAVINGS TRACKER", SAVI.bold(1.6f), SAVI.DEEP_SLATE);
         Label dt = SAVI.text("DATE", SAVI.bold(1.6f), SAVI.DEEP_SLATE);
         Label tm = SAVI.text("TIME", SAVI.bold(1.6f), SAVI.DEEP_SLATE);
         Label am = SAVI.text("AMOUNT (P)", SAVI.bold(1.6f), SAVI.DEEP_SLATE);
 
         TextField titleField = new TextField("", "Enter reminder title");
-        TextField customGroupField = new TextField("", "Enter group name");
         TextField amountField = new TextField("", "0.00");
         amountField.setConstraint(TextArea.DECIMAL);
 
-        // Group selector: uses the logged-in user's groups if available, otherwise a text field
-        List<GroupSavings> myGroups = SAVI.groupList.getForUser(SAVI.user.getCurrentName());
-        boolean hasGroups = !myGroups.isEmpty();
-
-        Picker groupPicker = new Picker();
-        if (hasGroups) {
-            // the dropdown lists every real group, plus an "Other" choice at the end
-            String[] groupNames = new String[myGroups.size() + 1];
-            for (int i = 0; i < myGroups.size(); i++) {
-                groupNames[i] = myGroups.get(i).getGroupName();
-            }
-            groupNames[myGroups.size()] = "Other";
-            groupPicker.setType(Display.PICKER_TYPE_STRINGS);
-            groupPicker.setStrings(groupNames);
-            groupPicker.setSelectedStringIndex(0);
-
-            // the text box for a custom group name only appears when "Other" is chosen
-            customGroupField.setHidden(true);
-            groupPicker.addActionListener(e -> {
-                boolean isOther = "Other".equals(groupPicker.getSelectedString());
-                customGroupField.setHidden(!isOther);
-                fields.revalidate();
-                dlg.revalidate();
-            });
-        }
+        // Tracker selector: lists every Group and Personal savings tracker of the user
+        Picker trackerPicker = new Picker();
+        trackerPicker.setType(Display.PICKER_TYPE_STRINGS);
+        trackerPicker.setStrings(labels.toArray(new String[0]));
+        trackerPicker.setSelectedStringIndex(0);
 
         // Date & Time pickers defaulting to current date/time
         Picker datePicker = new Picker();
@@ -345,19 +348,19 @@ public class ReminderPage {
         Label[] lb = {rmd, sv, am, dt, tm};
 
         for (Label l : lb) {
-            l.getAllStyles().setPadding(1,1f,2,0);
+            l.getAllStyles().setPadding(1, 1f, 2, 0);
         }
 
-        TextField[] txt = {amountField, titleField, customGroupField };
+        TextField[] txt = {amountField, titleField};
 
         for (TextField tf : txt) {
             tf.getAllStyles().setFont(SAVI.regular(2f));
             tf.getHintLabel().getAllStyles().setFont(SAVI.italic(2f));
             tf.getHintLabel().getAllStyles().setFgColor(SAVI.SLATE_GRAY);
-            tf.getHintLabel().getAllStyles().setPadding(0,0,2,2);
+            tf.getHintLabel().getAllStyles().setPadding(0, 0, 2, 2);
         }
 
-        Picker[] pk = {groupPicker, datePicker, timePicker };
+        Picker[] pk = {trackerPicker, datePicker, timePicker};
 
         for (Picker p : pk) {
             p.getAllStyles().setFont(SAVI.regular(2f));
@@ -367,11 +370,7 @@ public class ReminderPage {
         }
 
         fields.add(rmd).add(titleField);
-        fields.add(sv);
-        if (hasGroups) {
-            fields.add(groupPicker);
-        }
-        fields.add(customGroupField);
+        fields.add(sv).add(trackerPicker);
         fields.add(dt).add(datePicker);
         fields.add(tm).add(timePicker);
         fields.add(am).add(amountField);
@@ -394,16 +393,9 @@ public class ReminderPage {
         save.addActionListener(e -> {
             String t = titleField.getText().trim();
 
-            // pick the group name: from the dropdown, or from the text box when "Other" (or no groups)
-            String g;
-            if (hasGroups && !"Other".equals(groupPicker.getSelectedString())) {
-                g = groupPicker.getSelectedString();
-            } else {
-                g = customGroupField.getText().trim();
-            }
-            if (g == null || g.isEmpty()) {
-                g = "General";
-            }
+            // pick the tracker label from the dropdown
+            int idx = trackerPicker.getSelectedStringIndex();
+            String g = (idx >= 0 && idx < labels.size()) ? labels.get(idx) : "General";
 
             // read the amount; a wrong or empty value stays 0 and is rejected below
             double amt = 0;
@@ -420,8 +412,8 @@ public class ReminderPage {
             LocalDate pickedDate = toLocalDate(datePicker.getDate());
             String pickedTime = formatTime(timePicker.getTime());
 
-            // backend: link a new node at the end of the list and save the CSV
-            SAVI.reminders.addReminder(t, g, pickedDate, pickedTime, amt);
+            // backend: link a new node at the end of the list with the logged-in user as owner
+            SAVI.reminders.addReminder(currentUser, t, g, pickedDate, pickedTime, amt);
             dlg.dispose();
             onAdded.run();   // redraw the page so the new reminder shows
         });
@@ -432,6 +424,14 @@ public class ReminderPage {
         dlg.add(BorderLayout.CENTER, fields);
         dlg.add(BorderLayout.SOUTH, actions);
         dlg.show();
+    }
+
+    private static String activeUsername() {
+        if (SAVI.user != null && SAVI.user.getCurrentName() != null
+                && !SAVI.user.getCurrentName().trim().isEmpty()) {
+            return SAVI.user.getCurrentName().trim();
+        }
+        return Profile.getInstance().getMemberName();
     }
 
     // the date picker gives a java.util.Date; our reminders store a LocalDate

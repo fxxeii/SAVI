@@ -5,7 +5,7 @@ import java.util.ArrayList;
 
 // REMINDER LIST (backend linked list + file storage)
 // File format (Reminders_Records.txt):
-//   title,groupName,yyyy-MM-dd,time,amount,completed
+//   title,groupName,yyyy-MM-dd,time,amount,completed,owner
 public class ReminderList {
 
     private Reminder head;
@@ -13,17 +13,22 @@ public class ReminderList {
 
     // CREATE
     public void addReminder(String title, String groupName, LocalDate date, String time, double amount) {
-        Reminder node = new Reminder(title, groupName, date, time, amount, false);
+        addReminder("", title, groupName, date, time, amount);
+    }
+
+    public void addReminder(String owner, String title, String groupName, LocalDate date, String time, double amount) {
+        Reminder node = new Reminder(owner, title, groupName, date, time, amount, false);
         appendNode(node);
         saveAll();
     }
 
-    // READ
-    public ArrayList<Reminder> getUpcoming() {
+    // READ (filtered by logged-in user; auto-claims legacy 6-column records with no owner yet)
+    public ArrayList<Reminder> getUpcoming(String username) {
+        claimLegacyRemindersIfNeeded(username);
         ArrayList<Reminder> result = new ArrayList<>();
         Reminder curr = head;
         while (curr != null) {
-            if (!curr.isCompleted()) {
+            if (!curr.isCompleted() && curr.isOwnedBy(username)) {
                 result.add(curr);
             }
             curr = curr.getNext();
@@ -31,11 +36,12 @@ public class ReminderList {
         return result;
     }
 
-    public ArrayList<Reminder> getCompleted() {
+    public ArrayList<Reminder> getCompleted(String username) {
+        claimLegacyRemindersIfNeeded(username);
         ArrayList<Reminder> result = new ArrayList<>();
         Reminder curr = head;
         while (curr != null) {
-            if (curr.isCompleted()) {
+            if (curr.isCompleted() && curr.isOwnedBy(username)) {
                 result.add(curr);
             }
             curr = curr.getNext();
@@ -43,11 +49,12 @@ public class ReminderList {
         return result;
     }
 
-    public int countUpcoming() {
+    public int countUpcoming(String username) {
+        claimLegacyRemindersIfNeeded(username);
         int count = 0;
         Reminder curr = head;
         while (curr != null) {
-            if (!curr.isCompleted()) {
+            if (!curr.isCompleted() && curr.isOwnedBy(username)) {
                 count++;
             }
             curr = curr.getNext();
@@ -55,16 +62,37 @@ public class ReminderList {
         return count;
     }
 
-    public int countCompleted() {
+    public int countCompleted(String username) {
+        claimLegacyRemindersIfNeeded(username);
         int count = 0;
         Reminder curr = head;
         while (curr != null) {
-            if (curr.isCompleted()) {
+            if (curr.isCompleted() && curr.isOwnedBy(username)) {
                 count++;
             }
             curr = curr.getNext();
         }
         return count;
+    }
+
+    // If Reminders_Records.txt still has older 6-column rows without an owner, assign them to the active user
+    // and rewrite the TXT file as 7-column rows so they stay private to that account.
+    private void claimLegacyRemindersIfNeeded(String username) {
+        if (username == null || username.trim().isEmpty()) {
+            return;
+        }
+        boolean upgraded = false;
+        Reminder curr = head;
+        while (curr != null) {
+            if (curr.getOwner() == null || curr.getOwner().trim().isEmpty()) {
+                curr.setOwner(username.trim());
+                upgraded = true;
+            }
+            curr = curr.getNext();
+        }
+        if (upgraded) {
+            saveAll();
+        }
     }
 
     // UPDATE
@@ -81,6 +109,36 @@ public class ReminderList {
             }
             curr = curr.getNext();
         }
+    }
+
+    public void toggleCompleted(Reminder target) {
+        if (target == null) {
+            return;
+        }
+        Reminder curr = head;
+        while (curr != null) {
+            if (curr == target) {
+                curr.toggleCompleted(); // switches between Upcoming and Completed and saves to file
+                saveAll();
+                return;
+            }
+            curr = curr.getNext();
+        }
+    }
+
+    /** A user changed their username: their reminders follow. */
+    public void renameOwner(String oldName, String newName) {
+        if (oldName == null || newName == null || newName.trim().isEmpty()) {
+            return;
+        }
+        Reminder curr = head;
+        while (curr != null) {
+            if (curr.isOwnedBy(oldName)) {
+                curr.setOwner(newName);
+            }
+            curr = curr.getNext();
+        }
+        saveAll();
     }
 
     // DELETE
@@ -127,7 +185,8 @@ public class ReminderList {
                     .append(curr.getDate() != null ? curr.getDate().toString() : LocalDate.now().toString()).append(",")
                     .append(RecordStorage.encode(curr.getTime())).append(",")
                     .append(curr.getAmount()).append(",")
-                    .append(curr.isCompleted()).append("\n");
+                    .append(curr.isCompleted()).append(",")
+                    .append(RecordStorage.encode(curr.getOwner())).append("\n");
             curr = curr.getNext();
         }
         RecordStorage.writeLocal(fileRec, sb.toString());
@@ -156,7 +215,8 @@ public class ReminderList {
             String time = RecordStorage.decode(parts.get(3));
             double amount = Double.parseDouble(parts.get(4));
             boolean completed = Boolean.parseBoolean(parts.get(5));
-            appendNode(new Reminder(title, groupName, date, time, amount, completed));
+            String owner = parts.size() >= 7 ? RecordStorage.decode(parts.get(6)) : "";
+            appendNode(new Reminder(owner, title, groupName, date, time, amount, completed));
         } catch (Exception ignored) {
         }
     }
