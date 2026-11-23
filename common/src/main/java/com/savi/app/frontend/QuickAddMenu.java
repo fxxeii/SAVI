@@ -310,6 +310,7 @@ public class QuickAddMenu {
         Label sgd = SAVI.text("SAVING GOAL DESCRIPTION", SAVI.bold(textSize), SAVI.DEEP_SLATE);
         Label tta = SAVI.text("TOTAL TARGET AMOUNT (P)", SAVI.bold(textSize), SAVI.DEEP_SLATE);
         Label exp = SAVI.text("DAILY TARGET AMOUNT (P)", SAVI.bold(textSize), SAVI.DEEP_SLATE);
+        Label sd = SAVI.text("START DATE", SAVI.bold(textSize), SAVI.DEEP_SLATE);
         Label mm = SAVI.text("OTHER MEMBERS (comma-separated)", SAVI.bold(textSize), SAVI.DEEP_SLATE);
 
         TextField groupNameField = styledField("e.g. Vacation");
@@ -320,9 +321,13 @@ public class QuickAddMenu {
         TextField expectedField = styledField("P 0.00");
         expectedField.setConstraint(TextArea.DECIMAL);
 
+        Picker startDatePicker = styledPicker();
+        startDatePicker.setType(Display.PICKER_TYPE_DATE);
+        startDatePicker.setDate(new Date());
+
         TextField membersField = styledField("person1, person2, person3, ...");
 
-        Label[] lb = {gp, sgd, tta, exp, mm};
+        Label[] lb = {gp, sgd, tta, exp, sd, mm};
 
         for (Label l : lb) {
             l.getAllStyles().setPadding(1, 1.5f, 0, 0);
@@ -341,6 +346,7 @@ public class QuickAddMenu {
         fields.add(sgd).add(goalNameField);
         fields.add(tta).add(targetField);
         fields.add(exp).add(expectedField);
+        fields.add(sd).add(startDatePicker);
         fields.add(mm).add(membersField);
 
         dlg.add(BorderLayout.CENTER, fields);
@@ -349,10 +355,11 @@ public class QuickAddMenu {
             String savName = goalNameField.getText().trim();
             double target = parsePositiveAmount(targetField.getText());
             double expected = parseNonNegativeAmount(expectedField.getText());
+            LocalDate startDate = toLocalDate(startDatePicker.getDate());
 
             if (grpName.isEmpty() || savName.isEmpty() || target <= 0 || expected < 0) {
                 Dialog.show("Missing Info",
-                        "Please fill in Group Name, Savings Title, a Target > 0, and a valid Expected amount.",
+                        "Please fill in Group Name, Savings Title, a Target > 0, and a valid Daily Target amount.",
                         "OK", null);
                 return;
             }
@@ -373,7 +380,7 @@ public class QuickAddMenu {
 
             for (String name : memberNames) {
                 String member = name.trim();
-                if (!member.isEmpty() && !members.contains(member)) {
+                if (!member.isEmpty() && !member.equalsIgnoreCase(me) && !members.contains(member)) {
                     members.add(member);
                 }
             }
@@ -385,11 +392,9 @@ public class QuickAddMenu {
                 return;
             }
 
-            if (!members.contains(me)) {
-                members.add(me);
-            }
+            members.add(me);
 
-            String res = SAVI.groupList.addGroup(me, target, grpName, expected, LocalDate.now(),
+            String res = SAVI.groupList.addGroup(me, target, grpName, expected, startDate,
                     members, savName);
             if (!"success".equals(res)) {
                 Dialog.show("Error", res, "OK", null);
@@ -410,23 +415,32 @@ public class QuickAddMenu {
         dlg.getAllStyles().setFont(SAVI.bold(4f));
 
         Container fields = new Container(BoxLayout.y());
+        fields.setScrollableY(true);
         fields.getAllStyles().setPaddingUnit(Style.UNIT_TYPE_DIPS);
         fields.getAllStyles().setPadding(1f, 1f, 1.5f, 1.5f);
 
         Label gn = SAVI.text("GOAL NAME", SAVI.bold(textSize), SAVI.DEEP_SLATE);
         Label tta = SAVI.text("TOTAL TARGET AMOUNT (P)", SAVI.bold(textSize), SAVI.DEEP_SLATE);
+        Label dta = SAVI.text("DAILY TARGET AMOUNT (P)", SAVI.bold(textSize), SAVI.DEEP_SLATE);
+        Label sd = SAVI.text("START DATE", SAVI.bold(textSize), SAVI.DEEP_SLATE);
 
         TextField nameField = styledField("e.g. Emergency Fund");
         TextField targetField = styledField("P 0.00");
         targetField.setConstraint(TextArea.DECIMAL);
+        TextField dailyTargetField = styledField("P 0.00");
+        dailyTargetField.setConstraint(TextArea.DECIMAL);
 
-        Label[] lb = {gn, tta};
+        Picker startDatePicker = styledPicker();
+        startDatePicker.setType(Display.PICKER_TYPE_DATE);
+        startDatePicker.setDate(new Date());
+
+        Label[] lb = {gn, tta, dta, sd};
 
         for (Label l : lb) {
             l.getAllStyles().setPadding(1, 1.5f, 0, 0);
         }
 
-        TextField[] txt = {nameField, targetField};
+        TextField[] txt = {nameField, targetField, dailyTargetField};
 
         for (TextField tf : txt) {
             tf.getAllStyles().setFont(SAVI.regular(2.5f));
@@ -437,14 +451,26 @@ public class QuickAddMenu {
 
         fields.add(gn).add(nameField);
         fields.add(tta).add(targetField);
+        fields.add(dta).add(dailyTargetField);
+        fields.add(sd).add(startDatePicker);
 
         dlg.add(BorderLayout.CENTER, fields);
         dlg.add(BorderLayout.SOUTH, dialogButtons(dlg, () -> {
             String goalName = nameField.getText().trim();
             double target = parsePositiveAmount(targetField.getText());
+            double dailyTarget = parseNonNegativeAmount(dailyTargetField.getText());
+            LocalDate startDate = toLocalDate(startDatePicker.getDate());
             String owner = activeUsername();
 
-            String res = SAVI.personalList.addPersonalSavings(owner, target, goalName);
+            if (goalName.isEmpty() || target <= 0 || dailyTarget < 0) {
+                Dialog.show("Missing Info",
+                        "Please enter a Goal Name, a Target > 0, and a valid Daily Target amount.",
+                        "OK", null);
+                return;
+            }
+
+            String res = SAVI.personalList.addPersonalSavings(owner, target, goalName,
+                    dailyTarget, startDate);
             if (!"success".equals(res)) {
                 Dialog.show("Error", res, "OK", null);
                 return;

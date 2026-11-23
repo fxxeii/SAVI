@@ -6,15 +6,20 @@ import java.util.List;
 
 // PERSONAL LIST (manages PersonalSavings + saves to Personal_Records.txt via Codename One Storage)
 // File format:
-//   P,creator,targetAmount,savingsName
+//   P,creator,targetAmount,savingsName[,dailyTarget,createdDate]
 //   C,creator,savingsName,amount,date,note[,timestamp]
 public class PersonalList implements SavingsStore {
 
     private final ArrayList<PersonalSavings> list = new ArrayList<>();
     private final String fileRec = "Personal_Records.txt";
 
-    // CREATE
+    // CREATE (Overloaded for backward compatibility)
     public String addPersonalSavings(String creator, double targetAmount, String savingsName) {
+        return addPersonalSavings(creator, targetAmount, savingsName, 0, LocalDate.now());
+    }
+
+    public String addPersonalSavings(String creator, double targetAmount, String savingsName,
+                                     double dailyTarget, LocalDate createdDate) {
         if (creator == null || creator.trim().isEmpty()) {
             return "Creator name is required.";
         }
@@ -24,11 +29,15 @@ public class PersonalList implements SavingsStore {
         if (targetAmount <= 0) {
             return "Target amount must be greater than 0.";
         }
+        if (dailyTarget < 0) {
+            return "Daily target amount cannot be negative.";
+        }
         if (findByCreatorAndName(creator, savingsName) != null) {
             return "You already have a personal saving with that name.";
         }
 
-        list.add(new PersonalSavings(creator.trim(), targetAmount, savingsName.trim()));
+        list.add(new PersonalSavings(creator.trim(), targetAmount, savingsName.trim(),
+                dailyTarget, createdDate));
         if (!saveAll()) {
             return "Could not save personal savings.";
         }
@@ -110,7 +119,9 @@ public class PersonalList implements SavingsStore {
         for (PersonalSavings p : list) {
             sb.append("P,").append(RecordStorage.encode(p.getCreator())).append(",")
                     .append(p.getTargetAmount()).append(",")
-                    .append(RecordStorage.encode(p.getSavingsName())).append("\n");
+                    .append(RecordStorage.encode(p.getSavingsName())).append(",")
+                    .append(p.getDailyTarget()).append(",")
+                    .append(p.getCreatedDate().toString()).append("\n");
 
             for (Contribution c : p.getContributions()) {
                 sb.append("C,").append(RecordStorage.encode(p.getCreator())).append(",")
@@ -147,8 +158,12 @@ public class PersonalList implements SavingsStore {
                 String creator = RecordStorage.decode(parts.get(1));
                 double target = Double.parseDouble(parts.get(2));
                 String name = RecordStorage.decode(parts.get(3));
+                double dailyTarget = parts.size() >= 5 ? Double.parseDouble(parts.get(4)) : 0.0;
+                LocalDate createdDate = parts.size() >= 6
+                        ? RecordStorage.parseDate(parts.get(5))
+                        : LocalDate.now();
                 if (findByCreatorAndName(creator, name) == null) {
-                    list.add(new PersonalSavings(creator, target, name));
+                    list.add(new PersonalSavings(creator, target, name, dailyTarget, createdDate));
                 }
             } catch (Exception ignored) {
             }
