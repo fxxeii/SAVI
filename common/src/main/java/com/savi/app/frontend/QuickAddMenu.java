@@ -354,21 +354,44 @@ public class QuickAddMenu {
                 return;
             }
 
-            // the creator is the logged-in user (NOT the savings title); the typed members are added too
+            // Get the logged-in user (group creator)
             String me = SAVI.user.getCurrentName();
+
+            // Read the members entered by the user
             ArrayList<String> members = new ArrayList<>();
             String rawMembers = membersField.getText().trim();
-            int start = 0;
-            while (!rawMembers.isEmpty() && start <= rawMembers.length()) {
-                int comma = rawMembers.indexOf(',', start);
-                String part = (comma == -1)
-                        ? rawMembers.substring(start).trim()
-                        : rawMembers.substring(start, comma).trim();
-                if (!part.isEmpty()) {
-                    members.add(part);
+
+            // Check if the member field is empty
+            if (rawMembers.isEmpty()) {
+                Dialog.show("Missing Members",
+                        "Please enter at least one member before creating a group.",
+                        "OK", null);
+                return;
+            }
+
+            // Split the input using commas
+            String[] memberNames = rawMembers.split(",");
+
+            for (String name : memberNames) {
+                String member = name.trim();
+
+                // Ignore empty entries
+                if (!member.isEmpty() && !members.contains(member)) {
+                    members.add(member);
                 }
-                if (comma == -1) break;
-                start = comma + 1;
+            }
+
+            // Make sure at least one valid member was entered
+            if (members.isEmpty()) {
+                Dialog.show("Missing Members",
+                        "A group must have at least one other member.",
+                        "OK", null);
+                return;
+            }
+
+            // Add the creator to the group if not already included
+            if (!members.contains(me)) {
+                members.add(me);
             }
 
             String res = SAVI.groupList.addGroup(me, target, grpName, expected, LocalDate.now(),
