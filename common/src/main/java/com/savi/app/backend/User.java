@@ -166,7 +166,7 @@ public class User {
         return false;
     }
 
-    private boolean emailExists(String e) {
+    public boolean emailExists(String e) {
         Node temp = head;
 
         while (temp != null) {

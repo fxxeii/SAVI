@@ -13,6 +13,131 @@ import java.io.IOException;
 
 public class SignUpPage {
 
+    private String verifiedEmail = null;
+
+    private void showCustomOtpDialog(String email, TextField emailf, Button verifyBtn) {
+        Dialog otpDialog = new Dialog();
+        otpDialog.setLayout(new BorderLayout());
+        otpDialog.setDisposeWhenPointerOutOfBounds(false);
+
+        Style dlgStyle = otpDialog.getDialogStyle();
+        dlgStyle.setBgColor(SAVI.WHITE);
+        dlgStyle.setBgTransparency(255);
+        dlgStyle.setBorder(RoundRectBorder.create()
+                .cornerRadius(4f)
+                .shadowOpacity(35)
+                .shadowBlur(3)
+                .shadowColor(SAVI.DARK_PURPLE)
+        );
+        dlgStyle.setPadding(0, 15, 0, 0);
+
+        Container headerBox = new Container(BoxLayout.y());
+        Style hdrStyle = headerBox.getAllStyles();
+        hdrStyle.setBgTransparency(255);
+        hdrStyle.setBgColor(SAVI.DARK_PURPLE);
+        hdrStyle.setPadding(43, 2, 5, 5);
+        hdrStyle.setBorder(RoundRectBorder.create()
+                .cornerRadius(3f)
+                .shadowOpacity(35)
+                .shadowBlur(3)
+                .shadowColor(SAVI.DARK_PURPLE)
+        );
+
+        Label titleLbl = SAVI.text("Email Verification", SAVI.bold(2.8f), SAVI.WHITE);
+        titleLbl.setAlignment(Component.CENTER);
+        headerBox.add(titleLbl);
+
+        Container bodyBox = new Container(BoxLayout.y());
+        bodyBox.getAllStyles().setPadding(15, 5, 20, 20);
+
+        com.codename1.components.SpanLabel sentMsg = new com.codename1.components.SpanLabel(
+                "A verification code was sent to " + email + ", please check your email."
+        );
+        sentMsg.getTextAllStyles().setFont(SAVI.regular(2f));
+        sentMsg.getTextAllStyles().setFgColor(SAVI.DEEP_SLATE);
+        sentMsg.getTextAllStyles().setAlignment(Component.CENTER);
+        sentMsg.getAllStyles().setMargin(0, 12, 0, 0);
+
+        Label promptLbl = SAVI.text("Input verification code:", SAVI.bold(2.1f), SAVI.DARK_PURPLE);
+        promptLbl.getAllStyles().setMargin(5, 4, 2, 0);
+
+        TextField otpField = new TextField("", "Enter 6-digit code", 6, TextField.NUMERIC);
+        otpField.getAllStyles().setFont(SAVI.bold(2.5f));
+        otpField.getAllStyles().setFgColor(SAVI.BLACK);
+        otpField.getAllStyles().setPadding(1, 1, 2, 2);
+        otpField.getHintLabel().getAllStyles().setPadding(1, 1, 2, 2);
+        otpField.getHintLabel().getAllStyles().setFont(SAVI.italic(1.9f));
+        otpField.getHintLabel().getAllStyles().setFgColor(SAVI.GRANITE_GRAY);
+        otpField.setSingleLineTextArea(true);
+
+        Style[] tfStyles = {otpField.getUnselectedStyle(), otpField.getSelectedStyle(), otpField.getPressedStyle()};
+        for (Style s : tfStyles) {
+            s.setBgColor(SAVI.PALE_PURPLE);
+            s.setBgTransparency(255);
+            s.setBorder(RoundRectBorder.create().cornerRadius(1f));
+        }
+
+        bodyBox.add(sentMsg).add(promptLbl).add(otpField);
+
+        Button confirmBtn = new Button("Verify Code");
+        confirmBtn.getAllStyles().setFont(SAVI.bold(2.2f));
+        confirmBtn.getAllStyles().setPadding(1, 1, 1, 1);
+        confirmBtn.getAllStyles().setMargin(2, 2, 3, 3);
+        confirmBtn.getAllStyles().setBorder(Border.createRoundBorder(80, SAVI.BORDER_COLOR));
+
+        Style[] cStyles = {confirmBtn.getUnselectedStyle(), confirmBtn.getSelectedStyle(), confirmBtn.getPressedStyle()};
+        for (Style s : cStyles) {
+            s.setBgTransparency(255);
+            s.setBgColor(SAVI.DARK_PURPLE);
+            s.setFgColor(SAVI.WHITE);
+        }
+
+        Button cancelBtn = new Button("Cancel");
+        cancelBtn.getAllStyles().setFont(SAVI.regular(2f));
+        cancelBtn.getAllStyles().setPadding(1, 1, 1, 1);
+        cancelBtn.getAllStyles().setMargin(2, 2, 3, 3);
+        cancelBtn.getAllStyles().setBorder(Border.createRoundBorder(80, SAVI.BORDER_COLOR));
+
+        Style[] xStyles = {cancelBtn.getUnselectedStyle(), cancelBtn.getSelectedStyle(), cancelBtn.getPressedStyle()};
+        for (Style s : xStyles) {
+            s.setBgTransparency(255);
+            s.setBgColor(SAVI.PALE_PURPLE);
+            s.setFgColor(SAVI.DEEP_SLATE);
+        }
+
+        confirmBtn.addActionListener(ev -> {
+            String enteredCode = otpField.getText().trim();
+            if (OTPManager.verifyOtp(enteredCode)) {
+                verifiedEmail = email;
+                emailf.setEditable(false);
+                verifyBtn.setText("Verified");
+                verifyBtn.setEnabled(false);
+                verifyBtn.getParent().revalidate();
+                otpDialog.dispose();
+                Dialog.show("Success", "Your email has been verified!", "OK", null);
+            } else {
+                Dialog.show("Invalid Code", "The code you entered is incorrect or expired.", "OK", null);
+            }
+        });
+
+        cancelBtn.addActionListener(ev -> otpDialog.dispose());
+
+        Container buttonRow = new Container(new GridLayout(1, 2));
+        buttonRow.getAllStyles().setPadding(5, 5, 15, 15);
+        buttonRow.add(cancelBtn).add(confirmBtn);
+
+        otpDialog.add(BorderLayout.NORTH, headerBox);
+        otpDialog.add(BorderLayout.CENTER, bodyBox);
+        otpDialog.add(BorderLayout.SOUTH, buttonRow);
+
+        int width = Display.getInstance().getDisplayWidth();
+        int height = Display.getInstance().getDisplayHeight();
+        int sideMargin = (int) (width * 0.08f);
+        int topBottomMargin = (int) (height * 0.31f);
+
+        otpDialog.show(topBottomMargin, topBottomMargin, sideMargin, sideMargin);
+    }
+
     public void show() {
 
         Form signUpForm = new Form(new BorderLayout());
@@ -153,34 +278,26 @@ public class SignUpPage {
                 Dialog.show("Invalid Email", "Please enter a valid email address.", "OK", null);
                 return;
             }
+            if (SAVI.user.emailExists(email)) {
+                Dialog.show("Email Already Used", "This email is already registered. Please log in or use another email.", "OK", null);
+                return;
+            }
 
             verify.setEnabled(false);
+            verify.setText("Sending...");
 
             OTPManager.sendOtp(
                     email,
-                    new Runnable() {
-                        @Override
-                        public void run() {
-                            Display.getInstance().callSerially(() -> {
-                                verify.setEnabled(true);
-                                Dialog.show(
-                                        "Verification Code Sent",
-                                        "A verification code was sent to " + email + ". Please check your email account to proceed.",
-                                        "OK",
-                                        null
-                                );
-                            });
-                        }
-                    },
-                    new OTPManager.OtpErrorCallback() {
-                        @Override
-                        public void onError(String errorMsg) {
-                            Display.getInstance().callSerially(() -> {
-                                verify.setEnabled(true);
-                                Dialog.show("Failed to Send Code", errorMsg, "OK", null);
-                            });
-                        }
-                    }
+                    () -> Display.getInstance().callSerially(() -> {
+                        verify.setEnabled(true);
+                        verify.setText("Verify");
+                        showCustomOtpDialog(email, emailf, verify);
+                    }),
+                    errorMsg -> Display.getInstance().callSerially(() -> {
+                        verify.setEnabled(true);
+                        verify.setText("Verify");
+                        Dialog.show("Failed to Send Code", errorMsg, "OK", null);
+                    })
             );
         });
 
