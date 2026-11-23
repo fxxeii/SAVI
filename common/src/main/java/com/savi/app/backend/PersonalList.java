@@ -89,6 +89,24 @@ public class PersonalList implements SavingsStore {
         return saveAll();
     }
 
+    /** Edits a personal savings goal from the Profile page. */
+    /** Edits a personal savings goal from the Profile page. */
+    public boolean updatePersonalSavings(String creator, String savingsName, String newName,
+                                         double dailyTarget, double totalTarget) {
+        PersonalSavings p = findByCreatorAndName(creator, savingsName);
+        if (p == null || newName == null || newName.trim().isEmpty() || totalTarget <= 0 || dailyTarget < 0) {
+            return false;
+        }
+        PersonalSavings other = findByCreatorAndName(creator, newName);
+        if (other != null && other != p) {
+            return false;
+        }
+        p.setSavingsName(newName.trim());
+        p.setDailyTarget(dailyTarget);
+        p.setTargetAmount(totalTarget);
+        return saveAll();
+    }
+
     /** A user changed their username: their personal savings follow. */
     public boolean renameOwner(String oldName, String newName) {
         for (PersonalSavings p : list) {

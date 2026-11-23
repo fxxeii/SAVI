@@ -10,19 +10,18 @@ import com.codename1.ui.Label;
 import com.codename1.ui.TextField;
 import com.codename1.ui.events.ActionEvent;
 import com.codename1.ui.events.ActionListener;
-import com.codename1.ui.geom.Dimension;
 import com.codename1.ui.layouts.BorderLayout;
 import com.codename1.ui.layouts.BoxLayout;
 import com.codename1.ui.layouts.FlowLayout;
 import com.codename1.ui.layouts.GridLayout;
-import com.codename1.ui.layouts.LayeredLayout;
 import com.codename1.ui.layouts.Layout;
 import com.codename1.ui.plaf.Border;
 import com.codename1.ui.plaf.RoundRectBorder;
 import com.codename1.ui.plaf.Style;
 import com.savi.app.SAVI;
-import com.savi.app.backend.Profile;
 import com.savi.app.backend.GroupSavings;
+import com.savi.app.backend.PersonalSavings;
+import com.savi.app.backend.Profile;
 import com.savi.app.backend.UserProfile;
 
 import java.util.List;
@@ -36,11 +35,6 @@ public class ProfilePage implements Profile.DataChangeListener {
 
     static int mm(float v) {
         return Display.getInstance().convertToPixels(v);
-    }
-
-    static float pxToMM(int px) {
-        int oneMM = mm(1f);
-        return oneMM > 0 ? px / (float) oneMM : px / 6f;
     }
 
     static void setMargins(Component c, float t, float b, float l, float r) {
@@ -209,9 +203,10 @@ public class ProfilePage implements Profile.DataChangeListener {
         return FlowLayout.encloseCenter(badge);
     }
 
-    Container profileHeader(float extraBottomMM, UserProfile profile) {
+    Container profileHeader(float bottomPaddingMM, UserProfile profile) {
         Container header = new GradientHeader(BoxLayout.y(), 6f);
-        setPadding(header, 1f, extraBottomMM, 2f, 2f);
+        setPadding(header, 1f, bottomPaddingMM, 2f, 2f);
+        setMargins(header, 0, 1f, 0, 0);
 
         Label title = SAVI.text("PROFILE", SAVI.bold(2.3f), SAVI.WHITE);
         title.getAllStyles().setAlignment(Component.CENTER);
@@ -237,58 +232,8 @@ public class ProfilePage implements Profile.DataChangeListener {
         return header;
     }
 
-    static Container statCell(String value, String caption, int valueColor, boolean divided) {
-        Container cell = new Container(BoxLayout.y());
-        Label v = SAVI.text(value, SAVI.bold(2.5f), valueColor);
-        Label c = SAVI.text(caption, SAVI.regular(1.7f), SAVI.SLATE_GRAY);
-        v.getAllStyles().setAlignment(Component.CENTER);
-        c.getAllStyles().setAlignment(Component.CENTER);
-        cell.add(v).add(c);
-        setPadding(cell, 1.2f, 1.2f, 0.4f, 0.4f);
-        if (divided) {
-            Border line = Border.createLineBorder(1, SAVI.BORDER_COLOR);
-            cell.getAllStyles().setBorder(Border.createCompoundBorder(null, null, line, line));
-        }
-        return cell;
-    }
-
-    static Container statsCard(int groups, double saved, int people) {
-        Container card = new Container(new GridLayout(1, 3));
-        cardStyles(card, SAVI.WHITE, 4, 1.5f, 1.2f);
-        setMargins(card, 0, 1, 2, 2);
-
-        card.add(statCell(String.valueOf(groups), "GROUPS", SAVI.DARK_KNIGHT, false));
-        card.add(statCell("P" + Profile.formatAmount(saved), "TOTAL SAVED", SAVI.BRIGHT_VIOLET, true));
-        card.add(statCell(String.valueOf(people), "PEOPLE", SAVI.DARK_KNIGHT, false));
-        return card;
-    }
-
     Container topSection(UserProfile profile) {
-        final Container stats = statsCard(
-                backend.getGroupCount(),
-                backend.getTotalSaved(),
-                backend.getTotalPeople()
-        );
-        int measuredStatsH = stats.getOuterPreferredH();
-        if (measuredStatsH <= 0) {
-            measuredStatsH = mm(12f);
-        }
-        final int statsH = measuredStatsH;
-        final float gapMM = 3.2f;
-
-        final Container header = profileHeader(gapMM + pxToMM(statsH) / 2f, profile);
-
-        Container top = new Container(new LayeredLayout()) {
-            @Override
-            protected Dimension calcPreferredSize() {
-                Dimension d = super.calcPreferredSize();
-                int headerH = header.getPreferredH();
-                return new Dimension(d.getWidth(), headerH + (statsH / 2));
-            }
-        };
-        top.add(BorderLayout.north(header));
-        top.add(BorderLayout.south(stats));
-        return top;
+        return profileHeader(2.5f, profile);
     }
 
     static Container sectionHeader(String title, Component right) {
@@ -328,17 +273,18 @@ public class ProfilePage implements Profile.DataChangeListener {
         return box;
     }
 
-    static Container groupCard(GroupSavings group, ActionListener<ActionEvent> onEdit) {
+    static Container savingsCard(char icon, String title, double dailyTarget, double totalTarget,
+                                 ActionListener<ActionEvent> onEdit) {
         Container card = new Container(BoxLayout.y());
         cardStyles(card, SAVI.WHITE, 4, 2f, 2.2f);
         setMargins(card, 0.5f, 1f, 2, 2);
 
         Container nameCont = new Container(BoxLayout.y());
-        nameCont.add(SAVI.text(group.getGroupName(), SAVI.bold(2.1f), SAVI.DARK_KNIGHT));
+        nameCont.add(SAVI.text(title, SAVI.bold(2.1f), SAVI.DARK_KNIGHT));
         setMargins(nameCont, 0, 0, 1.5f, 1f);
 
         Container left = new Container(new BorderLayout());
-        left.add(BorderLayout.WEST, squareIcon(FontImage.MATERIAL_BEACH_ACCESS, SAVI.PALE_PURPLE, SAVI.BRIGHT_VIOLET));
+        left.add(BorderLayout.WEST, squareIcon(icon, SAVI.PALE_PURPLE, SAVI.BRIGHT_VIOLET));
         left.add(BorderLayout.CENTER, BoxLayout.encloseYCenter(nameCont));
 
         Container header = new Container(new BorderLayout());
@@ -346,8 +292,8 @@ public class ProfilePage implements Profile.DataChangeListener {
         header.add(BorderLayout.EAST, editPill(onEdit));
 
         Container targets = new Container(new GridLayout(1, 2));
-        targets.add(targetBox("DAILY TARGET", "P " + Profile.formatAmount(group.getExpectedPerMember())));
-        targets.add(targetBox("TOTAL TARGET", "P " + Profile.formatAmount(group.getTargetAmount())));
+        targets.add(targetBox("DAILY TARGET", "P " + Profile.formatAmount(dailyTarget)));
+        targets.add(targetBox("TOTAL TARGET", "P " + Profile.formatAmount(totalTarget)));
 
         card.add(header);
         card.add(divider(SAVI.BORDER_COLOR));
@@ -355,12 +301,32 @@ public class ProfilePage implements Profile.DataChangeListener {
         return card;
     }
 
-    static Container emptyGroupCard() {
+    static Container groupCard(GroupSavings group, ActionListener<ActionEvent> onEdit) {
+        return savingsCard(
+                FontImage.MATERIAL_BEACH_ACCESS,
+                group.getGroupName(),
+                group.getExpectedPerMember(),
+                group.getTargetAmount(),
+                onEdit
+        );
+    }
+
+    static Container personalCard(PersonalSavings personal, ActionListener<ActionEvent> onEdit) {
+        return savingsCard(
+                FontImage.MATERIAL_SAVINGS,
+                personal.getSavingsName(),
+                personal.getDailyTarget(),
+                personal.getTargetAmount(),
+                onEdit
+        );
+    }
+
+    static Container emptySavingsCard(String emptyText) {
         Container card = new Container(BoxLayout.y());
         cardStyles(card, SAVI.WHITE, 4, 2.5f, 2.5f);
         setMargins(card, 0.5f, 1f, 2, 2);
 
-        Label msg = SAVI.text("No savings groups yet.", SAVI.regular(2.0f), SAVI.SLATE_GRAY);
+        Label msg = SAVI.text(emptyText, SAVI.regular(2.0f), SAVI.SLATE_GRAY);
         msg.getAllStyles().setAlignment(Component.CENTER);
         card.add(msg);
         return card;
@@ -499,7 +465,71 @@ public class ProfilePage implements Profile.DataChangeListener {
 
             boolean ok = backend.updateGroup(existing.getGroupName(), name, daily, total);
             if (!ok) {
-                Dialog.show("Group Name", "A group with that name already exists.", "OK", null);
+                Dialog.show("Could Not Save", "Please check the target amounts and make sure the group name is unique.", "OK", null);
+                return;
+            }
+            dlg.dispose();
+        });
+        actions.add(save);
+
+        dlg.add(BorderLayout.CENTER, body);
+        dlg.add(BorderLayout.SOUTH, actions);
+        dlg.show();
+    }
+
+    /**
+     * Edit or delete an existing personal savings goal in Personal_Records.txt.
+     */
+    private void showEditPersonalDialog(final PersonalSavings existing) {
+        if (existing == null) {
+            return;
+        }
+        Dialog dlg = new Dialog("Edit Personal Savings", new BorderLayout());
+        Container body = new Container(BoxLayout.y());
+        body.setScrollableY(true);
+        setPadding(body, 1.5f, 1.5f, 2f, 2f);
+
+        TextField nameField = new TextField(existing.getSavingsName(), "Savings Name", 24, TextField.ANY);
+        TextField dailyField = new TextField(String.valueOf(existing.getDailyTarget()), "Daily Target (P)", 12, TextField.DECIMAL);
+        TextField totalField = new TextField(String.valueOf(existing.getTargetAmount()), "Total Target (P)", 12, TextField.DECIMAL);
+
+        body.add(SAVI.text("SAVINGS NAME", SAVI.bold(1.6f), SAVI.SLATE_GRAY)).add(nameField);
+        body.add(SAVI.text("DAILY TARGET (P)", SAVI.bold(1.6f), SAVI.SLATE_GRAY)).add(dailyField);
+        body.add(SAVI.text("TOTAL TARGET (P)", SAVI.bold(1.6f), SAVI.SLATE_GRAY)).add(totalField);
+
+        Container actions = new Container(new GridLayout(1, 3));
+
+        Button cancel = new Button("Cancel");
+        cancel.addActionListener(e -> dlg.dispose());
+        actions.add(cancel);
+
+        Button delete = new Button("Delete");
+        delete.getAllStyles().setFgColor(0xD32F2F);
+        delete.addActionListener(e -> {
+            boolean sure = Dialog.show("Delete Personal Savings",
+                    "Delete \"" + existing.getSavingsName() + "\" and all its contributions?",
+                    "Delete", "Cancel");
+            if (!sure) {
+                return;
+            }
+            backend.deletePersonalSavings(existing.getSavingsName());
+            dlg.dispose();
+        });
+        actions.add(delete);
+
+        Button save = new Button("Save");
+        save.addActionListener(e -> {
+            String name = nameField.getText().trim();
+            if (name.isEmpty()) {
+                Dialog.show("Savings Name", "Please enter a savings name.", "OK", null);
+                return;
+            }
+            double daily = parseDoubleSafe(dailyField.getText(), 0.0);
+            double total = parseDoubleSafe(totalField.getText(), 500.0);
+
+            boolean ok = backend.updatePersonalSavings(existing.getSavingsName(), name, daily, total);
+            if (!ok) {
+                Dialog.show("Could Not Save", "Please check the target amounts and make sure the savings name is unique.", "OK", null);
                 return;
             }
             dlg.dispose();
@@ -529,16 +559,28 @@ public class ProfilePage implements Profile.DataChangeListener {
 
         UserProfile profile = backend.getActiveProfile();
         List<GroupSavings> groups = backend.getGroups();
+        List<PersonalSavings> personals = backend.getPersonalSavings();
 
         mainContents.add(topSection(profile));
-        mainContents.add(sectionHeader("GROUP SETTINGS", null));
+        mainContents.add(sectionHeader("GROUP SAVINGS SETTINGS", null));
 
         if (groups.isEmpty()) {
-            mainContents.add(emptyGroupCard());
+            mainContents.add(emptySavingsCard("No savings groups yet."));
         } else {
             for (int i = 0; i < groups.size(); i++) {
                 final GroupSavings group = groups.get(i);
                 mainContents.add(groupCard(group, e -> showEditGroupDialog(group)));
+            }
+        }
+
+        mainContents.add(sectionHeader("PERSONAL SAVINGS SETTINGS", null));
+
+        if (personals.isEmpty()) {
+            mainContents.add(emptySavingsCard("No personal savings yet."));
+        } else {
+            for (int i = 0; i < personals.size(); i++) {
+                final PersonalSavings personal = personals.get(i);
+                mainContents.add(personalCard(personal, e -> showEditPersonalDialog(personal)));
             }
         }
 

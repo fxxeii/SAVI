@@ -116,28 +116,15 @@ public class Profile {
         return SAVI.groupList.getForUser(member);
     }
 
-    public int getGroupCount() {
-        return getGroups().size();
-    }
-
-    public double getTotalSaved() {
+    /** Personal savings belonging to the currently logged-in user. */
+    public List<PersonalSavings> getPersonalSavings() {
         getActiveProfile();
         String member = getMemberName();
-        if (SAVI.user != null && SAVI.user.getCurrentName() != null) member = SAVI.user.getCurrentName();
-        double total = 0;
-        if (SAVI.personalList != null) {
-            for (PersonalSavings savings : SAVI.personalList.getForUser(member)) {
-                total += savings.getCurrentAmount();
-            }
+        if (SAVI.user != null && SAVI.user.getCurrentName() != null) {
+            member = SAVI.user.getCurrentName();
         }
-        for (GroupSavings group : getGroups()) total += group.getCurrentAmount();
-        return total;
-    }
-
-    public int getTotalPeople() {
-        int total = 0;
-        for (GroupSavings group : getGroups()) total += group.getMembers().size();
-        return total;
+        if (SAVI.personalList == null) return new ArrayList<>();
+        return SAVI.personalList.getForUser(member);
     }
 
     public void refreshGroups() {
@@ -200,17 +187,30 @@ public class Profile {
         if (SAVI.groupList != null && SAVI.groupList.deleteGroup(groupId)) notifyListeners();
     }
 
+    public boolean updatePersonalSavings(String savingsName, String newName,
+                                         double dailyTarget, double totalTarget) {
+        if (SAVI.personalList == null) return false;
+        String owner = getMemberName();
+        if (SAVI.user != null && SAVI.user.getCurrentName() != null) {
+            owner = SAVI.user.getCurrentName();
+        }
+        boolean updated = SAVI.personalList.updatePersonalSavings(owner, savingsName, newName, dailyTarget, totalTarget);
+        if (updated) notifyListeners();
+        return updated;
+    }
+
+    public void deletePersonalSavings(String savingsName) {
+        if (SAVI.personalList == null) return;
+        String owner = getMemberName();
+        if (SAVI.user != null && SAVI.user.getCurrentName() != null) {
+            owner = SAVI.user.getCurrentName();
+        }
+        if (SAVI.personalList.deletePersonalSavings(owner, savingsName)) notifyListeners();
+    }
+
     public void logout() {
         Preferences.delete(PREF_ACTIVE_ACCOUNT);
         activeProfile = null;
-    }
-
-    public String buildShareSummary() {
-        UserProfile current = getActiveProfile();
-        return current.getUsername() + " (" + current.getHandle() + ") on SAVI\n"
-                + "Groups: " + getGroupCount()
-                + " | Total Saved: P" + formatAmount(getTotalSaved())
-                + " | People: " + getTotalPeople();
     }
 
     /** Amount without the peso sign ("1,250" / "1,250.50"): same formatter as the rest of the app. */
