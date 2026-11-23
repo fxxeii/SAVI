@@ -14,10 +14,8 @@ import com.codename1.ui.layouts.BorderLayout;
 import com.codename1.ui.layouts.BoxLayout;
 import com.codename1.ui.layouts.FlowLayout;
 import com.codename1.ui.layouts.GridLayout;
-import com.codename1.ui.plaf.Border;
 import com.codename1.ui.plaf.RoundRectBorder;
 import com.codename1.ui.plaf.Style;
-import com.codename1.ui.spinner.Picker;
 import com.savi.app.SAVI;
 import com.savi.app.backend.GroupSavings;
 import com.savi.app.backend.Home;
@@ -25,38 +23,6 @@ import com.savi.app.backend.Home;
 import java.time.LocalDate;
 
 public class HomePage {
-
-    static Component progressBar(float progress, int trackColor, int fillColor, float heightMM) {
-        final float p = Math.max(0f, Math.min(1f, progress));
-
-        return new Component() {
-            @Override
-            protected Dimension calcPreferredSize() {
-                return new Dimension(
-                        Display.getInstance().convertToPixels(30f),
-                        Display.getInstance().convertToPixels(heightMM));
-            }
-
-            @Override
-            public void paint(Graphics g) {
-                int x = getX(), y = getY(), w = getWidth(), h = getHeight();
-
-                g.setAntiAliased(true);
-                g.setAlpha(255);
-
-                // track
-                g.setColor(trackColor);
-                g.fillRoundRect(x, y, w, h, h, h);
-
-                // fill
-                int fw = (int) (w * p);
-                if (fw > 0) {
-                    g.setColor(fillColor);
-                    g.fillRoundRect(x, y, Math.max(fw, h), h, h, h);
-                }
-            }
-        };
-    }
 
     // CALENDAR: the date, day letter and "is it today" now come from Home (backend)
     static Container dayCell(LocalDate d){
@@ -246,16 +212,8 @@ public class HomePage {
     }
 
     public void show() {
-        show(null);
-    }
-
-    // opens with the weekly card on this choice (a group name or a personal savings)
-    public void show(String weeklyChoice) {
         // BACKEND: one Home object feeds the cards below (SAVI.user / SAVI.groupList.getGroups: see note)
         Home home = new Home(SAVI.user, Home.allSavings());
-        if (weeklyChoice != null) {
-            home.setWeeklyChoice(weeklyChoice);
-        }
         GroupSavings g = home.getFeaturedGroup();                    // null if the user has no groups
 
         Form base = new Form("", new BorderLayout());
@@ -307,76 +265,6 @@ public class HomePage {
 
         weekContainer.add(BorderLayout.NORTH, header);
         weekContainer.add(BorderLayout.CENTER, daysRow);
-
-        Container weekTotalContainer = new Container(new BorderLayout());
-        boxStyles(weekTotalContainer, SAVI.WHITE, 2, 3);
-
-        // WEEKLY CARD CHOICE: one saving (a group or a personal savings) with its own weekly target.
-        // The name is a Picker (same wheel as the Transfer page): tapping the name or the arrow opens it.
-        Container choiceRow = null;
-        java.util.List<String> choices = home.getWeeklyChoices();
-        if (!choices.isEmpty()) {
-            final String shown = home.getWeeklyChoice();
-            String[] items = new String[choices.size()];
-            for (int i = 0; i < items.length; i++) {
-                items[i] = choices.get(i).toUpperCase();
-            }
-
-            final Picker choicePicker = new Picker();
-            choicePicker.setUIID("Label");
-            choicePicker.setType(Display.PICKER_TYPE_STRINGS);
-            choicePicker.setStrings(items);
-            choicePicker.setSelectedString(shown.toUpperCase());
-            Style ps = choicePicker.getAllStyles();
-            ps.setFont(SAVI.bold(2.5f));
-            ps.setFgColor(SAVI.DARK_KNIGHT);
-            ps.setBgTransparency(0);
-            ps.setBorder(Border.createEmpty());
-            ps.setMargin(0, 0, 0, 0);
-            ps.setPadding(0, 0, 0, 0);
-            choicePicker.addActionListener(e -> {
-                String chosen = choicePicker.getSelectedString();
-                if (chosen != null && !chosen.equalsIgnoreCase(shown)) {
-                    new HomePage().show(chosen);       // reload the page on the chosen savings
-                }
-            });
-
-            Label chev = new Label();
-            chev.getAllStyles().setFgColor(SAVI.DARK_KNIGHT);
-            chev.getAllStyles().setBgTransparency(0);
-            chev.getAllStyles().setMargin(0, 0, 0, 0);
-            FontImage.setMaterialIcon(chev, FontImage.MATERIAL_KEYBOARD_ARROW_DOWN, 4f);
-
-            choiceRow = new Container(new BorderLayout());
-            choiceRow.add(BorderLayout.WEST, choicePicker);
-            choiceRow.add(BorderLayout.EAST, chev);
-            choiceRow.setLeadComponent(choicePicker);
-        }
-
-        Label amountSaved = SAVI.text("AMOUNT SAVED", SAVI.bold(2.5f), SAVI.SLATE_GRAY);
-        float pct = (float) home.getWeeklyProgress();
-
-        Label amount = SAVI.text(Home.pesoFormat(home.getWeeklySaved()), SAVI.bold(4), SAVI.DARK_KNIGHT);
-
-        Container targetPercent = new Container(new BorderLayout());
-        Label weekTarget = SAVI.text(home.getWeeklyTargetLabel(), SAVI.regular(2f), SAVI.SLATE_GRAY);
-        Label percentage = SAVI.text(home.getWeeklyPercent() + "%", SAVI.bold(2f), SAVI.BRIGHT_VIOLET);
-        targetPercent.add(BorderLayout.WEST, weekTarget);
-        targetPercent.add(BorderLayout.EAST, percentage);
-
-        Container weekTotalContent = new Container(BoxLayout.y());
-        if (choiceRow != null) {               // the name + arrow of the savings being shown
-            weekTotalContent.add(choiceRow);
-        }
-        weekTotalContent.add(amountSaved);
-        weekTotalContent.add(amount);
-        weekTotalContent.add(targetPercent);
-
-        Component bar = progressBar(pct, SAVI.POWDER_WHITE, SAVI.DARK_PURPLE, 1.5f);
-        bar.getAllStyles().setMarginUnit(Style.UNIT_TYPE_DIPS);
-        bar.getAllStyles().setMargin(1f, 0f, 0f, 0f);
-        weekTotalContent.add(bar);
-        weekTotalContainer.add(BorderLayout.NORTH, weekTotalContent);
 
         Container shortcutsContainer = new Container(new GridLayout(1, 4));
         Style styleShortC = shortcutsContainer.getAllStyles();
@@ -443,7 +331,6 @@ public class HomePage {
         Container mainContents = new Container(BoxLayout.y());
         mainContents.setScrollableY(true);
         mainContents.add(weekContainer);
-        mainContents.add(weekTotalContainer);
         mainContents.add(shortcutsContainer);
         mainContents.add(GroupOverviewContainer);
         if (!overviews.isEmpty()) {            // overview cards only when the user has savings

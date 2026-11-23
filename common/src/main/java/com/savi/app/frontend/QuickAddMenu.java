@@ -301,15 +301,12 @@ public class QuickAddMenu {
 
         Label gp = SAVI.text("GROUP NAME", SAVI.bold(textSize), SAVI.DEEP_SLATE);
         Label sgd = SAVI.text("SAVING GOAL DESCRIPTION", SAVI.bold(textSize), SAVI.DEEP_SLATE);
-        Label wta = SAVI.text("WEEKLY TARGET AMOUNT (P)", SAVI.bold(textSize), SAVI.DEEP_SLATE);
         Label tta = SAVI.text("TOTAL TARGET AMOUNT (P)", SAVI.bold(textSize), SAVI.DEEP_SLATE);
         Label exp = SAVI.text("DAILY TARGET AMOUNT (P)", SAVI.bold(textSize), SAVI.DEEP_SLATE);
         Label mm = SAVI.text("OTHER MEMBERS (comma-separated)", SAVI.bold(textSize), SAVI.DEEP_SLATE);
 
         TextField groupNameField = styledField("e.g. Vacation");
         TextField goalNameField = styledField("e.g. Travel & Hotel Fund");
-        TextField weeklyTargetField = styledField("P0.00");
-        weeklyTargetField.setConstraint(TextArea.DECIMAL);
         TextField targetField = styledField("P 0.00");
         targetField.setConstraint(TextArea.DECIMAL);
 
@@ -318,13 +315,13 @@ public class QuickAddMenu {
 
         TextField membersField = styledField("person1, person2, person3, ...");
 
-        Label[] lb = {gp, sgd, wta, tta, exp, mm};
+        Label[] lb = {gp, sgd, tta, exp, mm};
 
         for (Label l : lb) {
             l.getAllStyles().setPadding(1,1.5f,0,0);
         }
 
-        TextField[] txt = {groupNameField, goalNameField, weeklyTargetField, targetField, expectedField, membersField};
+        TextField[] txt = {groupNameField, goalNameField, targetField, expectedField, membersField};
 
         for (TextField tf : txt) {
             tf.getAllStyles().setFont(SAVI.regular(2.5f));
@@ -335,7 +332,6 @@ public class QuickAddMenu {
 
         fields.add(gp).add(groupNameField);
         fields.add(sgd).add(goalNameField);
-        fields.add(wta).add(weeklyTargetField);
         fields.add(tta).add(targetField);
         fields.add(exp).add(expectedField);
         fields.add(mm).add(membersField);
@@ -346,7 +342,6 @@ public class QuickAddMenu {
             String savName = goalNameField.getText().trim();
             double target = parsePositiveAmount(targetField.getText());
             double expected = parseNonNegativeAmount(expectedField.getText());
-            double weekly = parseNonNegativeAmount(weeklyTargetField.getText());   // blank = no weekly target
 
             if (grpName.isEmpty() || savName.isEmpty() || target <= 0 || expected < 0) {
                 Dialog.show("Missing Info",
@@ -355,7 +350,7 @@ public class QuickAddMenu {
                 return;
             }
 
-            String res = SAVI.groupList.addGroup(savName, target, grpName, expected, weekly);
+            String res = SAVI.groupList.addGroup(savName, target, grpName, expected);
             if (!"success".equals(res)) {
                 Dialog.show("Error", res, "OK", null);
                 return;
@@ -403,22 +398,19 @@ public class QuickAddMenu {
         fields.getAllStyles().setPadding(1f, 1f, 1.5f, 1.5f);
 
         Label gn = SAVI.text("GOAL NAME", SAVI.bold(textSize), SAVI.DEEP_SLATE);
-        Label wta = SAVI.text("WEEKLY TARGET AMOUNT", SAVI.bold(textSize), SAVI.DEEP_SLATE);
         Label tta = SAVI.text("TOTAL TARGET AMOUNT (P)", SAVI.bold(textSize), SAVI.DEEP_SLATE);
 
         TextField nameField = styledField("e.g. Emergency Fund");
-        TextField weeklyTargetField = styledField("P0.00");
-        weeklyTargetField.setConstraint(TextArea.DECIMAL);
         TextField targetField = styledField("P 0.00");
         targetField.setConstraint(TextArea.DECIMAL);
 
-        Label[] lb = {gn, wta, tta};
+        Label[] lb = {gn, tta};
 
         for (Label l : lb) {
             l.getAllStyles().setPadding(1,1.5f,0,0);
         }
 
-        TextField[] txt = {nameField, weeklyTargetField, targetField};
+        TextField[] txt = {nameField, targetField};
 
         for (TextField tf : txt) {
             tf.getAllStyles().setFont(SAVI.regular(2.5f));
@@ -428,17 +420,15 @@ public class QuickAddMenu {
         }
 
         fields.add(gn).add(nameField);
-        fields.add(wta).add(weeklyTargetField);
         fields.add(tta).add(targetField);
 
         dlg.add(BorderLayout.CENTER, fields);
         dlg.add(BorderLayout.SOUTH, dialogButtons(dlg, () -> {
             String goalName = nameField.getText().trim();
             double target = parsePositiveAmount(targetField.getText());
-            double weekly = parseNonNegativeAmount(weeklyTargetField.getText());   // blank = no weekly target
             String owner = SAVI.user.getCurrentName();
 
-            String res = SAVI.personalList.addPersonalSavings(goalName, target, owner, weekly);
+            String res = SAVI.personalList.addPersonalSavings(goalName, target, owner);
             if (!"success".equals(res)) {
                 Dialog.show("Error", res, "OK", null);
                 return;

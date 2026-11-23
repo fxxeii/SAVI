@@ -317,7 +317,6 @@ public class Transfer {
             return "The transfer could not be recorded.";
         }
 
-        home.refresh();   // weekly numbers change when the logged-in user is part of the transfer
         return SUCCESS;
     }
 

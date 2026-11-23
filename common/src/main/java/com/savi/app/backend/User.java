@@ -166,7 +166,7 @@ public class User {
     private void save(String name, String pass) {
         // Storage cannot append, so read the old text and write it back with the new line added
         writeFile(readFile() + toLine(name, pass));
-        System.out.println("SAVED: " + name);
+        Log.p("SAVED: " + name);
     }
 
     /** Rewrites the whole file from the linked list (used after a delete or an update). */
@@ -302,36 +302,35 @@ public class User {
             if (!Storage.getInstance().exists(fileRec)) {
                 return "";      // first run: nothing saved yet
             }
-            InputStream in = Storage.getInstance().createInputStream(fileRec);
-            String text = Util.readToString(in, "UTF-8");
-            return text == null ? "" : text;
+            try (InputStream in = Storage.getInstance().createInputStream(fileRec)) {
+                return Util.readToString(in, "UTF-8");
+            }
         } catch (Exception ex) {
-            ex.printStackTrace();
+            Log.e(ex);
             return "";
         }
     }
 
     private String readRecords() {
         try {
-            InputStream in = Display.getInstance().getResourceAsStream(User.class, "/" + fileRec);
-            if (in == null) {
+            InputStream resource = Display.getInstance().getResourceAsStream(User.class, "/" + fileRec);
+            if (resource == null) {
                 return "";
             }
-            String text = Util.readToString(in, "UTF-8");
-            return text == null ? "" : text;
+            try (InputStream in = resource) {
+                return Util.readToString(in, "UTF-8");
+            }
         } catch (Exception ex) {
-            ex.printStackTrace();
+            Log.e(ex);
             return "";
         }
     }
 
     private void writeFile(String text) {
-        try {
-            OutputStream out = Storage.getInstance().createOutputStream(fileRec);
+        try (OutputStream out = Storage.getInstance().createOutputStream(fileRec)) {
             out.write(text.getBytes("UTF-8"));
-            out.close();
         } catch (Exception ex) {
-            ex.printStackTrace();
+            Log.e(ex);
         }
     }
 }
