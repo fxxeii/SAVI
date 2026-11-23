@@ -66,6 +66,23 @@ public class PersonalSavings extends Savings {
         return createdTimestamp;
     }
 
+    // --- Missed / Pending Calculations (matches GroupSavings.getTotalMissed) ---
+    public double getTotalMissed() {
+        if (dailyTarget <= 0) {
+            return 0;
+        }
+        LocalDate today = LocalDate.now();
+        long days = 0;
+        LocalDate cursor = createdDate;
+        while (cursor.toString().compareTo(today.toString()) < 0) {
+            days++;
+            cursor = cursor.plusDays(1);
+        }
+        double totalExpected = (days + 1) * dailyTarget;
+        double totalContributed = Math.max(0, getCurrentAmount());
+        return Math.max(0, totalExpected - totalContributed);
+    }
+
     @Override
     public String getDisplayName() {
         return getSavingsName();
