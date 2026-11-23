@@ -9,7 +9,6 @@ public abstract class Savings {
     private String creator;
     private double targetAmount;
     private String savingsName;
-    private double weeklyTarget;
     private final ArrayList<Contribution> contributions = new ArrayList<>();
 
     public Savings(String creator, double targetAmount) {
@@ -26,7 +25,6 @@ public abstract class Savings {
         this.creator = creator.trim();
         this.targetAmount = targetAmount;
         this.savingsName = savingsName != null ? savingsName.trim() : "";
-        this.weeklyTarget = Math.max(0, weeklyTarget);
     }
 
     // --- Encapsulated Getters & Setters ---
@@ -56,16 +54,6 @@ public abstract class Savings {
 
     public void setSavingsName(String savingsName) {
         this.savingsName = savingsName != null ? savingsName.trim() : "";
-    }
-
-    public double getWeeklyTarget() {
-        return weeklyTarget;
-    }
-
-    public void setWeeklyTarget(double weeklyTarget) {
-        if (weeklyTarget >= 0) {
-            this.weeklyTarget = weeklyTarget;
-        }
     }
 
     // --- Shared Contribution Logic ---
