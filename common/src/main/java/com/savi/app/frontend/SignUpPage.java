@@ -6,6 +6,7 @@ import com.codename1.io.Log;
 import com.codename1.ui.plaf.*;
 import com.codename1.ui.plaf.RoundRectBorder;
 import com.savi.app.SAVI;
+import com.savi.app.backend.OTPManager;
 
 import java.io.IOException;
 
@@ -127,6 +128,8 @@ public class SignUpPage {
             }
         }
 
+        emailf.getAllStyles().setPadding(2, 1.5f, 3, 3);
+        emailf.getAllStyles().setMargin(1, 2, 9, 1);
         passf.getAllStyles().setPadding(2, 1.5f, 3, 3);
         passf.getAllStyles().setMargin(1, 2, 9, 1);
         cpassf.getAllStyles().setPadding(2, 1.5f, 3, 3);
@@ -135,8 +138,51 @@ public class SignUpPage {
         passf.setConstraint(TextField.PASSWORD);
         cpassf.setConstraint(TextField.PASSWORD);
 
+        Button verify = new Button("Verify");
         Button showPass = new Button("Show");
         Button showCpass = new Button("Show");
+
+        verify.addActionListener(e -> {
+            String email = emailf.getText().trim();
+
+            if (email.isEmpty()) {
+                Dialog.show("Missing Email", "Please enter your email address first.", "OK", null);
+                return;
+            }
+            if (!SAVI.user.validEmail(email)) {
+                Dialog.show("Invalid Email", "Please enter a valid email address.", "OK", null);
+                return;
+            }
+
+            verify.setEnabled(false);
+
+            OTPManager.sendOtp(
+                    email,
+                    new Runnable() {
+                        @Override
+                        public void run() {
+                            Display.getInstance().callSerially(() -> {
+                                verify.setEnabled(true);
+                                Dialog.show(
+                                        "Verification Code Sent",
+                                        "A verification code was sent to " + email + ". Please check your email account to proceed.",
+                                        "OK",
+                                        null
+                                );
+                            });
+                        }
+                    },
+                    new OTPManager.OtpErrorCallback() {
+                        @Override
+                        public void onError(String errorMsg) {
+                            Display.getInstance().callSerially(() -> {
+                                verify.setEnabled(true);
+                                Dialog.show("Failed to Send Code", errorMsg, "OK", null);
+                            });
+                        }
+                    }
+            );
+        });
 
         showPass.addActionListener(e -> {
             if (passf.getConstraint() == TextField.PASSWORD) {
@@ -162,7 +208,7 @@ public class SignUpPage {
             cpassf.getParent().revalidate();
         });
 
-        Button[] showButtons = {showPass, showCpass};
+        Button[] showButtons = {verify, showPass, showCpass};
 
         for (Button btn : showButtons) {
             Style[] styles = {
@@ -189,6 +235,7 @@ public class SignUpPage {
         Container emlContainer = new Container(new BorderLayout());
         emlContainer.add(BorderLayout.NORTH, eml);
         emlContainer.add(BorderLayout.CENTER, emailf);
+        emlContainer.add(BorderLayout.EAST, verify);
 
         Container passContainer = new Container(new BorderLayout());
         passContainer.add(BorderLayout.NORTH, ps);
